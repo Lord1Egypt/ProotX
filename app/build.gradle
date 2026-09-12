@@ -15,6 +15,10 @@ apply plugin: 'de.undercouch.download'
 android {
     compileSdkVersion 30
 
+    buildFeatures {
+        viewBinding true
+    }
+
     defaultConfig {
         // Version code is generated as time since June 1, 2019. These allows for constantly
         // sequential deployments to both production and beta tracks.
