@@ -130,3 +130,19 @@
 - Remote CI green (run `34679658479`, commit `4f61a47`); APK identity/ABIs/native payload
   unchanged.
 - No Parcelize/plugin migration performed (that is the P1C2 retry); no runtime/UI change.
+
+## P1C2-R — Final Parcelize / Android Extensions Migration (2026-09-12) — PASS
+
+- Replaced `apply plugin: 'kotlin-android-extensions'` with `kotlin-parcelize`; removed the
+  obsolete `androidExtensions { experimental true }` block.
+- Migrated all production imports `kotlinx.android.parcel.Parcelize` →
+  `kotlinx.parcelize.Parcelize` (`App`, `Filesystem`, `Session`); model contracts,
+  field order, Room annotations and the sealed `ServiceType` hierarchy unchanged.
+- Added `LegacyAndroidExtensionsGuardTest` (forbids legacy Android Extensions in
+  production source/build config) and `ParcelableContractTest` (Parcelable + static
+  `CREATOR` for the model types).
+- Local: `clean assembleDebug testDebugUnitTest` green — **317 tests / 27 suites / 0
+  failures**. Remote (run `34711411103`, commit `0c7a814`): all steps success, same test
+  result, debug APK uploaded.
+- **P1C is now CLOSED / PASS.** Unchanged: Kotlin 1.4.32, Moshi 1.9.3, Gradle 6.7.1,
+  AGP 4.2.2, SDK/NDK, other dependencies, runtime, visual design, assets.

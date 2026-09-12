@@ -229,3 +229,22 @@
 - **Trade-offs:** Moshi stays on 1.9.3 for now; a later Moshi bump (e.g. 1.11.x) can happen
   in P1D once Kotlin is stable.
 - **Affected components:** `app/build.gradle`, kapt, P1C2 retry, P1D.
+
+---
+
+## D015 — Parcelize uses `kotlin-parcelize`; legacy Android Extensions removed
+
+- **Date:** 2026-09-12
+- **Status:** Accepted
+- **Decision:** The project uses the standalone `kotlin-parcelize` plugin with
+  `kotlinx.parcelize.Parcelize`. The legacy `kotlin-android-extensions` plugin, the
+  `androidExtensions {}` DSL, `kotlinx.android.parcel`, and `kotlinx.android.synthetic` are
+  permanently removed and enforced by guard tests.
+- **Reason:** `kotlin-android-extensions` was removed in Kotlin 1.8 and blocked Kotlin
+  modernization; Parcelize was split into `kotlin-parcelize` in Kotlin 1.4.20.
+  `LegacyAndroidExtensionsGuardTest` prevents reintroduction.
+- **Alternatives considered:** Keeping the legacy plugin (rejected — removed in Kotlin 1.8);
+  hand-written `Parcelable` (rejected — unnecessary churn).
+- **Trade-offs:** None material; Parcelize behavior is unchanged and covered by
+  `ParcelableContractTest`.
+- **Affected components:** `app/build.gradle`, model entities, tests, P1D+.

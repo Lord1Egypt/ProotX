@@ -48,18 +48,17 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
   - [x] Remove `jcenter()`; prove resolution from Google Maven + Maven Central
   - [x] Align CI build-tools pin to `30.0.2`
   - [x] Local + remote green build and 313 tests; APK uploaded
-- [~] **P1C — Kotlin / Synthetics Migration** — IN PROGRESS
+- [x] **P1C — Kotlin / Synthetics Migration** — CLOSED / PASS
   - [x] **P1C1 — Synthetic views → view binding** — PASS
     - [x] Enable View Binding (`buildFeatures.viewBinding`)
     - [x] Migrate MainActivity + 7 view-using Fragments
     - [x] Zero synthetic view imports; source guard test added
-    - [x] Legacy Parcelize and `kotlin-android-extensions` preserved
-  - [~] **P1C2 — Kotlin modernization + legacy Parcelize migration + plugin removal** — READY TO RETRY
+  - [x] **P1C2 — Kotlin modernization + legacy Parcelize migration + plugin removal** — PASS
     - [x] Upgrade Kotlin 1.3.61 → 1.4.32 (done in P1C2-P)
     - [x] Moshi 1.8.0 → 1.9.3 bridge (done in P1C2-P)
-    - [ ] Migrate `kotlinx.android.parcel.Parcelize` → `kotlinx.parcelize.Parcelize`
-    - [ ] Remove `kotlin-android-extensions` and `androidExtensions`
-    - [ ] Add legacy-Android-extensions source guard
+    - [x] Migrate `kotlinx.android.parcel.Parcelize` → `kotlinx.parcelize.Parcelize`
+    - [x] Replace `kotlin-android-extensions` with `kotlin-parcelize`; remove `androidExtensions`
+    - [x] Add legacy-Android-extensions source guard + Parcelable contract test
   - [x] **P1C2-U — Moshi compatibility unblocker** — CLOSED (superseded by P1C2-P)
     - Finding: Moshi ≥1.10.0 codegen is compiled against Kotlin 1.4 and throws
       `NoSuchMethodError` on Kotlin 1.3.61 (1.10.0/1.11.0 fail; 1.9.3 passes).
