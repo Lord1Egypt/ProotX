@@ -1,0 +1,14 @@
+ProotX runs full Linux distributions and Linux applications on Android, with no root access required.
+
+Powered by PRoot, every environment runs entirely in user space: install it like an app, use it like a computer, remove it like an app.
+
+Features:
+* Full distributions: Debian, Ubuntu, Arch, Kali Linux and Alpine
+* Desktop environments: LXDE and XFCE over VNC or XSDL
+* One-click Linux apps: Firefox, LibreOffice, GIMP, Inkscape, Octave, R, Gnuplot, Git, IDLE and more
+* Built-in terminal emulator for CLI sessions
+* SSH, VNC and X11 services per environment
+* Access to your Android storage from inside every environment
+* Always-current root filesystems delivered as downloadable assets
+
+No root. No flashing. No warranty worries. Just Linux in your pocket.

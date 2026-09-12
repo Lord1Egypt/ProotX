@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp">
+
+        <ImageView
+            android:id="@+id/apps_icon"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/apps_title"/>
+
+        <TextView
+            android:id="@+id/apps_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            android:textColor="#FFFFFF"
+            android:textSize="32sp"
+            android:gravity="center"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/apps_icon"
+            app:layout_constraintBottom_toTopOf="@id/apps_description"/>
+
+        <TextView
+            android:id="@+id/apps_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="48dp"
+            android:layout_marginEnd="48dp"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:letterSpacing="0.15"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/apps_title" />
+
+        <RadioGroup
+            android:id="@+id/apps_service_type_preferences"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:gravity="center"
+            app:layout_constraintTop_toBottomOf="@id/apps_description"
+            android:paddingTop="32dp">
+
+            <RadioButton
+                android:id="@+id/apps_ssh_preference"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableEnd="@drawable/ic_console_24dp"
+                android:drawablePadding="8dp"
+                android:text="@string/client_ssh"
+                android:padding="10dp" />
+
+            <RadioButton
+                android:id="@+id/apps_vnc_preference"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableEnd="@drawable/ic_desktop_windows_black_24dp"
+                android:drawablePadding="8dp"
+                android:text="@string/client_vnc"
+                android:padding="10dp" />
+
+            <RadioButton
+                android:id="@+id/apps_xsdl_preference"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableEnd="@drawable/ic_desktop_windows_black_24dp"
+                android:drawablePadding="8dp"
+                android:text="@string/client_xsdl"
+                android:padding="10dp" />
+
+        </RadioGroup>
+
+        <TextView
+            android:id="@+id/text_describe_state"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:text="@string/info_finish_app_setup"
+            android:visibility="gone"
+            android:textAlignment="center"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/apps_service_type_preferences"
+            app:layout_constraintBottom_toTopOf="@id/text_xsdl_version_supported_description" />
+
+
+        <TextView
+            android:id="@+id/text_xsdl_version_supported_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:paddingBottom="40dp"
+            android:text="@string/info_xsdl_support"
+            android:visibility="gone"
+            android:textAlignment="center"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/text_describe_state"
+            app:layout_constraintBottom_toTopOf="@id/checkbox_auto_start" />
+
+        <CheckBox android:id="@+id/checkbox_auto_start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:text="@string/auto_start_checkbox"
+            android:textAlignment="center"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/text_xsdl_version_supported_description"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

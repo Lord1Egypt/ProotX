@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- app:navGraph is defined dynamically so that startDestination can be defined dynamically
+    according to user preference -->
+<navigation xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" >
+    <fragment
+        android:id="@+id/app_list_fragment"
+        android:name="io.github.lord1egypt.prootx.ui.AppsListFragment"
+        android:label="@string/apps"
+        tools:layout="@layout/frag_app_list" >
+        <action
+            android:id="@+id/action_app_list_to_app_details"
+            app:destination="@id/app_details_fragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/app_details_fragment"
+        android:name="io.github.lord1egypt.prootx.ui.AppDetailsFragment"
+        android:label="App Description"
+        tools:layout="@layout/frag_app_details" >
+        <argument
+            android:name="app"
+            android:defaultValue="@null"
+            app:argType="io.github.lord1egypt.prootx.model.entities.App"
+            app:nullable="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/session_list_fragment"
+        android:name="io.github.lord1egypt.prootx.ui.SessionListFragment"
+        android:label="@string/sessions"
+        tools:layout="@layout/frag_session_list" >
+        <action
+            android:id="@+id/action_session_list_to_session_edit"
+            app:destination="@id/session_edit_fragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/session_edit_fragment"
+        android:name="io.github.lord1egypt.prootx.ui.SessionEditFragment"
+        android:label="@string/edit_session"
+        tools:layout="@layout/frag_session_edit" >
+        <argument
+            android:name="session"
+            android:defaultValue="@null"
+            app:argType="io.github.lord1egypt.prootx.model.entities.Session"
+            app:nullable="true" />
+        <argument
+            android:name="editExisting"
+            android:defaultValue="false"
+            app:argType="boolean"/>
+    </fragment>
+    
+    <fragment
+        android:id="@+id/filesystem_list_fragment"
+        android:name="io.github.lord1egypt.prootx.ui.FilesystemListFragment"
+        android:label="@string/filesystems"
+        tools:layout="@layout/frag_filesystem_list">
+        <action
+            android:id="@+id/action_filesystem_list_to_filesystem_edit"
+            app:destination="@id/filesystem_edit_fragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/filesystem_edit_fragment"
+        android:name="io.github.lord1egypt.prootx.ui.FilesystemEditFragment"
+        android:label="@string/edit_filesystem"
+        tools:layout="@layout/frag_filesystem_edit" >
+        <argument
+            android:name="filesystem"
+            android:defaultValue="@null"
+            app:argType="io.github.lord1egypt.prootx.model.entities.Filesystem"
+            app:nullable="true" />
+        <argument
+            android:name="editExisting"
+            android:defaultValue="false"
+            app:argType="boolean"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/settings_fragment"
+        android:name="io.github.lord1egypt.prootx.ui.SettingsFragment"
+        android:label="@string/settings" />
+
+    <fragment
+        android:id="@+id/help_fragment"
+        android:name="io.github.lord1egypt.prootx.ui.HelpFragment"
+        android:label="@string/help"
+        tools:layout="@layout/frag_help" />
+
+</navigation>
