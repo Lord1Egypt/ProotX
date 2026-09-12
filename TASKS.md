@@ -61,6 +61,12 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
     - [ ] Add legacy-Android-extensions source guard
     - Blocker: Moshi 1.8.0 codegen can't read Kotlin 1.4 metadata; Moshi 1.11.0 verified
       as the fix. Dependency bump needs authorization (or move Kotlin migration to P1D).
+  - [!] **P1C2-U — Moshi compatibility unblocker** — BLOCKED
+    - [!] Bump Moshi 1.8.0 → 1.11.0 on the frozen Kotlin 1.3.61 state
+    - Finding: Moshi ≥1.10.0 codegen is compiled against Kotlin 1.4 and throws
+      `NoSuchMethodError` on Kotlin 1.3.61 (1.10.0 and 1.11.0 fail; 1.9.3 passes).
+      No Moshi version works for both Kotlin 1.3 and 1.4 → the bump and the Kotlin
+      1.4.32 migration must be done together (coordinated P1C2 retry).
 - [ ] **P1D — AndroidX / dependency modernization**
   - [ ] Update AndroidX and third-party dependencies to supported versions
   - [ ] Remove unused Sentry / Play Billing code and billing permission

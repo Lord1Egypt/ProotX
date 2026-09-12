@@ -94,3 +94,23 @@
   committed**; the working tree was restored to the P1C1 green state
   (`clean assembleDebug testDebugUnitTest` → 314 tests / 25 suites / 0 failures).
 - Required next step: authorize the minimal Moshi bump, or move Kotlin 1.4.32 into P1D.
+
+## P1C2-U — Moshi Compatibility Unblocker (2026-09-12) — BLOCKED
+
+- Attempted the authorized Moshi bump on the frozen Kotlin 1.3.61 state
+  (`moshi`/`moshi-kotlin-codegen` 1.8.0 → 1.11.0).
+- `:app:kaptDebugKotlin` failed: `java.lang.NoSuchMethodError:
+  kotlin.jvm.internal.FunctionReferenceImpl.<init>(ILjava/lang/Class;...)` at
+  `com.squareup.moshi.kotlin.codegen.MetadataKt$unwrapTypeAlias$2.<init>`. Moshi 1.11.0's
+  codegen is compiled against Kotlin 1.4 and cannot run on the Kotlin 1.3.61 stdlib.
+- Investigated candidate versions on Kotlin 1.3.61: Moshi **1.10.0 fails**, Moshi
+  **1.11.0 fails**, Moshi **1.9.3 passes**.
+- Combined with P1C2 (Moshi 1.8.0 cannot parse Kotlin 1.4 metadata), there is **no Moshi
+  version valid for both Kotlin 1.3 and 1.4**. The Moshi bump and Kotlin 1.4.32 migration
+  must be performed atomically.
+- No dependency/source changes were committed; the working tree was restored to the P1C1
+  green state (`kaptDebugKotlin` PASS, Moshi 1.8.0).
+- Control-plane also corrected two stale `PROJECT_STATE.md` fields: the Feature HEAD now
+  reflects the actual branch tip, and Current Blockers no longer reads "None".
+- Required next step: authorize a coordinated P1C2 retry (Kotlin 1.4.32 + Moshi 1.11.0
+  together).

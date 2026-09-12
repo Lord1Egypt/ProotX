@@ -28,22 +28,24 @@ Last updated: 2026-09-12 (P1C1 — Synthetic Views → View Binding)
 | P1C — Kotlin / Synthetics Migration | **IN PROGRESS** |
 | P1C1 — Synthetic Views → View Binding | **CLOSED / PASS** |
 | P1C2 — Kotlin + Legacy Parcelize + Plugin Removal | **BLOCKED** |
+| P1C2-U — Moshi Compatibility Unblocker | **BLOCKED** |
 
 ## Current Milestone
 
-**P1C2 — Kotlin + Legacy Parcelize + Plugin Removal: BLOCKED.** The Kotlin 1.4.32
-migration cannot compile because **Moshi 1.8.0's kapt codegen** is incompatible with
-Kotlin 1.4 metadata. Completing P1C2 requires bumping Moshi (a runtime dependency),
-which is outside this milestone's "only Kotlin moves" invariant and belongs to P1D
-pending explicit authorization. No changes were committed; the branch remains at the
-P1C1 green state. Prior milestone **P1C1** is COMPLETE.
+**P1C2-U — Moshi Compatibility Unblocker: BLOCKED.** Moshi 1.11.0 cannot run on the
+frozen Kotlin 1.3.61 state: its kapt codegen is compiled against Kotlin 1.4 and throws
+`NoSuchMethodError: kotlin.jvm.internal.FunctionReferenceImpl.<init>(...)`. Moshi ≤1.9.3
+runs on Kotlin 1.3 but cannot parse Kotlin 1.4 metadata; Moshi ≥1.10.0 requires Kotlin 1.4.
+There is no Moshi version valid for both states. The Moshi bump must therefore be done
+**atomically with the Kotlin 1.4.32 migration** in a coordinated P1C2 retry. No changes
+were committed; the branch remains at the P1C1 green state.
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD (P1C1) | `fbf6f9d6dfd1b653886cdcd81a87ef4b0325a54f` | P1C1 migration + guard test (state docs updated by the follow-up control-plane commit) |
+| Feature HEAD | `30b79955661ff64e9d312af7fba99ad031bb97cb` | Actual tip of `feature/android-modernization` (P1C2 blocker docs; code still at the P1C1 green state) |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -122,7 +124,10 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-None.
+**P1C2 / P1C2-U are BLOCKED.** Moshi 1.8.0 cannot parse Kotlin 1.4 metadata, and Moshi
+≥1.10.0 cannot run on Kotlin 1.3.61 (`NoSuchMethodError` from the codegen compiled against
+Kotlin 1.4). The Kotlin 1.4.32 migration and the Moshi 1.11.0 bump must be performed
+together in one coordinated milestone; this requires explicit authorization.
 
 ## Deferred Findings
 
@@ -133,11 +138,16 @@ The canonical list lives in
 - **Resolved in P1B:** `jcenter()` fallback repository.
 - **Resolved in P1C1:** Kotlin Android **synthetic views** (migrated to View Binding with
   a guard test).
-- **P1C2 BLOCKER (new):** Kotlin 1.4.32 is incompatible with **Moshi 1.8.0**
+- **P1C2 BLOCKER:** Kotlin 1.4.32 is incompatible with **Moshi 1.8.0**
   (`moshi-kotlin-codegen`) — its `me.eugeniomarletti.kotlin.metadata` reader throws
-  `KotlinNullPointerException`, failing `kaptDebugKotlin`. Verified remediation: bumping
-  `moshi`/`moshi-kotlin-codegen` to **1.11.0** lets kapt succeed (Room 2.1.0-beta01 is
-  fine). This is an application dependency change → defer to **P1D** / needs authorization.
+  `KotlinNullPointerException`, failing `kaptDebugKotlin`.
+- **P1C2-U BLOCKER (new):** Moshi **1.11.0** cannot run on the frozen Kotlin 1.3.61 state —
+  its codegen is compiled against Kotlin 1.4 and throws
+  `NoSuchMethodError: kotlin.jvm.internal.FunctionReferenceImpl.<init>(...)`. Observed:
+  Moshi 1.10.0 and 1.11.0 fail on Kotlin 1.3.61; Moshi 1.9.3 passes on Kotlin 1.3.61.
+  There is **no Moshi version valid for both** Kotlin 1.3 and 1.4. Resolution: perform the
+  Kotlin 1.4.32 migration and the Moshi 1.11.0 bump **together** in one coordinated P1C2
+  retry.
 - **Remaining Kotlin legacy (blocked by P1C2):** `kotlin-android-extensions` plugin,
   `androidExtensions { experimental = true }`, and `kotlinx.android.parcel.Parcelize`.
 - **Still open:** `com.schibsted.spain:barista:3.1.0` (androidTest, JCenter-only);
@@ -146,9 +156,9 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**Authorization decision for P1C2:** permit the minimal **Moshi 1.8.0 → 1.11.0**
-annotation-processor/runtime compatibility bump (verified to unblock Kotlin 1.4.32), or
-move the Kotlin 1.4.32 migration to **P1D** (dependency modernization) and rebase P1C2 on
-it.
+**Coordinated P1C2 retry (requires authorization):** perform Kotlin 1.3.61 → **1.4.32** and
+Moshi 1.8.0 → **1.11.0** in a single atomic migration (together with the
+`kotlin-android-extensions` → `kotlin-parcelize` swap, `androidExtensions` removal, and the
+`kotlinx.android.parcel` → `kotlinx.parcelize` import migration), then re-validate.
 
-Do **not** start P1C2 from this document. A phase must be explicitly authorized.
+Do **not** start the retry from this document. A phase must be explicitly authorized.

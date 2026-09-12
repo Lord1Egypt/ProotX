@@ -20,18 +20,18 @@ remote build + tests green (314 tests / 25 suites).
 
 ## Current Milestone
 
-**P1C2 — Kotlin modernization + legacy Parcelize migration + final
-`kotlin-android-extensions` removal**: **BLOCKED**.
+**P1C2-U — Moshi Compatibility Unblocker**: **BLOCKED**.
 
-Kotlin 1.4.32 cannot compile with **Moshi 1.8.0**: its `moshi-kotlin-codegen`
-`me.eugeniomarletti.kotlin.metadata` reader throws `KotlinNullPointerException` while
-processing Kotlin 1.4 metadata, failing `:app:kaptDebugKotlin`. Bumping
-`moshi`/`moshi-kotlin-codegen` to **1.11.0** was verified to unblock kapt (Room
-2.1.0-beta01 is fine), but a dependency bump is outside P1C2's "only Kotlin moves"
-invariant → needs authorization or move the Kotlin migration to P1D.
+Moshi **1.11.0** cannot run on the frozen Kotlin 1.3.61 state: its kapt codegen is compiled
+against Kotlin 1.4 and throws
+`NoSuchMethodError: kotlin.jvm.internal.FunctionReferenceImpl.<init>(...)`, failing
+`:app:kaptDebugKotlin`. Observed on Kotlin 1.3.61: Moshi **1.10.0 fails**, Moshi **1.11.0
+fails**, Moshi **1.9.3 succeeds**. Combined with the P1C2 finding (Moshi 1.8.0 cannot parse
+Kotlin 1.4 metadata), there is **no Moshi version valid for both Kotlin 1.3 and 1.4**.
 
-No changes were committed for P1C2; `feature/android-modernization` remains at the P1C1
-green state.
+Therefore the Moshi bump and the Kotlin 1.4.32 migration must be performed **atomically** in
+a coordinated P1C2 retry. No dependency or source changes were committed; the branch remains
+at the P1C1 green state.
 
 ## What Was Completed
 
@@ -107,10 +107,10 @@ Play-readiness gaps (→ P1E); dynamic time-based `versionCode`.
 
 ## Next Safe Action
 
-**Authorization decision for P1C2:** permit the minimal **Moshi 1.8.0 → 1.11.0** bump
-(verified to unblock Kotlin 1.4.32), or move the Kotlin 1.4.32 migration into **P1D**
-and rebase P1C2 on the modernized dependency set. Do not bump dependencies without
-explicit authorization.
+**Coordinated P1C2 retry (requires authorization):** do Kotlin 1.3.61 → **1.4.32** and
+Moshi 1.8.0 → **1.11.0** together in one atomic migration (plus `kotlin-parcelize`,
+`androidExtensions` removal, and `kotlinx.android.parcel` → `kotlinx.parcelize` imports),
+then re-validate. Do not apply either change alone.
 
 ## Resume Procedure
 

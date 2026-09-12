@@ -147,12 +147,16 @@ deferred to the appropriate later phase.
    clean separation between a *candidate* version and the *last physically accepted*
    version (see `DECISIONS.md` D005). Recorded for a later release-contract milestone; not
    fixed in P0.5.
-10. **Kotlin 1.4 vs Moshi 1.8.0 (P1C2 blocker).** Kotlin 1.4.32 cannot compile because
-    Moshi 1.8.0's `moshi-kotlin-codegen` uses `me.eugeniomarletti.kotlin.metadata`, which
-    throws `KotlinNullPointerException` on Kotlin 1.4 metadata (`:app:kaptDebugKotlin`
-    failure). Verified remediation: bump `moshi`/`moshi-kotlin-codegen` to **1.11.0**
-    (Room 2.1.0-beta01 unaffected). Because it changes an application dependency, it is
-    deferred to **P1D** or requires explicit authorization to finish P1C2.
+10. **Kotlin 1.4 vs Moshi 1.8.0 (P1C2 blocker) + Moshi/Kotlin version fork (P1C2-U).**
+    Kotlin 1.4.32 cannot compile because Moshi 1.8.0's `moshi-kotlin-codegen` uses
+    `me.eugeniomarletti.kotlin.metadata`, which throws `KotlinNullPointerException` on
+    Kotlin 1.4 metadata (`:app:kaptDebugKotlin` failure). The P1C2-U unblocker then showed
+    the inverse problem: on the frozen Kotlin 1.3.61 state, Moshi **1.11.0** (and 1.10.0)
+    fail with `NoSuchMethodError: kotlin.jvm.internal.FunctionReferenceImpl.<init>(...)`
+    because their codegen is compiled against Kotlin 1.4; Moshi **1.9.3** passes on
+    Kotlin 1.3.61. **There is no Moshi version valid for both Kotlin 1.3 and 1.4**, so the
+    Moshi 1.11.0 bump and the Kotlin 1.4.32 migration must be performed **atomically**
+    (coordinated P1C2 retry).
 
 ## Non-goals for P0
 

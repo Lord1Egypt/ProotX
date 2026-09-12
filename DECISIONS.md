@@ -188,3 +188,25 @@
 - **Trade-offs:** Generated binding classes add minor build surface; fragments must clear
   binding in `onDestroyView` to avoid leaks.
 - **Affected components:** `app/build.gradle`, `MainActivity`, `ui/*Fragment`, tests, P1C2.
+
+---
+
+## D013 — Kotlin and Moshi upgrades must move together
+
+- **Date:** 2026-09-12
+- **Status:** Accepted
+- **Decision:** The Kotlin upgrade (1.3.61 → 1.4.32) and the Moshi upgrade
+  (1.8.0 → 1.11.0) are treated as a single atomic change. Neither is applied alone.
+- **Reason:** There is no Moshi version compatible with both Kotlin generations. Moshi
+  1.8.0's `moshi-kotlin-codegen` cannot parse Kotlin 1.4 metadata (kapt
+  `KotlinNullPointerException`); conversely, Moshi ≥1.10.0's codegen is compiled against
+  Kotlin 1.4 and fails on Kotlin 1.3.61 with
+  `NoSuchMethodError: kotlin.jvm.internal.FunctionReferenceImpl.<init>(...)` (observed:
+  1.10.0 and 1.11.0 fail on 1.3.61; 1.9.3 passes on 1.3.61). The two version ranges do not
+  overlap.
+- **Alternatives considered:** Bumping Moshi alone on Kotlin 1.3.61 (rejected — verified to
+  break kapt); bumping Kotlin alone (rejected — verified to break kapt); staying on Moshi
+  1.9.3 (rejected — does not address Kotlin 1.4 support and is unverified for it).
+- **Trade-offs:** The coordinated migration is larger and must be validated as one unit, but
+  it is the only viable path.
+- **Affected components:** `app/build.gradle`, `build.gradle`, kapt, P1C2 retry.
