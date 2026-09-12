@@ -10,8 +10,8 @@ import java.io.File
  * Source guard for the P1C1 view-binding migration.
  *
  * Synthetic view access (`kotlinx.android.synthetic...`) must never be reintroduced.
- * Legacy Parcelize (`kotlinx.android.parcel.Parcelize`) is intentionally still permitted
- * until P1C2 removes `kotlin-android-extensions` entirely.
+ * Legacy Android Extensions (including `kotlinx.android.parcel`) are now also forbidden and
+ * are covered by [LegacyAndroidExtensionsGuardTest].
  */
 class SyntheticViewImportsTest {
 
