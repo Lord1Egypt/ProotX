@@ -9,7 +9,7 @@ import android.view.* // ktlint-disable no-wildcard-imports
 import android.widget.AdapterView
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
-import kotlinx.android.synthetic.main.frag_session_list.* // ktlint-disable no-wildcard-imports
+import io.github.lord1egypt.prootx.databinding.FragSessionListBinding
 import io.github.lord1egypt.prootx.MainActivity
 import io.github.lord1egypt.prootx.R
 import io.github.lord1egypt.prootx.ServerService
@@ -20,6 +20,9 @@ import io.github.lord1egypt.prootx.viewmodel.SessionListViewModel
 import io.github.lord1egypt.prootx.viewmodel.SessionListViewModelFactory
 
 class SessionListFragment : Fragment() {
+
+    private var _binding: FragSessionListBinding? = null
+    private val binding get() = _binding!!
 
     interface SessionSelection {
         fun sessionHasBeenSelected(session: Session)
@@ -46,7 +49,7 @@ class SessionListFragment : Fragment() {
             filesystemList = pair.second
 
             sessionAdapter = SessionListAdapter(activityContext, sessionList, filesystemList)
-            list_sessions.adapter = sessionAdapter
+            binding.listSessions.adapter = sessionAdapter
         }
     }
 
@@ -66,7 +69,13 @@ class SessionListFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.frag_session_list, container, false)
+        _binding = FragSessionListBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -75,8 +84,8 @@ class SessionListFragment : Fragment() {
 
         sessionListViewModel.getSessionsAndFilesystems().observe(viewLifecycleOwner, sessionsAndFilesystemsChangeObserver)
 
-        registerForContextMenu(list_sessions)
-        list_sessions.onItemClickListener = AdapterView.OnItemClickListener {
+        registerForContextMenu(binding.listSessions)
+        binding.listSessions.onItemClickListener = AdapterView.OnItemClickListener {
             parent, _, position, _ ->
             when (val selectedItem = parent.getItemAtPosition(position) as SessionListItem) {
                 is SessionSeparatorItem -> return@OnItemClickListener
@@ -96,7 +105,7 @@ class SessionListFragment : Fragment() {
         super.onCreateContextMenu(menu, v, menuInfo)
         val info = menuInfo as AdapterView.AdapterContextMenuInfo
         val position = info.position
-        when (val selectedItem = list_sessions.adapter.getItem(position) as SessionListItem) {
+        when (val selectedItem = binding.listSessions.adapter.getItem(position) as SessionListItem) {
             is SessionSeparatorItem -> return
             is SessionItem -> {
                 val session = selectedItem.session
@@ -117,7 +126,7 @@ class SessionListFragment : Fragment() {
     override fun onContextItemSelected(item: MenuItem): Boolean {
         val menuInfo = item.menuInfo as AdapterView.AdapterContextMenuInfo
         val position = menuInfo.position
-        return when (val selectedItem = list_sessions.adapter.getItem(position) as SessionListItem) {
+        return when (val selectedItem = binding.listSessions.adapter.getItem(position) as SessionListItem) {
             is SessionSeparatorItem -> true
             is SessionItem -> {
                 val session = selectedItem.session

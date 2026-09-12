@@ -11,7 +11,7 @@ import android.widget.AdapterView
 import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
-import kotlinx.android.synthetic.main.frag_filesystem_list.* // ktlint-disable no-wildcard-imports
+import io.github.lord1egypt.prootx.databinding.FragFilesystemListBinding
 import io.github.lord1egypt.prootx.MainActivity
 import io.github.lord1egypt.prootx.R
 import io.github.lord1egypt.prootx.ServerService
@@ -25,6 +25,9 @@ import io.github.lord1egypt.prootx.viewmodel.FilesystemListViewModel
 private const val FILESYSTEM_EXPORT_REQUEST_CODE = 7
 
 class FilesystemListFragment : Fragment() {
+
+    private var _binding: FragFilesystemListBinding? = null
+    private val binding get() = _binding!!
 
     interface FilesystemListProgress {
         fun updateFilesystemExportProgress(details: String)
@@ -54,7 +57,7 @@ class FilesystemListFragment : Fragment() {
         it?.let { list ->
             filesystemList = list
 
-            list_filesystems.adapter = FilesystemListAdapter(activityContext, filesystemList)
+            binding.listFilesystems.adapter = FilesystemListAdapter(activityContext, filesystemList)
         }
     }
 
@@ -89,7 +92,13 @@ class FilesystemListFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.frag_filesystem_list, container, false)
+        _binding = FragFilesystemListBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -99,7 +108,7 @@ class FilesystemListFragment : Fragment() {
         filesystemListViewModel.getAllFilesystems().observe(viewLifecycleOwner, filesystemChangeObserver)
         filesystemListViewModel.getViewState().observe(viewLifecycleOwner, viewStateObserver)
         filesystemListViewModel.getAllActiveSessions().observe(viewLifecycleOwner, activeSessionObserver)
-        registerForContextMenu(list_filesystems)
+        registerForContextMenu(binding.listFilesystems)
     }
 
     override fun onCreateContextMenu(menu: ContextMenu, v: View, menuInfo: ContextMenu.ContextMenuInfo?) {

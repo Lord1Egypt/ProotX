@@ -12,7 +12,7 @@ import android.widget.TextView
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.fragment.navArgs
-import kotlinx.android.synthetic.main.frag_app_details.* // ktlint-disable no-wildcard-imports
+import io.github.lord1egypt.prootx.databinding.FragAppDetailsBinding
 import io.github.lord1egypt.prootx.R
 import io.github.lord1egypt.prootx.model.repositories.ProotXDatabase
 import io.github.lord1egypt.prootx.utils.* // ktlint-disable no-wildcard-imports
@@ -22,6 +22,9 @@ import io.github.lord1egypt.prootx.viewmodel.AppDetailsViewState
 import io.github.lord1egypt.prootx.viewmodel.AppDetailsViewmodelFactory
 
 class AppDetailsFragment : Fragment() {
+
+    private var _binding: FragAppDetailsBinding? = null
+    private val binding get() = _binding!!
 
     private lateinit var activityContext: Activity
 
@@ -38,14 +41,20 @@ class AppDetailsFragment : Fragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.frag_app_details, container, false)
+        _binding = FragAppDetailsBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
         activityContext = activity!!
-        viewModel.viewState.observe(this, Observer<AppDetailsViewState> { viewState ->
+        viewModel.viewState.observe(viewLifecycleOwner, Observer<AppDetailsViewState> { viewState ->
             viewState?.let {
                 handleViewStateChange(viewState)
             }
@@ -56,29 +65,29 @@ class AppDetailsFragment : Fragment() {
     }
 
     private fun handleViewStateChange(viewState: AppDetailsViewState) {
-        apps_icon.setImageURI(viewState.appIconUri)
-        apps_title.text = viewState.appTitle
-        apps_description.text = viewState.appDescription
+        binding.appsIcon.setImageURI(viewState.appIconUri)
+        binding.appsTitle.text = viewState.appTitle
+        binding.appsDescription.text = viewState.appDescription
         handleEnableRadioButtons(viewState)
         handleShowStateHint(viewState)
 
         if (viewState.selectedServiceTypeButton != null) {
-            apps_service_type_preferences.check(viewState.selectedServiceTypeButton)
+            binding.appsServiceTypePreferences.check(viewState.selectedServiceTypeButton)
         }
 
-        checkbox_auto_start.setChecked(viewState.autoStartEnabled)
+        binding.checkboxAutoStart.setChecked(viewState.autoStartEnabled)
     }
 
     private fun handleEnableRadioButtons(viewState: AppDetailsViewState) {
-        apps_ssh_preference.isEnabled = viewState.sshEnabled
-        apps_vnc_preference.isEnabled = viewState.vncEnabled
+        binding.appsSshPreference.isEnabled = viewState.sshEnabled
+        binding.appsVncPreference.isEnabled = viewState.vncEnabled
 
         if (viewState.xsdlEnabled) {
-            apps_xsdl_preference.isEnabled = true
+            binding.appsXsdlPreference.isEnabled = true
         } else {
             // Xsdl is unavailable on Android 9 and greater
-            apps_xsdl_preference.isEnabled = false
-            apps_xsdl_preference.alpha = 0.5f
+            binding.appsXsdlPreference.isEnabled = false
+            binding.appsXsdlPreference.alpha = 0.5f
 
             val xsdlSupportedText = view?.find<TextView>(R.id.text_xsdl_version_supported_description)
             xsdlSupportedText?.visibility = View.VISIBLE
@@ -87,21 +96,21 @@ class AppDetailsFragment : Fragment() {
 
     private fun handleShowStateHint(viewState: AppDetailsViewState) {
         if (viewState.describeStateHintEnabled) {
-            text_describe_state.visibility = View.VISIBLE
-            text_describe_state.setText(viewState.describeStateText!!)
+            binding.textDescribeState.visibility = View.VISIBLE
+            binding.textDescribeState.setText(viewState.describeStateText!!)
         } else {
-            text_describe_state.visibility = View.GONE
+            binding.textDescribeState.visibility = View.GONE
         }
     }
 
     private fun setupPreferredServiceTypeRadioGroup() {
-        apps_service_type_preferences.setOnCheckedChangeListener { _, checkedId ->
+        binding.appsServiceTypePreferences.setOnCheckedChangeListener { _, checkedId ->
             viewModel.submitEvent(AppDetailsEvent.ServiceTypeChanged(checkedId, app))
         }
     }
 
     private fun setupAutoStartCheckbox() {
-        checkbox_auto_start.setOnCheckedChangeListener { _, checked ->
+        binding.checkboxAutoStart.setOnCheckedChangeListener { _, checked ->
             viewModel.submitEvent(AppDetailsEvent.AutoStartChanged(checked, app))
         }
     }
