@@ -10,9 +10,13 @@ import androidx.test.espresso.Root
 import androidx.test.espresso.ViewInteraction
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.matcher.ViewMatchers
-import com.schibsted.spain.barista.assertion.BaristaVisibilityAssertions.assertDisplayed
-import com.schibsted.spain.barista.internal.failurehandler.BaristaException
+import androidx.recyclerview.widget.RecyclerView
+import androidx.test.espresso.NoMatchingViewException
+import androidx.test.espresso.action.ViewActions
+import androidx.test.espresso.contrib.RecyclerViewActions
+import junit.framework.AssertionFailedError
 import org.hamcrest.Description
+import org.hamcrest.Matchers.allOf
 import org.hamcrest.TypeSafeMatcher
 import androidx.test.uiautomator.UiDevice
 import androidx.test.platform.app.InstrumentationRegistry
@@ -40,13 +44,64 @@ fun @receiver:IdRes Int.extraLongWaitForDisplay() {
 fun waitForDisplay(@IdRes id: Int, timeout: Long = 300_000) {
     val test = {
         try {
-            assertDisplayed(id)
+            Espresso.onView(ViewMatchers.withId(id))
+                    .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
             true
-        } catch (err: BaristaException) {
+        } catch (err: NoMatchingViewException) {
+            // View is not in the hierarchy yet.
+            false
+        } catch (err: AssertionFailedError) {
+            // View exists but is not displayed yet.
             false
         }
     }
     waitForSuccess(test, timeout)
+}
+
+/**
+ * Espresso replacements for the previously used Barista helpers. Semantics are preserved:
+ * list position assertions scroll to the position, "not displayed" accepts both an absent
+ * view and a non-visible one, dialog clicks target the dialog positive button, and text
+ * entry replaces the field content and closes the soft keyboard.
+ */
+fun assertDisplayedAtPosition(@IdRes listId: Int, position: Int, @IdRes itemViewId: Int, text: String) {
+    Espresso.onView(ViewMatchers.withId(listId))
+            .perform(RecyclerViewActions.scrollToPosition<RecyclerView.ViewHolder>(position))
+    Espresso.onView(allOf(ViewMatchers.withId(itemViewId), ViewMatchers.isDisplayed()))
+            .check(ViewAssertions.matches(ViewMatchers.withText(text)))
+}
+
+fun assertNotDisplayed(@IdRes id: Int) {
+    try {
+        Espresso.onView(ViewMatchers.withId(id))
+                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+        throw AssertionError("View with id $id is displayed but should not be")
+    } catch (err: NoMatchingViewException) {
+        // Not present in the hierarchy -> not displayed.
+    } catch (err: AssertionFailedError) {
+        // Present but not displayed.
+    }
+}
+
+fun clickDialogPositiveButton() {
+    Espresso.onView(ViewMatchers.withId(android.R.id.button1)).perform(ViewActions.click())
+}
+
+fun writeTo(@IdRes id: Int, text: String) {
+    Espresso.onView(ViewMatchers.withId(id)).perform(ViewActions.replaceText(text))
+    Espresso.closeSoftKeyboard()
+}
+
+fun clickListItem(@IdRes listId: Int, position: Int) {
+    Espresso.onView(ViewMatchers.withId(listId))
+            .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(position, ViewActions.click()))
+}
+
+fun clickRadioButtonItem(@IdRes radioGroupId: Int, @IdRes radioButtonId: Int) {
+    Espresso.onView(allOf(
+            ViewMatchers.withId(radioButtonId),
+            ViewMatchers.isDescendantOfA(ViewMatchers.withId(radioGroupId))
+    )).perform(ViewActions.click())
 }
 
 fun waitForFile(file: File, timeout: Long = 300_000) {
