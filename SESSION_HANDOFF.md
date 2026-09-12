@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-12 (P1A — Build-System / JDK / CI Foundation)
+Last updated: 2026-09-12 (P1B — Gradle / AGP Bridge Migration)
 
 ## Current Objective
 
@@ -13,41 +13,42 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1A — Build-System / JDK / CI Foundation**: **PASS**.
-CI now provisions the Android SDK with JDK 17 and builds/tests the legacy app with JDK 8.
-First fully green remote run achieved; remote test summary measured.
+**P1B — Gradle / AGP Bridge Migration**: **PASS**.
+Gradle 5.1.1 → 6.7.1 and AGP 3.4.3 → 4.2.2, Kotlin unchanged, `jcenter()` removed,
+build-tools aligned to 30.0.2. Local and remote build + 313 unit tests green.
 
 ## Current Milestone
 
-**P1B — Gradle / Android Gradle Plugin migration**: NOT STARTED.
+**P1C — Kotlin synthetics removal / view binding migration and controlled Kotlin
+modernization**: NOT STARTED.
 
 ## What Was Completed
 
-- Repaired the baseline CI failure (JDK 8 was active when `sdkmanager` ran).
-- Implemented a two-stage JDK bootstrap in `.github/workflows/build.yml`:
-  JDK 17 for Android SDK/NDK provisioning, JDK 8 for the legacy Gradle build.
-- Pinned the required SDK/NDK packages instead of relying on runner defaults:
-  `platforms;android-30`, `platforms;android-29`, `build-tools;28.0.3`,
-  `ndk;21.4.7075529`.
-- Extended CI triggers to `develop` and `feature/**` (and PRs to `main`/`develop`).
-- Made the build contract explicit:
-  `./gradlew clean assembleDebug testDebugUnitTest --no-daemon`.
-- Added a CI step that prints the exact unit-test summary.
-- Added `docs/BUILD_ENVIRONMENT.md` documenting the two-JDK requirement.
+- Upgraded the Gradle wrapper to 6.7.1 (regenerated canonical wrapper artifacts).
+- Upgraded AGP to 4.2.2; Kotlin remains 1.3.61.
+- Removed `jcenter()` from `buildscript` and `allprojects`; verified clean resolution from
+  `google()` + `mavenCentral()` with a fresh Gradle user home.
+- Aligned the CI build-tools pin to `30.0.2` (AGP 4.2.2 default).
+- No DSL compatibility fixes were required (the existing `lintOptions`,
+  `androidExtensions`, `testCoverageEnabled`, and nested `dependencies {}` blocks all
+  configured/build under AGP 4.2.2).
+- Updated `docs/BUILD_ENVIRONMENT.md` for the bridge toolchain.
 
 ## What Was Intentionally NOT Changed
 
-- No Android/terminal source, Gradle/AGP/Kotlin versions, SDK levels, NDK version,
-  dependencies, manifest, resources, UI, runtime, database, logging, network, billing,
-  Sentry, package ID, `versionName`, or the `versionCode` algorithm.
-- No asset repositories modified.
+- Kotlin version (1.3.61), `kotlin-android-extensions` / synthetics usage.
+- `compileSdk` 30, `targetSdk` 30, `minSdk` 21, NDK 21.4.7075529.
+- Application/runtime dependency versions, package ID, `versionName`, `versionCode`
+  algorithm.
+- Any application Kotlin/Java source, UI, resources, runtime, PRoot, database, or assets.
+- Build JDK contract: JDK 17 for SDK tooling, JDK 8 for Gradle.
 
 ## Current Repository State
 
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (P1A commit) | `006dc98055038c5510bc0672435417dacef8a807` |
+| Feature HEAD (P1B build) | `70bcc09a74ce81a5dfefef30ca2c19a88cb2c86a` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -55,19 +56,23 @@ First fully green remote run achieved; remote test summary measured.
 ## Accepted Baseline
 
 Commit `94abf5fa520255bb10d087a6be3ba2bc70b0e127`, package
-`io.github.lord1egypt.prootx`, version `1.0.0`, **313 tests / 24 suites / 0 failures**,
-JDK 8 / Gradle 5.1.1 / AGP 3.4.3 / Kotlin 1.3.61 / compileSdk 30 / NDK 21.4.7075529.
-The P0 baseline remains the accepted application baseline (P1A changed no app artifact
-source/build configuration).
+`io.github.lord1egypt.prootx`, version `1.0.0`, **313 tests / 24 suites / 0 failures**.
+The P0 baseline remains the accepted application baseline (P1B changed only the build
+toolchain, not the app).
+
+## Current Toolchain
+
+Gradle **6.7.1** · AGP **4.2.2** · Kotlin **1.3.61** · JDK **8** (build) · compileSdk **30** ·
+targetSdk **30** · minSdk **21** · NDK **21.4.7075529** · build-tools **30.0.2**.
+Repositories: `google()`, `mavenCentral()` only.
 
 ## Known Deferred Findings
 
-See [`docs/PROOTX_2_ROADMAP.md`](docs/PROOTX_2_ROADMAP.md#deferred-findings). The CI
-Android SDK finding is **resolved** (P1A). Still open: legacy toolchain; Kotlin Android
-synthetics; unused Sentry + Play Billing code and permission; prebuilt rootfs containing
-old `/etc/profile.d/prootx.sh`; `jcenter()` fallback; network-dependent unit tests;
-Play-readiness gaps (`targetSdk` 30, missing `android:exported`); dynamic time-based
-`versionCode` release-contract gap.
+See [`docs/PROOTX_2_ROADMAP.md`](docs/PROOTX_2_ROADMAP.md#deferred-findings). Resolved: CI
+SDK setup (P1A), `jcenter()` (P1B). New: `com.schibsted.spain:barista:3.1.0` (androidTest,
+JCenter-only) is unresolvable and needs a replacement in P1D. Still open: Kotlin
+synthetics (→ P1C); unused Sentry/Billing code (→ P1D); prebuilt rootfs profile remnant;
+network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based `versionCode`.
 
 ## Important Invariants
 
@@ -81,13 +86,13 @@ Play-readiness gaps (`targetSdk` 30, missing `android:exported`); dynamic time-b
    without a dedicated assets milestone.
 7. Published history is immutable: no force-push, no history rewrite.
 8. One milestone at a time; respect STOP gates.
-9. CI must run the Android SDK tooling under a modern JDK and the legacy Gradle build under
-   JDK 8 (see `DECISIONS.md` D010).
+9. CI runs the Android SDK tooling under a modern JDK and the application build under JDK 8
+   (`DECISIONS.md` D010). Gradle 6.7.1 / AGP 4.2.2 is an intentional bridge (`D011`).
 
 ## Next Safe Action
 
-**P1B — Gradle / Android Gradle Plugin migration** (do not begin without explicit
-authorization).
+**P1C — Kotlin synthetics removal / view binding migration and controlled Kotlin
+modernization** (do not begin without explicit authorization).
 
 ## Resume Procedure
 

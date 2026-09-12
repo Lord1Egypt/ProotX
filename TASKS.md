@@ -42,10 +42,13 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
   - [x] Extend CI triggers to `develop` and `feature/**`
   - [x] Establish reproducible build invocation and remote green run
   - [x] Document environment in `docs/BUILD_ENVIRONMENT.md`
-- [ ] **P1B — Gradle / AGP migration**
-  - [ ] Upgrade Gradle and Android Gradle Plugin to supported versions
-  - [ ] Migrate repositories off `jcenter()` to Maven Central / Google Maven
-- [ ] **P1C — Kotlin + synthetics migration**
+- [x] **P1B — Gradle / AGP bridge migration** — PASS
+  - [x] Upgrade Gradle wrapper 5.1.1 → 6.7.1
+  - [x] Upgrade AGP 3.4.3 → 4.2.2 (Kotlin unchanged)
+  - [x] Remove `jcenter()`; prove resolution from Google Maven + Maven Central
+  - [x] Align CI build-tools pin to `30.0.2`
+  - [x] Local + remote green build and 313 tests; APK uploaded
+- [ ] **P1C — Kotlin synthetics removal / view binding migration and controlled Kotlin modernization**
   - [ ] Remove `kotlin-android-extensions` synthetics (view binding)
   - [ ] Upgrade Kotlin to a supported version
 - [ ] **P1D — AndroidX / dependency modernization**

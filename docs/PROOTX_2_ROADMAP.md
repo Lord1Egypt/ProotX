@@ -5,8 +5,9 @@
 > - **P0 — Baseline freeze and development safety:** CLOSED / PASS
 > - **P0.5 — Project Control Plane:** CLOSED / PASS
 > - **P1 — Android Modernization:** IN PROGRESS
->   - **P1A — Build-System / JDK / CI Foundation:** PASS
->   - **P1B — Gradle / AGP Migration:** NOT STARTED
+>   - **P1A — Build-System / JDK / CI Foundation:** CLOSED / PASS
+>   - **P1B — Gradle / AGP Bridge Migration:** CLOSED / PASS
+>   - **P1C — Kotlin / Synthetics Migration:** NOT STARTED
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -124,9 +125,13 @@ deferred to the appropriate later phase.
    profile script rename and still contain an internal `/etc/profile.d/prootx.sh` from the
    old build. Distribution assets must not be modified in this phase; regenerate them in a
    later assets phase.
-6. **`jcenter()` fallback repository.** `jcenter()` remains configured as a dependency
-   fallback and is sunset; dependency resolution should be migrated to Maven Central /
-   Google Maven as part of modernization.
+6. **`jcenter()` fallback repository — RESOLVED in P1B.** `jcenter()` was removed from
+   `buildscript` and `allprojects`; the full build/test classpath resolves from
+   `google()` + `mavenCentral()` (verified with a clean Gradle user home).
+   Residual: `com.schibsted.spain:barista:3.1.0` is an **androidTest-only** dependency
+   that was published only to JCenter and no longer resolves; it does not affect the debug
+   build or unit tests. A replacement (e.g. `com.adevinta.android:barista`) is deferred to
+   P1D dependency modernization.
 7. **Network-dependent unit tests.** Some unit tests fetch live files over the network
    (raw GitHub asset catalog), making the test suite and CI network-dependent and flaky.
    Should be replaced with fixtures or mocked HTTP during modernization.

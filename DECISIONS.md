@@ -150,3 +150,23 @@
 - **Trade-offs:** The workflow is slightly more complex and must keep the two stages
   distinct, but the legacy build is preserved and CI is reproducible.
 - **Affected components:** `.github/workflows/build.yml`, CI foundation, P1B+.
+
+---
+
+## D011 — Gradle 6.7.1 / AGP 4.2.2 is an intentional bridge toolchain
+
+- **Date:** 2026-09-12
+- **Status:** Accepted
+- **Decision:** Android build-tool modernization proceeds through an explicit bridge step:
+  Gradle 6.7.1 with AGP 4.2.2, keeping Kotlin 1.3.61, `compileSdk`/`targetSdk` 30 and
+  NDK 21.4.7075529 unchanged. This is not the final toolchain; further migration (e.g. AGP
+  7/8, Kotlin upgrade, synthetics removal) happens in later milestones.
+- **Reason:** A direct jump from the 2019-era toolchain to AGP 8/9 crosses the Kotlin
+  synthetics removal and the JDK 8→11 boundary at the same time, which would entangle
+  unrelated failures. AGP 4.2+ pairs officially with Gradle 6.7.1, stays on the Android 30
+  generation, and matches the NDK 21 generation.
+- **Alternatives considered:** Jumping directly to a modern AGP/Kotlin (rejected — too many
+  simultaneous variables); staying on AGP 3.4.3 (rejected — no forward progress).
+- **Trade-offs:** An extra intermediate state to migrate through, but each migration step is
+  independently verifiable and reversible.
+- **Affected components:** Gradle wrapper, root `build.gradle`, CI, P1C+.

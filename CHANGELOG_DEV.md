@@ -41,3 +41,19 @@
   failures=0 errors=0 skipped=0`, debug APK artifact uploaded.
 - No application source, toolchain version, dependency, manifest, resource, UI, runtime,
   or asset change.
+
+## P1B — Gradle / AGP Bridge Migration (2026-09-12) — PASS
+
+- Gradle wrapper 5.1.1 → **6.7.1** (canonical wrapper artifacts regenerated).
+- Android Gradle Plugin 3.4.3 → **4.2.2**. Kotlin remains **1.3.61**.
+- Removed the sunset `jcenter()` repository; resolved the full build/test classpath from
+  `google()` + `mavenCentral()` only (clean Gradle home proof).
+- CI: build-tools pin `28.0.3` → **`30.0.2`** (AGP 4.2.2 default).
+- No Gradle DSL compatibility changes were required.
+- Local: `clean assembleDebug testDebugUnitTest` green; **313 tests / 24 suites / 0
+  failures**. Remote (run `34675865307`, commit `70bcc09`): all steps success, same test
+  result, debug APK uploaded.
+- Unchanged: Kotlin, `compileSdk` 30, `targetSdk` 30, `minSdk` 21, NDK 21.4.7075529,
+  application dependency versions, source, UI, runtime, assets.
+- New deferred finding: `com.schibsted.spain:barista:3.1.0` (androidTest-only) was JCenter-
+  only and is not resolvable; replacement deferred to P1D.

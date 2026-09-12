@@ -1,24 +1,27 @@
 # ProotX Build Environment
 
-> Applies to the frozen ProotX 1.0.0 / legacy toolchain (P1A state).
-> This documents the legacy build only. Toolchain modernization is a later milestone.
+> Current state: **P1B bridge toolchain** (Gradle 6.7.1 / AGP 4.2.2).
+> This documents the bridge build only. Further Android modernization is a later milestone.
 
 ## Summary
 
-The ProotX application still builds with its **frozen legacy toolchain**:
+The ProotX application currently builds with the P1B **bridge toolchain**:
 
 | Component | Version |
 |---|---|
-| Gradle (wrapper) | 5.1.1 |
-| Android Gradle Plugin | 3.4.3 |
+| Gradle (wrapper) | 6.7.1 |
+| Android Gradle Plugin | 4.2.2 |
 | Kotlin | 1.3.61 |
 | JDK for the Gradle build | **8** |
 | `compileSdk` / `targetSdk` (app) | 30 / 30 |
 | `minSdk` | 21 |
 | `compileSdk` (terminal modules) | 29 |
 | Android NDK | 21.4.7075529 |
+| Android build-tools | 30.0.2 |
 
-This toolchain is intentionally **not** upgraded in P1A.
+History: P0/P1A used Gradle 5.1.1 / AGP 3.4.3. P1B migrated them to Gradle 6.7.1 /
+AGP 4.2.2 as an intentional intermediate ("bridge") step. Kotlin, SDK levels and NDK are
+unchanged.
 
 ## The two-JDK requirement
 
@@ -26,7 +29,7 @@ There is a version conflict between the tooling and the application build:
 
 - The **Android command-line tools** (`sdkmanager`) shipped with current Android SDK
   packages require a **modern JVM** (Java 11+; JDK 17 is used).
-- The **frozen Gradle 5.1.1 / AGP 3.4.3** build is only supported on **JDK 8**.
+- The **Gradle 6.7.1 / AGP 4.2.2** build still runs on **JDK 8**.
 
 Therefore any build automation must run in two stages:
 
@@ -36,8 +39,9 @@ JDK 17   →  Android SDK tooling / sdkmanager / SDK+NDK install
 JDK 8    →  ./gradlew clean assembleDebug testDebugUnitTest
 ```
 
-Running `sdkmanager` under JDK 8 fails (this was the original CI failure); running the
-legacy Gradle build under JDK 17 is unsupported. Both stages must be explicit.
+Running `sdkmanager` under JDK 8 fails (the original CI failure); the bridge Gradle build
+is not yet supported on JDK 11/17. Both stages must be explicit. Do **not** silently switch
+the application build to a newer JDK.
 
 ## Required Android SDK / NDK packages
 
@@ -47,11 +51,24 @@ Install exactly these (nothing more):
 |---|---|
 | `platforms;android-30` | `app` module `compileSdk` is 30 |
 | `platforms;android-29` | terminal modules (`terminal-view`, `terminal-emulator`, `terminal-term`) use `compileSdk` 29 |
-| `build-tools;28.0.3` | default build-tools for AGP 3.4.3 — pinned so CI is deterministic |
+| `build-tools;30.0.2` | default build-tools for AGP 4.2.2 — pinned so CI is deterministic |
 | `ndk;21.4.7075529` | native toolchain for the terminal emulator JNI (`ndkBuild`) |
 
-`build-tools` is pinned because AGP 3.4.3 silently defaults to `28.0.3`; making it explicit
-avoids depending on whatever happens to be preinstalled on a runner.
+`build-tools` is pinned to AGP 4.2.2's default (`30.0.2`); under P1A it was `28.0.3`
+(AGP 3.4.3's default). Pinning keeps CI independent of runner defaults.
+
+## Dependency repositories
+
+Only these repositories are configured:
+
+- `google()`
+- `mavenCentral()`
+
+`jcenter()` was removed in P1B (sunset repository). All dependencies required by the
+application build and unit tests resolve from the two repositories above; this was verified
+with a clean Gradle user home. (`com.schibsted.spain:barista:3.1.0` is an androidTest-only
+dependency that was published only to JCenter and is not resolvable — see the deferred
+findings in `docs/PROOTX_2_ROADMAP.md`. It is not used by the debug build or unit tests.)
 
 ## Verified build command
 
@@ -81,11 +98,12 @@ Notes:
 ## Continuous integration
 
 GitHub Actions (`.github/workflows/build.yml`) implements the two-stage bootstrap:
-JDK 17 provisions the SDK/NDK, then JDK 8 runs the legacy Gradle build and unit tests.
+JDK 17 provisions the SDK/NDK, then JDK 8 runs the bridge Gradle build and unit tests.
 The workflow runs on `main`, `develop`, and `feature/**` pushes, and on pull requests
-targeting `main`/`develop`.
+targeting `main`/`develop`. It installs the pinned packages above and prints the exact
+unit-test summary.
 
 ## Baseline result (reference)
 
-The frozen baseline at tag `v1.0.0-baseline` measured **313 tests / 24 suites / 0 failures**
-with this environment. See `PROJECT_STATE.md`.
+The frozen baseline at tag `v1.0.0-baseline` measured **313 tests / 24 suites / 0 failures**.
+The P1B bridge toolchain preserves that result. See `PROJECT_STATE.md`.
