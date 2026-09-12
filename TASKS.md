@@ -54,10 +54,13 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
     - [x] Migrate MainActivity + 7 view-using Fragments
     - [x] Zero synthetic view imports; source guard test added
     - [x] Legacy Parcelize and `kotlin-android-extensions` preserved
-  - [ ] **P1C2 — Kotlin modernization + legacy Parcelize migration + plugin removal**
+  - [!] **P1C2 — Kotlin modernization + legacy Parcelize migration + plugin removal** — BLOCKED
+    - [!] Upgrade Kotlin 1.3.61 → 1.4.32 (blocked by Moshi 1.8.0 kapt codegen)
     - [ ] Migrate `kotlinx.android.parcel.Parcelize` → `kotlinx.parcelize.Parcelize`
     - [ ] Remove `kotlin-android-extensions` and `androidExtensions`
-    - [ ] Upgrade Kotlin to a supported version
+    - [ ] Add legacy-Android-extensions source guard
+    - Blocker: Moshi 1.8.0 codegen can't read Kotlin 1.4 metadata; Moshi 1.11.0 verified
+      as the fix. Dependency bump needs authorization (or move Kotlin migration to P1D).
 - [ ] **P1D — AndroidX / dependency modernization**
   - [ ] Update AndroidX and third-party dependencies to supported versions
   - [ ] Remove unused Sentry / Play Billing code and billing permission

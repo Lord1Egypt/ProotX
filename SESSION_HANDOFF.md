@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-12 (P1C1 — Synthetic Views → View Binding)
+Last updated: 2026-09-12 (P1C2 — Kotlin / Parcelize migration: BLOCKED)
 
 ## Current Objective
 
@@ -21,7 +21,17 @@ remote build + tests green (314 tests / 25 suites).
 ## Current Milestone
 
 **P1C2 — Kotlin modernization + legacy Parcelize migration + final
-`kotlin-android-extensions` removal**: NOT STARTED.
+`kotlin-android-extensions` removal**: **BLOCKED**.
+
+Kotlin 1.4.32 cannot compile with **Moshi 1.8.0**: its `moshi-kotlin-codegen`
+`me.eugeniomarletti.kotlin.metadata` reader throws `KotlinNullPointerException` while
+processing Kotlin 1.4 metadata, failing `:app:kaptDebugKotlin`. Bumping
+`moshi`/`moshi-kotlin-codegen` to **1.11.0** was verified to unblock kapt (Room
+2.1.0-beta01 is fine), but a dependency bump is outside P1C2's "only Kotlin moves"
+invariant → needs authorization or move the Kotlin migration to P1D.
+
+No changes were committed for P1C2; `feature/android-modernization` remains at the P1C1
+green state.
 
 ## What Was Completed
 
@@ -97,8 +107,10 @@ Play-readiness gaps (→ P1E); dynamic time-based `versionCode`.
 
 ## Next Safe Action
 
-**P1C2 — Kotlin modernization + legacy Parcelize migration + final
-`kotlin-android-extensions` removal** (do not begin without explicit authorization).
+**Authorization decision for P1C2:** permit the minimal **Moshi 1.8.0 → 1.11.0** bump
+(verified to unblock Kotlin 1.4.32), or move the Kotlin 1.4.32 migration into **P1D**
+and rebase P1C2 on the modernized dependency set. Do not bump dependencies without
+explicit authorization.
 
 ## Resume Procedure
 

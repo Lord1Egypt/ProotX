@@ -27,14 +27,16 @@ Last updated: 2026-09-12 (P1C1 — Synthetic Views → View Binding)
 | P1B — Gradle / AGP Bridge Migration | **CLOSED / PASS** |
 | P1C — Kotlin / Synthetics Migration | **IN PROGRESS** |
 | P1C1 — Synthetic Views → View Binding | **CLOSED / PASS** |
-| P1C2 — Kotlin + Legacy Parcelize + Plugin Removal | **NOT STARTED** |
+| P1C2 — Kotlin + Legacy Parcelize + Plugin Removal | **BLOCKED** |
 
 ## Current Milestone
 
-**P1C1 — Synthetic Views → View Binding: COMPLETE.** All synthetic view access replaced
-with Android View Binding; a source guard prevents reintroduction. Legacy Parcelize and
-`kotlin-android-extensions` are intentionally retained. Next milestone is **P1C2**
-(not started).
+**P1C2 — Kotlin + Legacy Parcelize + Plugin Removal: BLOCKED.** The Kotlin 1.4.32
+migration cannot compile because **Moshi 1.8.0's kapt codegen** is incompatible with
+Kotlin 1.4 metadata. Completing P1C2 requires bumping Moshi (a runtime dependency),
+which is outside this milestone's "only Kotlin moves" invariant and belongs to P1D
+pending explicit authorization. No changes were committed; the branch remains at the
+P1C1 green state. Prior milestone **P1C1** is COMPLETE.
 
 ## Repository State
 
@@ -131,7 +133,12 @@ The canonical list lives in
 - **Resolved in P1B:** `jcenter()` fallback repository.
 - **Resolved in P1C1:** Kotlin Android **synthetic views** (migrated to View Binding with
   a guard test).
-- **Remaining Kotlin legacy (→ P1C2):** `kotlin-android-extensions` plugin,
+- **P1C2 BLOCKER (new):** Kotlin 1.4.32 is incompatible with **Moshi 1.8.0**
+  (`moshi-kotlin-codegen`) — its `me.eugeniomarletti.kotlin.metadata` reader throws
+  `KotlinNullPointerException`, failing `kaptDebugKotlin`. Verified remediation: bumping
+  `moshi`/`moshi-kotlin-codegen` to **1.11.0** lets kapt succeed (Room 2.1.0-beta01 is
+  fine). This is an application dependency change → defer to **P1D** / needs authorization.
+- **Remaining Kotlin legacy (blocked by P1C2):** `kotlin-android-extensions` plugin,
   `androidExtensions { experimental = true }`, and `kotlinx.android.parcel.Parcelize`.
 - **Still open:** `com.schibsted.spain:barista:3.1.0` (androidTest, JCenter-only);
   unused Sentry/Billing code (P1D); prebuilt rootfs profile remnant; network-dependent
@@ -139,7 +146,9 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1C2 — Kotlin modernization + legacy Parcelize migration + final
-`kotlin-android-extensions` removal.**
+**Authorization decision for P1C2:** permit the minimal **Moshi 1.8.0 → 1.11.0**
+annotation-processor/runtime compatibility bump (verified to unblock Kotlin 1.4.32), or
+move the Kotlin 1.4.32 migration to **P1D** (dependency modernization) and rebase P1C2 on
+it.
 
 Do **not** start P1C2 from this document. A phase must be explicitly authorized.

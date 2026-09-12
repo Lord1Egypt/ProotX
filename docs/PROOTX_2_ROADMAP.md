@@ -9,7 +9,7 @@
 >   - **P1B — Gradle / AGP Bridge Migration:** CLOSED / PASS
 >   - **P1C — Kotlin / Synthetics Migration:** IN PROGRESS
 >     - **P1C1 — Synthetic Views → View Binding:** CLOSED / PASS
->     - **P1C2 — Kotlin + Legacy Parcelize + Plugin Removal:** NOT STARTED
+>     - **P1C2 — Kotlin + Legacy Parcelize + Plugin Removal:** BLOCKED (pending Moshi bump)
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -147,6 +147,12 @@ deferred to the appropriate later phase.
    clean separation between a *candidate* version and the *last physically accepted*
    version (see `DECISIONS.md` D005). Recorded for a later release-contract milestone; not
    fixed in P0.5.
+10. **Kotlin 1.4 vs Moshi 1.8.0 (P1C2 blocker).** Kotlin 1.4.32 cannot compile because
+    Moshi 1.8.0's `moshi-kotlin-codegen` uses `me.eugeniomarletti.kotlin.metadata`, which
+    throws `KotlinNullPointerException` on Kotlin 1.4 metadata (`:app:kaptDebugKotlin`
+    failure). Verified remediation: bump `moshi`/`moshi-kotlin-codegen` to **1.11.0**
+    (Room 2.1.0-beta01 unaffected). Because it changes an application dependency, it is
+    deferred to **P1D** or requires explicit authorization to finish P1C2.
 
 ## Non-goals for P0
 

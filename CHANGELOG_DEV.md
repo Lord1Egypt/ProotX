@@ -77,3 +77,20 @@
   steps success, same test result, debug APK uploaded.
 - Unchanged: Kotlin 1.3.61, Gradle 6.7.1, AGP 4.2.2, SDK/NDK/toolchain, app dependency
   versions, runtime, visual design, assets.
+
+## P1C2 — Kotlin / Parcelize Migration (2026-09-12) — BLOCKED
+
+- Attempted Kotlin 1.3.61 → 1.4.32, `kotlin-android-extensions` → `kotlin-parcelize`,
+  removal of `androidExtensions {}`, and `kotlinx.android.parcel.Parcelize` →
+  `kotlinx.parcelize.Parcelize`.
+- Local compile failed at `:app:kaptDebugKotlin`:
+  `kotlin.KotlinNullPointerException` in `me.eugeniomarletti.kotlin.metadata.KotlinClassMetadata`
+  invoked from **Moshi 1.8.0**'s `JsonClassCodegenProcessor`. Moshi 1.8.0's metadata reader
+  cannot parse Kotlin 1.4 metadata.
+- Investigated the remediation: bumping `moshi`/`moshi-kotlin-codegen` to **1.11.0** makes
+  kapt succeed (Room 2.1.0-beta01 is unaffected). This is an application dependency change,
+  which P1C2 forbids ("only Kotlin moves").
+- Per the milestone's scope rules, the migration was **not** completed and **no changes were
+  committed**; the working tree was restored to the P1C1 green state
+  (`clean assembleDebug testDebugUnitTest` → 314 tests / 25 suites / 0 failures).
+- Required next step: authorize the minimal Moshi bump, or move Kotlin 1.4.32 into P1D.
