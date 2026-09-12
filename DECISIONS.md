@@ -170,3 +170,21 @@
 - **Trade-offs:** An extra intermediate state to migrate through, but each migration step is
   independently verifiable and reversible.
 - **Affected components:** Gradle wrapper, root `build.gradle`, CI, P1C+.
+
+---
+
+## D012 — UI view access uses View Binding; Kotlin synthetics are forbidden
+
+- **Date:** 2026-09-12
+- **Status:** Accepted
+- **Decision:** Programmatic view access uses Android **View Binding**. Kotlin Android
+  synthetic view imports (`kotlinx.android.synthetic`) must not be reintroduced; a unit
+  test (`SyntheticViewImportsTest`) enforces this. Legacy `kotlinx.android.parcel.Parcelize`
+  remains permitted until the `kotlin-android-extensions` plugin is removed in P1C2.
+- **Reason:** The synthetics API was removed in Kotlin 1.8 and blocks Kotlin modernization;
+  View Binding is null-safe, compile-time checked, and the standard modern mechanism.
+- **Alternatives considered:** `findViewById` (rejected — untyped, error-prone);
+  Data Binding (rejected — heavier, not needed).
+- **Trade-offs:** Generated binding classes add minor build surface; fragments must clear
+  binding in `onDestroyView` to avoid leaks.
+- **Affected components:** `app/build.gradle`, `MainActivity`, `ui/*Fragment`, tests, P1C2.

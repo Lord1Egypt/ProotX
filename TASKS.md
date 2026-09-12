@@ -48,9 +48,16 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
   - [x] Remove `jcenter()`; prove resolution from Google Maven + Maven Central
   - [x] Align CI build-tools pin to `30.0.2`
   - [x] Local + remote green build and 313 tests; APK uploaded
-- [ ] **P1C — Kotlin synthetics removal / view binding migration and controlled Kotlin modernization**
-  - [ ] Remove `kotlin-android-extensions` synthetics (view binding)
-  - [ ] Upgrade Kotlin to a supported version
+- [~] **P1C — Kotlin / Synthetics Migration** — IN PROGRESS
+  - [x] **P1C1 — Synthetic views → view binding** — PASS
+    - [x] Enable View Binding (`buildFeatures.viewBinding`)
+    - [x] Migrate MainActivity + 7 view-using Fragments
+    - [x] Zero synthetic view imports; source guard test added
+    - [x] Legacy Parcelize and `kotlin-android-extensions` preserved
+  - [ ] **P1C2 — Kotlin modernization + legacy Parcelize migration + plugin removal**
+    - [ ] Migrate `kotlinx.android.parcel.Parcelize` → `kotlinx.parcelize.Parcelize`
+    - [ ] Remove `kotlin-android-extensions` and `androidExtensions`
+    - [ ] Upgrade Kotlin to a supported version
 - [ ] **P1D — AndroidX / dependency modernization**
   - [ ] Update AndroidX and third-party dependencies to supported versions
   - [ ] Remove unused Sentry / Play Billing code and billing permission

@@ -57,3 +57,23 @@
   application dependency versions, source, UI, runtime, assets.
 - New deferred finding: `com.schibsted.spain:barista:3.1.0` (androidTest-only) was JCenter-
   only and is not resolvable; replacement deferred to P1D.
+
+## P1C1 — Synthetic Views → View Binding (2026-09-12) — PASS
+
+- Enabled Android View Binding in the `app` module (`buildFeatures.viewBinding true`).
+- Migrated `MainActivity` and seven view-using Fragments off
+  `kotlinx.android.synthetic`:
+  `HelpFragment`, `AppDetailsFragment`, `AppsListFragment`, `FilesystemListFragment`,
+  `SessionListFragment`, `SessionEditFragment`, `FilesystemEditFragment`.
+- Fragments use the lifecycle-safe `_binding`/`onDestroyView` pattern;
+  `AppDetailsFragment`'s LiveData observer is scoped to `viewLifecycleOwner`.
+- Added `SyntheticViewImportsTest` (source guard; forbids synthetic view imports, permits
+  legacy Parcelize).
+- **Zero** synthetic view imports remain in production source; no XML/layout changes were
+  needed.
+- Legacy Parcelize and `kotlin-android-extensions` intentionally preserved (P1C2).
+- Local: `clean assembleDebug testDebugUnitTest` green — **314 tests / 25 suites / 0
+  failures** (313 baseline + 1 guard). Remote (run `34676869322`, commit `fbf6f9d`): all
+  steps success, same test result, debug APK uploaded.
+- Unchanged: Kotlin 1.3.61, Gradle 6.7.1, AGP 4.2.2, SDK/NDK/toolchain, app dependency
+  versions, runtime, visual design, assets.

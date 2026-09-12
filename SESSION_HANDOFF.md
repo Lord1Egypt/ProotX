@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-12 (P1B — Gradle / AGP Bridge Migration)
+Last updated: 2026-09-12 (P1C1 — Synthetic Views → View Binding)
 
 ## Current Objective
 
@@ -13,42 +13,46 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1B — Gradle / AGP Bridge Migration**: **PASS**.
-Gradle 5.1.1 → 6.7.1 and AGP 3.4.3 → 4.2.2, Kotlin unchanged, `jcenter()` removed,
-build-tools aligned to 30.0.2. Local and remote build + 313 unit tests green.
+**P1C1 — Synthetic Views → View Binding**: **PASS**.
+All `kotlinx.android.synthetic` view access replaced with View Binding; source guard test
+added; legacy Parcelize and `kotlin-android-extensions` intentionally retained. Local and
+remote build + tests green (314 tests / 25 suites).
 
 ## Current Milestone
 
-**P1C — Kotlin synthetics removal / view binding migration and controlled Kotlin
-modernization**: NOT STARTED.
+**P1C2 — Kotlin modernization + legacy Parcelize migration + final
+`kotlin-android-extensions` removal**: NOT STARTED.
 
 ## What Was Completed
 
-- Upgraded the Gradle wrapper to 6.7.1 (regenerated canonical wrapper artifacts).
-- Upgraded AGP to 4.2.2; Kotlin remains 1.3.61.
-- Removed `jcenter()` from `buildscript` and `allprojects`; verified clean resolution from
-  `google()` + `mavenCentral()` with a fresh Gradle user home.
-- Aligned the CI build-tools pin to `30.0.2` (AGP 4.2.2 default).
-- No DSL compatibility fixes were required (the existing `lintOptions`,
-  `androidExtensions`, `testCoverageEnabled`, and nested `dependencies {}` blocks all
-  configured/build under AGP 4.2.2).
-- Updated `docs/BUILD_ENVIRONMENT.md` for the bridge toolchain.
+- Enabled View Binding in the `app` module (`buildFeatures.viewBinding true`).
+- Migrated `MainActivity` to `ActivityMainBinding`.
+- Migrated seven Fragments to generated binding classes with the lifecycle-safe
+  `_binding`/`onDestroyView` pattern:
+  `HelpFragment`, `AppDetailsFragment`, `AppsListFragment`, `FilesystemListFragment`,
+  `SessionListFragment`, `SessionEditFragment`, `FilesystemEditFragment`.
+- Scoped `AppDetailsFragment`'s LiveData observer to `viewLifecycleOwner` so binding is
+  never touched after the view is destroyed.
+- Added `SyntheticViewImportsTest` to fail the build if synthetic view imports return
+  (legacy Parcelize explicitly permitted).
+- No XML/layout changes were required.
 
 ## What Was Intentionally NOT Changed
 
-- Kotlin version (1.3.61), `kotlin-android-extensions` / synthetics usage.
-- `compileSdk` 30, `targetSdk` 30, `minSdk` 21, NDK 21.4.7075529.
-- Application/runtime dependency versions, package ID, `versionName`, `versionCode`
-  algorithm.
-- Any application Kotlin/Java source, UI, resources, runtime, PRoot, database, or assets.
-- Build JDK contract: JDK 17 for SDK tooling, JDK 8 for Gradle.
+- `kotlin-android-extensions` plugin and `androidExtensions { experimental true }`
+  (still required for legacy Parcelize in P1C1).
+- `kotlinx.android.parcel.Parcelize` usage in `App`, `Filesystem`, `Session`.
+- Kotlin **1.3.61**; Gradle 6.7.1; AGP 4.2.2; `compileSdk` 30; `targetSdk` 30; `minSdk` 21;
+  NDK 21.4.7075529; build-tools 30.0.2.
+- App dependency versions, package ID, `versionName`, `versionCode` algorithm.
+- Runtime, PRoot, database, network, logging, billing, Sentry, assets.
 
 ## Current Repository State
 
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (P1B build) | `70bcc09a74ce81a5dfefef30ca2c19a88cb2c86a` |
+| Feature HEAD (P1C1) | `fbf6f9d6dfd1b653886cdcd81a87ef4b0325a54f` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -56,9 +60,8 @@ modernization**: NOT STARTED.
 ## Accepted Baseline
 
 Commit `94abf5fa520255bb10d087a6be3ba2bc70b0e127`, package
-`io.github.lord1egypt.prootx`, version `1.0.0`, **313 tests / 24 suites / 0 failures**.
-The P0 baseline remains the accepted application baseline (P1B changed only the build
-toolchain, not the app).
+`io.github.lord1egypt.prootx`, version `1.0.0`. Baseline tests **313 / 24 suites**; current
+tests **314 / 25 suites** (one added source-guard test).
 
 ## Current Toolchain
 
@@ -69,10 +72,11 @@ Repositories: `google()`, `mavenCentral()` only.
 ## Known Deferred Findings
 
 See [`docs/PROOTX_2_ROADMAP.md`](docs/PROOTX_2_ROADMAP.md#deferred-findings). Resolved: CI
-SDK setup (P1A), `jcenter()` (P1B). New: `com.schibsted.spain:barista:3.1.0` (androidTest,
-JCenter-only) is unresolvable and needs a replacement in P1D. Still open: Kotlin
-synthetics (→ P1C); unused Sentry/Billing code (→ P1D); prebuilt rootfs profile remnant;
-network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based `versionCode`.
+SDK setup (P1A), `jcenter()` (P1B), synthetic views (P1C1). Remaining Kotlin legacy (P1C2):
+`kotlin-android-extensions`, `androidExtensions`, `kotlinx.android.parcel.Parcelize`.
+Still open: `com.schibsted.spain:barista:3.1.0` (androidTest, JCenter-only); unused
+Sentry/Billing code (→ P1D); prebuilt rootfs profile remnant; network-dependent unit tests;
+Play-readiness gaps (→ P1E); dynamic time-based `versionCode`.
 
 ## Important Invariants
 
@@ -88,11 +92,13 @@ network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based 
 8. One milestone at a time; respect STOP gates.
 9. CI runs the Android SDK tooling under a modern JDK and the application build under JDK 8
    (`DECISIONS.md` D010). Gradle 6.7.1 / AGP 4.2.2 is an intentional bridge (`D011`).
+10. UI view access uses View Binding; synthetic views are forbidden (`D012`). Legacy
+    Parcelize remains until P1C2.
 
 ## Next Safe Action
 
-**P1C — Kotlin synthetics removal / view binding migration and controlled Kotlin
-modernization** (do not begin without explicit authorization).
+**P1C2 — Kotlin modernization + legacy Parcelize migration + final
+`kotlin-android-extensions` removal** (do not begin without explicit authorization).
 
 ## Resume Procedure
 

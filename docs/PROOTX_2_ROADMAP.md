@@ -7,7 +7,9 @@
 > - **P1 — Android Modernization:** IN PROGRESS
 >   - **P1A — Build-System / JDK / CI Foundation:** CLOSED / PASS
 >   - **P1B — Gradle / AGP Bridge Migration:** CLOSED / PASS
->   - **P1C — Kotlin / Synthetics Migration:** NOT STARTED
+>   - **P1C — Kotlin / Synthetics Migration:** IN PROGRESS
+>     - **P1C1 — Synthetic Views → View Binding:** CLOSED / PASS
+>     - **P1C2 — Kotlin + Legacy Parcelize + Plugin Removal:** NOT STARTED
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -114,9 +116,10 @@ deferred to the appropriate later phase.
    and runs the legacy build under JDK 8 (green run `34674686561`).
 2. **Legacy toolchain.** Gradle 5.1.1 / AGP 3.4.3 / Kotlin 1.3.61 / compileSdk 30 emit a
    deprecation warning ("incompatible with Gradle 6.0"). Modernization phase.
-3. **Kotlin Android synthetics.** `kotlin-android-extensions` synthetics remain in use
-   across several Activities/Fragments; this API was removed in Kotlin 1.8 and blocks a
-   Kotlin upgrade. Migration to view binding / Compose is required first.
+3. **Kotlin Android synthetics — VIEW PART RESOLVED in P1C1.** Synthetic view access
+   (`kotlinx.android.synthetic`) was migrated to View Binding, with a unit-test source
+   guard. Remaining Kotlin-legacy work (→ P1C2): the `kotlin-android-extensions` plugin,
+   `androidExtensions { experimental = true }`, and `kotlinx.android.parcel.Parcelize`.
 4. **Unused monetization and telemetry code.** Sentry integration (older `sentry-android`,
    no DSN configured) and Google Play Billing code remain present, along with the
    `com.android.vending.BILLING` permission. Legally/branding inert but should be removed
