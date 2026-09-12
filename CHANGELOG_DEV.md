@@ -24,3 +24,20 @@
 - Recorded the dynamic time-based `versionCode` release-contract finding as deferred.
 - Reflected P0 CLOSED / P0.5 CURRENT / P1 NOT STARTED status in the roadmap.
 - Documentation/state-management only: no source, build, runtime, UI, asset, or CI change.
+
+## P1A — Build-System / JDK / CI Foundation (2026-09-12) — PASS
+
+- Repaired the baseline CI failure: `sdkmanager` (cmdline-tools 16.0) requires a modern
+  JVM, but JDK 8 was active during Android SDK setup.
+- Reworked `.github/workflows/build.yml` into a two-stage JDK bootstrap:
+  JDK 17 provisions the Android SDK/NDK, JDK 8 runs the legacy Gradle build.
+- Pinned required SDK/NDK packages: `platforms;android-30`, `platforms;android-29`,
+  `build-tools;28.0.3`, `ndk;21.4.7075529`.
+- Extended CI triggers to `develop` and `feature/**` (PRs to `main`/`develop`).
+- Explicit build contract: `./gradlew clean assembleDebug testDebugUnitTest --no-daemon`.
+- Added a CI step reporting the exact unit-test summary.
+- Added `docs/BUILD_ENVIRONMENT.md`.
+- Verified remotely (run `34674686561`): all steps success, `suites=24 tests=313
+  failures=0 errors=0 skipped=0`, debug APK artifact uploaded.
+- No application source, toolchain version, dependency, manifest, resource, UI, runtime,
+  or asset change.

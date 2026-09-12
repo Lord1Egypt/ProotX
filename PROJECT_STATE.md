@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-12 (P0.5 — Project Control Plane)
+Last updated: 2026-09-12 (P1A — Build-System / JDK / CI Foundation)
 
 ## Project Identity
 
@@ -21,23 +21,22 @@ Last updated: 2026-09-12 (P0.5 — Project Control Plane)
 | Phase | Status |
 |---|---|
 | P0 — Baseline Freeze & Development Safety | **CLOSED / PASS** |
-| P0.5 — Project Control Plane | **CURRENT** |
-| P1 — Android Modernization | **NOT STARTED** |
+| P0.5 — Project Control Plane | **CLOSED / PASS** |
+| P1 — Android Modernization | **IN PROGRESS** |
+| P1A — Build-System / JDK / CI Foundation | **PASS** |
+| P1B — Gradle / AGP Migration | **NOT STARTED** |
 
 ## Current Milestone
 
-**Project Control Plane** (P0.5) — documentation/state-management only.
-No runtime, UI, build, or asset work.
-
-The P0.5 control-plane files are introduced by the commit that added this file
-(`git log --oneline -1 feature/android-modernization`).
+**P1A — Build-System / JDK / CI Foundation: COMPLETE.** The legacy application is
+unchanged; only CI and documentation were updated. Next milestone is **P1B** (not started).
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
-| Branch (current) | `feature/android-modernization` | Active work branch |
-| Current feature HEAD | `7f030cd9e346f800b0f1ff9545e9295ceb68977c` | P0 roadmap commit (branch HEAD when P0.5 docs were authored) |
+| Active branch | `feature/android-modernization` | |
+| Current feature HEAD | `006dc98055038c5510bc0672435417dacef8a807` | P1A build/CI commit (state docs updated by the follow-up control-plane commit) |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -45,7 +44,7 @@ The P0.5 control-plane files are introduced by the commit that added this file
 
 ## Accepted Baseline
 
-The frozen ProotX 1.0.0 baseline (measured in P0):
+The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application baseline):
 
 | Field | Value |
 |---|---|
@@ -56,19 +55,38 @@ The frozen ProotX 1.0.0 baseline (measured in P0):
 | Source origin | Last self-contained public UserLAnd **v2.8.3** codebase (GPLv3) |
 | Unit tests | **313 tests / 24 suites / 0 failures / 0 errors / 0 skipped** |
 | Baseline build | `./gradlew clean assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** |
-| Debug APK | `app/build/outputs/apk/debug/app-debug.apk` (~18.66 MB); label `ProotX` |
 | Toolchain | JDK 8, Gradle 5.1.1, AGP 3.4.3, Kotlin 1.3.61, compileSdk 30, NDK 21.4.7075529 |
-
-No data is recorded here that was not measured during P0.
 
 ## CI State
 
-GitHub Actions workflow `build` (`.github/workflows/build.yml`) exists and is active,
-but the **baseline CI currently fails** in ~10–14 seconds at the **"Set up Android SDK"**
-step. `actions/setup-java@v4` pins JDK 8, while `android-actions/setup-android@v3`
-needs a newer Java runtime for `sdkmanager`. The Gradle build/test steps are skipped.
+**CI is now PASSING** (this is the P1A deliverable). The baseline failure was that
+`actions/setup-java` pinned JDK 8 before `android-actions/setup-android` invoked
+`sdkmanager` (cmdline-tools 16.0), which requires a modern JVM.
 
-This is **deferred to modernization**; it is not fixed in P0.5.
+The workflow now uses a **two-stage JDK bootstrap**:
+
+```
+JDK 17 → Android SDK/NDK provisioning (sdkmanager)
+JDK 8  → ./gradlew clean assembleDebug testDebugUnitTest --no-daemon
+```
+
+Pinned packages: `platforms;android-30`, `platforms;android-29`, `build-tools;28.0.3`,
+`ndk;21.4.7075529`. Triggers: push to `main`, `develop`, `feature/**`; PR to `main`,
+`develop`.
+
+Verified remote evidence:
+
+| Field | Value |
+|---|---|
+| Final run | `34674686561` (push, commit `006dc98`) — **success** |
+| First green foundation run | `34674420285` (push, commit `0145656`) — success |
+| Remote test summary | `suites=24 tests=313 failures=0 errors=0 skipped=0` |
+| Artifact | `prootx-debug-apk` → `app-debug.apk` (18,650,305 bytes) |
+| Artifact SHA-256 | `8a6ce2a1f70f784048c890b5f65ff733ff3a4fb31cd66267b6d3a0457be6d558` |
+| Artifact identity | package `io.github.lord1egypt.prootx`, versionName `1.0.0`, ABIs `arm64-v8a, armeabi-v7a, x86, x86_64` |
+
+(`versionCode` is time-generated and therefore differs per run — expected; see Deferred
+Findings.)
 
 ## Runtime State
 
@@ -87,27 +105,21 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-None. Baseline is frozen, verified, and reproducible.
+None.
 
 ## Deferred Findings
 
-The canonical Deferred Findings list lives in
-[`docs/PROOTX_2_ROADMAP.md`](docs/PROOTX_2_ROADMAP.md#deferred-findings). Items currently
-tracked there: failing CI SDK setup, legacy toolchain, Kotlin synthetics, unused
-Sentry/Billing code, prebuilt rootfs profile remnant, `jcenter()` fallback, network-
-dependent tests, and Play-readiness gaps.
+The canonical list lives in
+[`docs/PROOTX_2_ROADMAP.md`](docs/PROOTX_2_ROADMAP.md#deferred-findings).
 
-Additionally confirmed in P0.5 from source (`app/build.gradle`):
-
-- **Dynamic `versionCode` (release-contract gap).** `versionCode` is generated as a
-  function of wall-clock time at Gradle configuration time
-  (`def vcode = (int)(((new Date().getTime()/1000) - 1559347200) / 10)`).
-  This prevents a clean PocketClaw-style separation between a *candidate* version and the
-  *last physically accepted* version. **Not fixed in P0.5** — recorded for a later
-  modernization / release-contract milestone.
+- **Resolved in P1A:** failing CI Android SDK setup (finding #1).
+- **Still open:** legacy toolchain (→ P1B+); Kotlin synthetics (→ P1C); unused
+  Sentry/Billing code (→ P1D); prebuilt rootfs profile remnant (assets milestone);
+  `jcenter()` fallback (→ P1B); network-dependent unit tests (later milestone);
+  Play-readiness gaps (→ P1E); dynamic time-based `versionCode` release-contract gap.
 
 ## Next Safe Action
 
-**P1A — first Android modernization increment** (build-system / JDK / CI foundation).
+**P1B — Gradle / Android Gradle Plugin migration.**
 
-Do **not** start P1A from this document. A phase must be explicitly authorized.
+Do **not** start P1B from this document. A phase must be explicitly authorized.

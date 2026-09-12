@@ -3,8 +3,10 @@
 > Status:
 >
 > - **P0 — Baseline freeze and development safety:** CLOSED / PASS
-> - **P0.5 — Project Control Plane:** CURRENT (documentation/state only)
-> - **P1 — Android Modernization:** NOT STARTED
+> - **P0.5 — Project Control Plane:** CLOSED / PASS
+> - **P1 — Android Modernization:** IN PROGRESS
+>   - **P1A — Build-System / JDK / CI Foundation:** PASS
+>   - **P1B — Gradle / AGP Migration:** NOT STARTED
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -105,10 +107,10 @@ across the modernized codebase.
 Issues observed during P0 that are **intentionally not fixed in this phase**. Fixes are
 deferred to the appropriate later phase.
 
-1. **CI baseline is failing.** Both baseline GitHub Actions runs fail in ~10–14s at the
-   "Set up Android SDK" step. `actions/setup-java@v4` pins JDK 8, but
-   `android-actions/setup-android@v3` requires a newer Java runtime for `sdkmanager`.
-   To be resolved as part of toolchain modernization.
+1. **CI baseline failure — RESOLVED in P1A.** Both baseline GitHub Actions runs failed at
+   the "Set up Android SDK" step because `actions/setup-java@v4` pinned JDK 8 while
+   `sdkmanager` requires a modern JVM. CI now provisions the Android SDK/NDK under JDK 17
+   and runs the legacy build under JDK 8 (green run `34674686561`).
 2. **Legacy toolchain.** Gradle 5.1.1 / AGP 3.4.3 / Kotlin 1.3.61 / compileSdk 30 emit a
    deprecation warning ("incompatible with Gradle 6.0"). Modernization phase.
 3. **Kotlin Android synthetics.** `kotlin-android-extensions` synthetics remain in use

@@ -16,7 +16,7 @@ Legend: `[x]` done · `[ ]` not started · `[~]` in progress · `[!]` blocked
 - [x] Roadmap created (`docs/PROOTX_2_ROADMAP.md`)
 - [x] P0 closed
 
-## P0.5 — Project Control Plane — CURRENT
+## P0.5 — Project Control Plane — CLOSED / PASS
 
 - [x] Verify P0 baseline invariants (main/develop/tag/feature)
 - [x] Create `PROJECT_STATE.md`
@@ -29,15 +29,19 @@ Legend: `[x]` done · `[ ]` not started · `[~]` in progress · `[!]` blocked
 - [x] Create `AGENTS.md`
 - [x] Record dynamic `versionCode` deferred finding
 - [x] Reflect P0/P0.5/P1 status in roadmap
-- [ ] Commit + push control plane on `feature/android-modernization` (this milestone)
+- [x] Commit + push control plane on `feature/android-modernization` (this milestone)
 
-## P1 — Android Modernization — NOT STARTED
+## P1 — Android Modernization — IN PROGRESS
 
 Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
 
-- [ ] **P1A — Build-system / JDK / CI foundation**
-  - [ ] Repair baseline CI Android SDK setup failure (JDK 8 vs. `sdkmanager`)
-  - [ ] Establish reproducible modern build invocation
+- [x] **P1A — Build-system / JDK / CI foundation** — PASS
+  - [x] Repair baseline CI Android SDK setup failure (JDK 8 vs. `sdkmanager`)
+  - [x] Two-stage CI: JDK 17 for SDK tooling, JDK 8 for the legacy Gradle build
+  - [x] Pin required SDK/NDK packages
+  - [x] Extend CI triggers to `develop` and `feature/**`
+  - [x] Establish reproducible build invocation and remote green run
+  - [x] Document environment in `docs/BUILD_ENVIRONMENT.md`
 - [ ] **P1B — Gradle / AGP migration**
   - [ ] Upgrade Gradle and Android Gradle Plugin to supported versions
   - [ ] Migrate repositories off `jcenter()` to Maven Central / Google Maven

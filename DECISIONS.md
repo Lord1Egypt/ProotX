@@ -131,3 +131,22 @@
 - **Alternatives considered:** A single distribution constrained to Play rules.
 - **Trade-offs:** Added build/release complexity; preserves both reach and capability.
 - **Affected components:** Gradle flavors, CI/release, catalog, runtime.
+
+---
+
+## D010 — CI uses a two-stage JDK bootstrap
+
+- **Date:** 2026-09-12
+- **Status:** Accepted
+- **Decision:** Continuous integration runs Android SDK/NDK provisioning under a modern
+  JDK (JDK 17) and then runs the frozen Gradle/application build under JDK 8, in explicit
+  sequential stages. The required SDK/NDK packages are pinned by the workflow.
+- **Reason:** Android command-line tools (`sdkmanager`) require a modern JVM, while the
+  frozen Gradle 5.1.1 / AGP 3.4.3 build only supports JDK 8. Running either stage under the
+  wrong JDK fails.
+- **Alternatives considered:** Upgrading Gradle/AGP to allow a single modern JDK (rejected
+  for P1A — that is P1B+ modernization, out of scope); relying on runner-preinstalled SDK
+  packages (rejected — non-deterministic).
+- **Trade-offs:** The workflow is slightly more complex and must keep the two stages
+  distinct, but the legacy build is preserved and CI is reproducible.
+- **Affected components:** `.github/workflows/build.yml`, CI foundation, P1B+.
