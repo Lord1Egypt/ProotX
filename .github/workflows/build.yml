@@ -2,38 +2,90 @@ name: build
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - develop
+      - 'feature/**'
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - develop
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Set up JDK 8
+    env:
+      ANDROID_PLATFORM: 'android-30'
+      ANDROID_PLATFORM_LEGACY: 'android-29'
+      ANDROID_BUILD_TOOLS: '28.0.3'
+      ANDROID_NDK_VERSION: '21.4.7075529'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------
+      # Stage 1 — Android SDK/NDK bootstrap under a modern JVM.
+      #
+      # Android command-line tools (sdkmanager) require a modern Java
+      # runtime, so the SDK is provisioned before the legacy JDK is
+      # activated.
+      # ------------------------------------------------------------------
+      - name: Set up JDK 17 (Android SDK tooling)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Show active Java (SDK bootstrap stage)
+        run: java -version
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install pinned Android SDK/NDK packages
+        run: |
+          echo "sdkmanager: $(command -v sdkmanager)"
+          sdkmanager --version
+          sdkmanager "platforms;$ANDROID_PLATFORM" "platforms;$ANDROID_PLATFORM_LEGACY" "build-tools;$ANDROID_BUILD_TOOLS" "ndk;$ANDROID_NDK_VERSION"
+
+      - name: Verify installed SDK/NDK components
+        run: |
+          SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT"
+          ls "$SDK_ROOT/platforms"
+          ls "$SDK_ROOT/build-tools"
+          ls "$SDK_ROOT/ndk"
+
+      # ------------------------------------------------------------------
+      # Stage 2 — legacy ProotX build under JDK 8.
+      #
+      # The frozen Gradle 5.1.1 / AGP 3.4.3 / Kotlin 1.3.61 build is only
+      # supported on JDK 8. Do not change the build toolchain here.
+      # ------------------------------------------------------------------
+      - name: Set up JDK 8 (legacy Gradle build)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '8'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install NDK
-        run: sdkmanager "ndk;21.4.7075529"
-
       - name: Configure local.properties
-        run: echo "ndk.dir=$ANDROID_SDK_ROOT/ndk/21.4.7075529" > local.properties
+        run: |
+          SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "sdk.dir=$SDK_ROOT" > local.properties
+          echo "ndk.dir=$SDK_ROOT/ndk/$ANDROID_NDK_VERSION" >> local.properties
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug
+      - name: Show active Java (build stage)
+        run: java -version
 
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
+      - name: Show Gradle version
+        run: ./gradlew --version
 
-      - name: Upload APK
+      - name: Build and test (legacy toolchain)
+        run: ./gradlew clean assembleDebug testDebugUnitTest --no-daemon
+
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: prootx-debug-apk

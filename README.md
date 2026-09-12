@@ -64,7 +64,7 @@ ProotX bundles [PRoot](https://proot-me.github.io/) together with Busybox and a 
 
 ### Build from source
 
-Requirements: JDK 8+, Android SDK (compileSdk 30), Android NDK (for the terminal emulator JNI).
+Requirements: JDK 8 (the legacy Gradle/AGP toolchain is JDK 8 only), Android SDK (compileSdk 30), Android NDK 21.4.7075529 (for the terminal emulator JNI). See [docs/BUILD_ENVIRONMENT.md](docs/BUILD_ENVIRONMENT.md) for the exact SDK/NDK packages and the two-JDK bootstrap.
 
 ```bash
 git clone https://github.com/Lord1Egypt/ProotX.git
