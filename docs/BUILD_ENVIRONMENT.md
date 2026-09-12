@@ -1,17 +1,18 @@
 # ProotX Build Environment
 
-> Current state: **P1B bridge toolchain** (Gradle 6.7.1 / AGP 4.2.2).
-> This documents the bridge build only. Further Android modernization is a later milestone.
+> Current state: **P1C2-P bridge toolchain** (Gradle 6.7.1 / AGP 4.2.2 / Kotlin 1.4.32).
+> This documents the current build only. Further Android modernization is a later milestone.
 
 ## Summary
 
-The ProotX application currently builds with the P1B **bridge toolchain**:
+The ProotX application currently builds with:
 
 | Component | Version |
 |---|---|
 | Gradle (wrapper) | 6.7.1 |
 | Android Gradle Plugin | 4.2.2 |
-| Kotlin | 1.3.61 |
+| Kotlin | **1.4.32** |
+| Moshi (runtime + codegen) | **1.9.3** |
 | JDK for the Gradle build | **8** |
 | `compileSdk` / `targetSdk` (app) | 30 / 30 |
 | `minSdk` | 21 |
@@ -20,8 +21,9 @@ The ProotX application currently builds with the P1B **bridge toolchain**:
 | Android build-tools | 30.0.2 |
 
 History: P0/P1A used Gradle 5.1.1 / AGP 3.4.3. P1B migrated them to Gradle 6.7.1 /
-AGP 4.2.2 as an intentional intermediate ("bridge") step. Kotlin, SDK levels and NDK are
-unchanged.
+AGP 4.2.2 as an intentional intermediate ("bridge") step. P1C1 migrated synthetic views to
+View Binding. P1C2-P migrated Kotlin 1.3.61 → **1.4.32** together with Moshi 1.8.0 →
+**1.9.3** (the verified cross-boundary bridge). SDK levels and NDK remain unchanged.
 
 ## The two-JDK requirement
 

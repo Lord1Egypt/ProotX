@@ -54,19 +54,19 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
     - [x] Migrate MainActivity + 7 view-using Fragments
     - [x] Zero synthetic view imports; source guard test added
     - [x] Legacy Parcelize and `kotlin-android-extensions` preserved
-  - [!] **P1C2 — Kotlin modernization + legacy Parcelize migration + plugin removal** — BLOCKED
-    - [!] Upgrade Kotlin 1.3.61 → 1.4.32 (blocked by Moshi 1.8.0 kapt codegen)
+  - [~] **P1C2 — Kotlin modernization + legacy Parcelize migration + plugin removal** — READY TO RETRY
+    - [x] Upgrade Kotlin 1.3.61 → 1.4.32 (done in P1C2-P)
+    - [x] Moshi 1.8.0 → 1.9.3 bridge (done in P1C2-P)
     - [ ] Migrate `kotlinx.android.parcel.Parcelize` → `kotlinx.parcelize.Parcelize`
     - [ ] Remove `kotlin-android-extensions` and `androidExtensions`
     - [ ] Add legacy-Android-extensions source guard
-    - Blocker: Moshi 1.8.0 codegen can't read Kotlin 1.4 metadata; Moshi 1.11.0 verified
-      as the fix. Dependency bump needs authorization (or move Kotlin migration to P1D).
-  - [!] **P1C2-U — Moshi compatibility unblocker** — BLOCKED
-    - [!] Bump Moshi 1.8.0 → 1.11.0 on the frozen Kotlin 1.3.61 state
+  - [x] **P1C2-U — Moshi compatibility unblocker** — CLOSED (superseded by P1C2-P)
     - Finding: Moshi ≥1.10.0 codegen is compiled against Kotlin 1.4 and throws
-      `NoSuchMethodError` on Kotlin 1.3.61 (1.10.0 and 1.11.0 fail; 1.9.3 passes).
-      No Moshi version works for both Kotlin 1.3 and 1.4 → the bump and the Kotlin
-      1.4.32 migration must be done together (coordinated P1C2 retry).
+      `NoSuchMethodError` on Kotlin 1.3.61 (1.10.0/1.11.0 fail; 1.9.3 passes).
+  - [x] **P1C2-P — Moshi 1.9.3 / Kotlin 1.4 bridge probe** — BRIDGE_FOUND
+    - [x] Verify Kotlin 1.3.61 + Moshi 1.9.3 (PASS)
+    - [x] Verify the missing cell Kotlin 1.4.32 + Moshi 1.9.3 (kapt PASS, full build PASS)
+    - [x] Commit the verified bridge (Kotlin 1.4.32 + Moshi 1.9.3); remote CI green
 - [ ] **P1D — AndroidX / dependency modernization**
   - [ ] Update AndroidX and third-party dependencies to supported versions
   - [ ] Remove unused Sentry / Play Billing code and billing permission

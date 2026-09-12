@@ -210,3 +210,22 @@
 - **Trade-offs:** The coordinated migration is larger and must be validated as one unit, but
   it is the only viable path.
 - **Affected components:** `app/build.gradle`, `build.gradle`, kapt, P1C2 retry.
+
+---
+
+## D014 — Moshi 1.9.3 is the Kotlin 1.3 → 1.4 bridge
+
+- **Date:** 2026-09-12
+- **Status:** Accepted
+- **Decision:** Use Moshi **1.9.3** as the bridge version for the Kotlin 1.4.32 migration.
+  The verified compatibility matrix is: Kotlin 1.3.61 with Moshi 1.8.0 PASS / 1.9.3 PASS /
+  1.10.0 FAIL / 1.11.0 FAIL; Kotlin 1.4.32 with Moshi 1.8.0 FAIL / **1.9.3 PASS**.
+- **Reason:** Moshi 1.9.3 is the only tested version that works on both Kotlin generations,
+  which lets the Kotlin upgrade proceed on a small hop without simultaneously jumping Moshi
+  to 1.11.0.
+- **Alternatives considered:** Coordinated jump to Kotlin 1.4.32 + Moshi 1.11.0 (still
+  viable but a larger step; not needed now that 1.9.3 bridges); Moshi 1.9.3 on Kotlin 1.3.61
+  alone (does not advance Kotlin).
+- **Trade-offs:** Moshi stays on 1.9.3 for now; a later Moshi bump (e.g. 1.11.x) can happen
+  in P1D once Kotlin is stable.
+- **Affected components:** `app/build.gradle`, kapt, P1C2 retry, P1D.

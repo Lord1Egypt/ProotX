@@ -11,7 +11,7 @@ Run full desktop-class Linux environments and individual Linux applications dire
 [![Release](https://img.shields.io/github/v/release/Lord1Egypt/ProotX?style=for-the-badge&logo=github&color=7C3AED)](https://github.com/Lord1Egypt/ProotX/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/Lord1Egypt/ProotX/build.yml?style=for-the-badge&logo=githubactions&label=build)](https://github.com/Lord1Egypt/ProotX/actions/workflows/build.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](LICENSE)
-[![Kotlin](https://img.shields.io/badge/Kotlin-1.3.61-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/Kotlin-1.4.32-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Android API](https://img.shields.io/badge/API-21%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com)
 [![Stars](https://img.shields.io/github/stars/Lord1Egypt/ProotX?style=for-the-badge&logo=github&color=e879f9)](https://github.com/Lord1Egypt/ProotX/stargazers)
 [![Issues](https://img.shields.io/github/issues/Lord1Egypt/ProotX?style=for-the-badge&logo=github)](https://github.com/Lord1Egypt/ProotX/issues)

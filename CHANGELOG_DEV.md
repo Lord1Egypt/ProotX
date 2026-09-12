@@ -114,3 +114,19 @@
   reflects the actual branch tip, and Current Blockers no longer reads "None".
 - Required next step: authorize a coordinated P1C2 retry (Kotlin 1.4.32 + Moshi 1.11.0
   together).
+
+## P1C2-P — Moshi 1.9.3 / Kotlin 1.4 Bridge Probe (2026-09-12) — BRIDGE_FOUND
+
+- Probed the previously untested compatibility cell **Kotlin 1.4.32 + Moshi 1.9.3**.
+- Result: `:app:kaptDebugKotlin` **PASS**, and full `clean assembleDebug
+  testDebugUnitTest` **PASS** (314 tests / 25 suites / 0 failures) with the legacy
+  `kotlin-android-extensions` plugin, `androidExtensions` block, and
+  `kotlinx.android.parcel.Parcelize` unchanged.
+- Committed the verified bridge (single atomic change per D013): Kotlin
+  **1.3.61 → 1.4.32** and Moshi **1.8.0 → 1.9.3**. Kotlin stdlib now resolves coherently
+  to the 1.4.32 family.
+- Full compatibility matrix now: Kotlin 1.3.61 → Moshi 1.8.0 PASS, 1.9.3 PASS, 1.10.0 FAIL,
+  1.11.0 FAIL; Kotlin 1.4.32 → Moshi 1.8.0 FAIL, **1.9.3 PASS**. Moshi 1.9.3 is the bridge.
+- Remote CI green (run `34679658479`, commit `4f61a47`); APK identity/ABIs/native payload
+  unchanged.
+- No Parcelize/plugin migration performed (that is the P1C2 retry); no runtime/UI change.

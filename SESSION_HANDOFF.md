@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-12 (P1C2 — Kotlin / Parcelize migration: BLOCKED)
+Last updated: 2026-09-12 (P1C2-P — Moshi 1.9.3 / Kotlin 1.4 bridge probe: BRIDGE_FOUND)
 
 ## Current Objective
 
@@ -13,56 +13,43 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1C1 — Synthetic Views → View Binding**: **PASS**.
-All `kotlinx.android.synthetic` view access replaced with View Binding; source guard test
-added; legacy Parcelize and `kotlin-android-extensions` intentionally retained. Local and
-remote build + tests green (314 tests / 25 suites).
+**P1C2-P — Moshi 1.9.3 / Kotlin 1.4 Bridge Probe**: **BRIDGE_FOUND**.
+The previously untested cell **Kotlin 1.4.32 + Moshi 1.9.3** passes kapt and a full clean
+build + unit tests (314 / 25). Moshi 1.9.3 is a valid bridge across Kotlin 1.3 → 1.4.
 
 ## Current Milestone
 
-**P1C2-U — Moshi Compatibility Unblocker**: **BLOCKED**.
-
-Moshi **1.11.0** cannot run on the frozen Kotlin 1.3.61 state: its kapt codegen is compiled
-against Kotlin 1.4 and throws
-`NoSuchMethodError: kotlin.jvm.internal.FunctionReferenceImpl.<init>(...)`, failing
-`:app:kaptDebugKotlin`. Observed on Kotlin 1.3.61: Moshi **1.10.0 fails**, Moshi **1.11.0
-fails**, Moshi **1.9.3 succeeds**. Combined with the P1C2 finding (Moshi 1.8.0 cannot parse
-Kotlin 1.4 metadata), there is **no Moshi version valid for both Kotlin 1.3 and 1.4**.
-
-Therefore the Moshi bump and the Kotlin 1.4.32 migration must be performed **atomically** in
-a coordinated P1C2 retry. No dependency or source changes were committed; the branch remains
-at the P1C1 green state.
+**P1C2 — Kotlin + Legacy Parcelize + Plugin Removal**: **READY TO RETRY** on the new bridge
+baseline. Kotlin is already 1.4.32 and Moshi already 1.9.3; the remaining work is the
+Parcelize/plugin swap. Not started.
 
 ## What Was Completed
 
-- Enabled View Binding in the `app` module (`buildFeatures.viewBinding true`).
-- Migrated `MainActivity` to `ActivityMainBinding`.
-- Migrated seven Fragments to generated binding classes with the lifecycle-safe
-  `_binding`/`onDestroyView` pattern:
-  `HelpFragment`, `AppDetailsFragment`, `AppsListFragment`, `FilesystemListFragment`,
-  `SessionListFragment`, `SessionEditFragment`, `FilesystemEditFragment`.
-- Scoped `AppDetailsFragment`'s LiveData observer to `viewLifecycleOwner` so binding is
-  never touched after the view is destroyed.
-- Added `SyntheticViewImportsTest` to fail the build if synthetic view imports return
-  (legacy Parcelize explicitly permitted).
-- No XML/layout changes were required.
+- Probed the missing compatibility cell: Kotlin 1.4.32 + Moshi 1.9.3 → `:app:kaptDebugKotlin`
+  **PASS**.
+- Full `clean assembleDebug testDebugUnitTest` **PASS** (314 tests / 25 suites) with the
+  legacy `kotlin-android-extensions` plugin, `androidExtensions` block, and
+  `kotlinx.android.parcel.Parcelize` all unchanged.
+- Committed the verified bridge: Kotlin **1.3.61 → 1.4.32** and Moshi **1.8.0 → 1.9.3**
+  (single atomic commit per D013).
+- Remote CI green (run `34679658479`, commit `4f61a47`).
 
 ## What Was Intentionally NOT Changed
 
-- `kotlin-android-extensions` plugin and `androidExtensions { experimental true }`
-  (still required for legacy Parcelize in P1C1).
-- `kotlinx.android.parcel.Parcelize` usage in `App`, `Filesystem`, `Session`.
-- Kotlin **1.3.61**; Gradle 6.7.1; AGP 4.2.2; `compileSdk` 30; `targetSdk` 30; `minSdk` 21;
-  NDK 21.4.7075529; build-tools 30.0.2.
-- App dependency versions, package ID, `versionName`, `versionCode` algorithm.
-- Runtime, PRoot, database, network, logging, billing, Sentry, assets.
+- `kotlin-android-extensions` plugin, `androidExtensions { experimental true }`,
+  `kotlinx.android.parcel.Parcelize` (all preserved for the P1C2 retry).
+- Gradle 6.7.1; AGP 4.2.2; JDK 8 build / JDK 17 bootstrap; `compileSdk` 30; `targetSdk` 30;
+  `minSdk` 21; NDK 21.4.7075529; build-tools 30.0.2.
+- Other app dependency versions (AndroidX, Room, Coroutines, OkHttp, Sentry, Billing, …),
+  package ID, `versionName`, `versionCode` algorithm.
+- Runtime, PRoot, database, network, logging, UI, assets.
 
 ## Current Repository State
 
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (P1C1) | `fbf6f9d6dfd1b653886cdcd81a87ef4b0325a54f` |
+| Feature HEAD (P1C2-P bridge) | `4f61a4710bf9092255028d9c744c0641b151a673` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -75,18 +62,19 @@ tests **314 / 25 suites** (one added source-guard test).
 
 ## Current Toolchain
 
-Gradle **6.7.1** · AGP **4.2.2** · Kotlin **1.3.61** · JDK **8** (build) · compileSdk **30** ·
-targetSdk **30** · minSdk **21** · NDK **21.4.7075529** · build-tools **30.0.2**.
-Repositories: `google()`, `mavenCentral()` only.
+Gradle **6.7.1** · AGP **4.2.2** · Kotlin **1.4.32** · Moshi **1.9.3** · JDK **8** (build) ·
+compileSdk **30** · targetSdk **30** · minSdk **21** · NDK **21.4.7075529** · build-tools
+**30.0.2**. Repositories: `google()`, `mavenCentral()` only.
 
 ## Known Deferred Findings
 
 See [`docs/PROOTX_2_ROADMAP.md`](docs/PROOTX_2_ROADMAP.md#deferred-findings). Resolved: CI
-SDK setup (P1A), `jcenter()` (P1B), synthetic views (P1C1). Remaining Kotlin legacy (P1C2):
-`kotlin-android-extensions`, `androidExtensions`, `kotlinx.android.parcel.Parcelize`.
-Still open: `com.schibsted.spain:barista:3.1.0` (androidTest, JCenter-only); unused
-Sentry/Billing code (→ P1D); prebuilt rootfs profile remnant; network-dependent unit tests;
-Play-readiness gaps (→ P1E); dynamic time-based `versionCode`.
+SDK setup (P1A), `jcenter()` (P1B), synthetic views (P1C1), Kotlin↔Moshi version fork
+(P1C2-P). Remaining Kotlin legacy (→ P1C2 retry): `kotlin-android-extensions`,
+`androidExtensions`, `kotlinx.android.parcel.Parcelize`. Still open:
+`com.schibsted.spain:barista:3.1.0` (androidTest, JCenter-only); unused Sentry/Billing code
+(→ P1D); prebuilt rootfs profile remnant; network-dependent unit tests; Play-readiness gaps
+(→ P1E); dynamic time-based `versionCode`.
 
 ## Important Invariants
 
@@ -103,14 +91,16 @@ Play-readiness gaps (→ P1E); dynamic time-based `versionCode`.
 9. CI runs the Android SDK tooling under a modern JDK and the application build under JDK 8
    (`DECISIONS.md` D010). Gradle 6.7.1 / AGP 4.2.2 is an intentional bridge (`D011`).
 10. UI view access uses View Binding; synthetic views are forbidden (`D012`). Legacy
-    Parcelize remains until P1C2.
+    Parcelize remains until the P1C2 retry.
+11. Kotlin and Moshi move together (`D013`); Moshi **1.9.3** is the Kotlin 1.3→1.4 bridge
+    (`D014`).
 
 ## Next Safe Action
 
-**Coordinated P1C2 retry (requires authorization):** do Kotlin 1.3.61 → **1.4.32** and
-Moshi 1.8.0 → **1.11.0** together in one atomic migration (plus `kotlin-parcelize`,
-`androidExtensions` removal, and `kotlinx.android.parcel` → `kotlinx.parcelize` imports),
-then re-validate. Do not apply either change alone.
+**P1C2 retry (requires authorization)** — now a small hop on the bridge baseline: swap
+`kotlin-android-extensions` → `kotlin-parcelize`, remove `androidExtensions`, migrate
+`kotlinx.android.parcel` → `kotlinx.parcelize`, add the legacy-extensions guard, and
+re-validate. Kotlin 1.4.32 and Moshi 1.9.3 are already in place.
 
 ## Resume Procedure
 

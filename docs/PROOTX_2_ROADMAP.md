@@ -9,7 +9,9 @@
 >   - **P1B — Gradle / AGP Bridge Migration:** CLOSED / PASS
 >   - **P1C — Kotlin / Synthetics Migration:** IN PROGRESS
 >     - **P1C1 — Synthetic Views → View Binding:** CLOSED / PASS
->     - **P1C2 — Kotlin + Legacy Parcelize + Plugin Removal:** BLOCKED (pending Moshi bump)
+>     - **P1C2-U — Moshi Compatibility Unblocker:** CLOSED / BLOCKED (superseded)
+>     - **P1C2-P — Moshi 1.9.3 / Kotlin 1.4 Bridge Probe:** BRIDGE_FOUND
+>     - **P1C2 — Kotlin + Legacy Parcelize + Plugin Removal:** READY TO RETRY
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -147,16 +149,12 @@ deferred to the appropriate later phase.
    clean separation between a *candidate* version and the *last physically accepted*
    version (see `DECISIONS.md` D005). Recorded for a later release-contract milestone; not
    fixed in P0.5.
-10. **Kotlin 1.4 vs Moshi 1.8.0 (P1C2 blocker) + Moshi/Kotlin version fork (P1C2-U).**
-    Kotlin 1.4.32 cannot compile because Moshi 1.8.0's `moshi-kotlin-codegen` uses
-    `me.eugeniomarletti.kotlin.metadata`, which throws `KotlinNullPointerException` on
-    Kotlin 1.4 metadata (`:app:kaptDebugKotlin` failure). The P1C2-U unblocker then showed
-    the inverse problem: on the frozen Kotlin 1.3.61 state, Moshi **1.11.0** (and 1.10.0)
-    fail with `NoSuchMethodError: kotlin.jvm.internal.FunctionReferenceImpl.<init>(...)`
-    because their codegen is compiled against Kotlin 1.4; Moshi **1.9.3** passes on
-    Kotlin 1.3.61. **There is no Moshi version valid for both Kotlin 1.3 and 1.4**, so the
-    Moshi 1.11.0 bump and the Kotlin 1.4.32 migration must be performed **atomically**
-    (coordinated P1C2 retry).
+10. **Kotlin↔Moshi compatibility — RESOLVED in P1C2-P (bridge found).** Kotlin 1.4.32 was
+    incompatible with Moshi 1.8.0 (metadata `KotlinNullPointerException`), while Moshi
+    ≥1.10.0 could not run on Kotlin 1.3.61 (`NoSuchMethodError`). The previously untested
+    cell **Kotlin 1.4.32 + Moshi 1.9.3** passes kapt and a full build, so **Moshi 1.9.3 is
+    the bridge** across the Kotlin 1.3 → 1.4 boundary. Kotlin is now 1.4.32 and Moshi 1.9.3
+    (see `DECISIONS.md` D013/D014).
 
 ## Non-goals for P0
 
