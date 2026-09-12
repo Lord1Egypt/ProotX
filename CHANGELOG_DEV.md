@@ -146,3 +146,17 @@
   result, debug APK uploaded.
 - **P1C is now CLOSED / PASS.** Unchanged: Kotlin 1.4.32, Moshi 1.9.3, Gradle 6.7.1,
   AGP 4.2.2, SDK/NDK, other dependencies, runtime, visual design, assets.
+
+## P1D1 — Barista Removal / AndroidTest Build Restoration (2026-09-12) — PASS
+
+- Removed the JCenter-only `com.schibsted.spain:barista:3.1.0` androidTest dependency and
+  migrated its usage to direct AndroidX Espresso (core/contrib/intents **3.2.0**); added
+  `androidx.test.uiautomator:uiautomator:2.2.0` (previously transitive via Barista).
+- `EspressoHelpers` retry now catches only `NoMatchingViewException` / `AssertionFailedError`;
+  added Espresso equivalents for the six Barista helpers used by `MainActivityTest`.
+- Added `BaristaRemovalGuardTest`.
+- Restored `:app:assembleDebugAndroidTest` (previously failed: `Could not find
+  com.schibsted.spain:barista:3.1.0`) and added it as a CI gate + artifact upload.
+- Local: app + androidTest builds green; **318 tests / 28 suites / 0 failures**. Remote
+  (run `34712929161`, commit `45abb83`): all steps success, both APKs uploaded.
+- P1D remains IN PROGRESS; no production source change.

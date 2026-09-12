@@ -248,3 +248,23 @@
 - **Trade-offs:** None material; Parcelize behavior is unchanged and covered by
   `ParcelableContractTest`.
 - **Affected components:** `app/build.gradle`, model entities, tests, P1D+.
+
+---
+
+## D016 — androidTest uses AndroidX Espresso; Barista is forbidden
+
+- **Date:** 2026-09-12
+- **Status:** Accepted
+- **Decision:** Instrumented UI tests use direct AndroidX Espresso (core/contrib/intents at
+  one coherent 3.2.0 family) plus `uiautomator`. The JCenter-only
+  `com.schibsted.spain:barista` dependency is removed and its reinintroduction is blocked by
+  `BaristaRemovalGuardTest`. CI compiles `:app:assembleDebugAndroidTest` so androidTest
+  dependency resolution is a standing gate.
+- **Reason:** Barista 3.1.0 was published only to JCenter, which is sunset, so androidTest
+  no longer resolved; direct Espresso uses supported Google/Maven Central artifacts.
+- **Alternatives considered:** Upgrading to a newer Barista release under a different
+  artifact coordinate (rejected — the project wants one standard testing stack, no third-
+  party abstraction).
+- **Trade-offs:** Test helpers are slightly more verbose; a full Parcel/device round-trip is
+  still deferred to the Golden Candidate gate.
+- **Affected components:** `app/build.gradle`, `app/src/androidTest`, CI, P1D.

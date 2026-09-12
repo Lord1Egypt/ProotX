@@ -11,7 +11,9 @@
 >     - **P1C1 — Synthetic Views → View Binding:** CLOSED / PASS
 >     - **P1C2-P — Moshi 1.9.3 / Kotlin 1.4 Bridge Probe:** CLOSED / BRIDGE_FOUND
 >     - **P1C2 — Kotlin + Legacy Parcelize + Plugin Removal:** CLOSED / PASS
->   - **P1D — Dependency / AndroidX Modernization:** NOT STARTED
+>   - **P1D — Dependency / AndroidX Modernization:** IN PROGRESS
+>     - **P1D1 — Barista Removal / AndroidTest Build Restoration:** CLOSED / PASS
+>     - **P1D2 — Dependency/AndroidX Modernization:** NOT STARTED
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -134,10 +136,10 @@ deferred to the appropriate later phase.
 6. **`jcenter()` fallback repository — RESOLVED in P1B.** `jcenter()` was removed from
    `buildscript` and `allprojects`; the full build/test classpath resolves from
    `google()` + `mavenCentral()` (verified with a clean Gradle user home).
-   Residual: `com.schibsted.spain:barista:3.1.0` is an **androidTest-only** dependency
-   that was published only to JCenter and no longer resolves; it does not affect the debug
-   build or unit tests. A replacement (e.g. `com.adevinta.android:barista`) is deferred to
-   P1D dependency modernization.
+   Residual: `com.schibsted.spain:barista:3.1.0` (androidTest-only, JCenter-published) was
+   **RESOLVED in P1D1**: removed and replaced with direct AndroidX Espresso; the debug app
+   and unit tests were never affected. `BaristaRemovalGuardTest` blocks reintroduction and
+   CI now compiles `:app:assembleDebugAndroidTest`.
 7. **Network-dependent unit tests.** Some unit tests fetch live files over the network
    (raw GitHub asset catalog), making the test suite and CI network-dependent and flaky.
    Should be replaced with fixtures or mocked HTTP during modernization.

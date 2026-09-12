@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-12 (P1C2-R — Final Android Extensions / Parcelize migration)
+Last updated: 2026-09-12 (P1D1 — Barista removal / androidTest build restoration)
 
 ## Project Identity
 
@@ -30,21 +30,23 @@ Last updated: 2026-09-12 (P1C2-R — Final Android Extensions / Parcelize migrat
 | P1C2-U — Moshi Compatibility Unblocker | **CLOSED / BLOCKED (superseded)** |
 | P1C2-P — Moshi 1.9.3 / Kotlin 1.4 Bridge Probe | **CLOSED / BRIDGE_FOUND** |
 | P1C2 — Kotlin + Legacy Parcelize + Plugin Removal | **CLOSED / PASS** |
-| P1D — Dependency / AndroidX Modernization | **NOT STARTED** |
+| P1D — Dependency / AndroidX Modernization | **IN PROGRESS** |
+| P1D1 — Barista Removal / AndroidTest Build Restoration | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1C2-R — Final Android Extensions / Parcelize Migration: COMPLETE. P1C is CLOSED.**
-`kotlin-android-extensions` was replaced by `kotlin-parcelize`; the `androidExtensions`
-block was removed; all Parcelize imports migrated to `kotlinx.parcelize`; and a guard now
-prevents legacy Android Extensions from returning. Next milestone is **P1D** (not started).
+**P1D1 — Barista Removal / AndroidTest Build Restoration: COMPLETE.** The JCenter-only
+`com.schibsted.spain:barista:3.1.0` androidTest dependency was removed and its usage
+migrated to direct AndroidX Espresso; `:app:assembleDebugAndroidTest` now resolves and
+builds from `google()` + `mavenCentral()` and is enforced in CI. Next milestone is **P1D2**
+(dependency/AndroidX modernization; not started).
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `0c7a814cb097c41e004879d8352f8e3363f2937b` | P1C2-R commits (plugin, imports, guard); updated by the follow-up control-plane commit |
+| Feature HEAD | `45abb83d63c178992192808c7f225edf42a4a3b8` | P1D1 commits (Barista→Espresso, CI androidTest gate, guard); updated by the follow-up control-plane commit |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -62,7 +64,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Package | `io.github.lord1egypt.prootx` |
 | Source origin | Last self-contained public UserLAnd **v2.8.3** codebase (GPLv3) |
 | Unit tests (baseline) | **313 tests / 24 suites / 0 failures / 0 errors / 0 skipped** |
-| Unit tests (current) | **317 tests / 27 suites / 0 failures / 0 errors / 0 skipped** (+ P1C1/P1C2-R guards) |
+| Unit tests (current) | **318 tests / 28 suites / 0 failures / 0 errors / 0 skipped** (+ P1C1/P1C2-R/P1D1 guards) |
 | Baseline build | `./gradlew clean assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** |
 
 ## Current Toolchain
@@ -95,16 +97,18 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 the Gradle build. `google()` + `mavenCentral()` only. Pinned packages:
 `platforms;android-30`, `platforms;android-29`, `build-tools;30.0.2`, `ndk;21.4.7075529`.
 
-Verified remote evidence (P1C2-R):
+Verified remote evidence (P1D1):
 
 | Field | Value |
 |---|---|
-| Run | `34711411103` (push, commit `0c7a814`) — **success** |
-| Log proof | `Gradle 6.7.1`; JDK 17 bootstrap + JDK 8 build |
-| Remote test summary | `suites=27 tests=317 failures=0 errors=0 skipped=0` |
-| Artifact | `prootx-debug-apk` → `app-debug.apk` (18,588,889 bytes) |
-| Artifact SHA-256 | `69767be8ca3f28e229fb6e6cc1e0c686870d57c30f6b37e5c835fb8ca16c67d1` |
-| Artifact identity | package `io.github.lord1egypt.prootx`, versionName `1.0.0`, ABIs `arm64-v8a, armeabi-v7a, x86, x86_64` |
+| Run | `34712929161` (push, commit `45abb83`) — **success** |
+| Log proof | `Gradle 6.7.1`; JDK 17 bootstrap + JDK 8 build; two `BUILD SUCCESSFUL` (app + androidTest) |
+| Remote test summary | `suites=28 tests=318 failures=0 errors=0 skipped=0` |
+| Artifacts | `prootx-debug-apk` (app-debug.apk, 18,588,898 bytes) and `prootx-debug-androidTest-apk` (app-debug-androidTest.apk, 1,754,708 bytes) |
+| Artifact identity | app: `io.github.lord1egypt.prootx` / 1.0.0 / ABIs arm64-v8a, armeabi-v7a, x86, x86_64; androidTest: `io.github.lord1egypt.prootx.test` |
+
+The CI workflow now also runs `:app:assembleDebugAndroidTest` and uploads both APKs, so
+androidTest dependency resolution is a standing gate.
 
 ## Runtime State
 
@@ -134,12 +138,15 @@ The canonical list lives in
 - **Resolved in P1B:** `jcenter()` fallback repository.
 - **Resolved in P1C:** synthetic views; Kotlin↔Moshi version fork; legacy Android
   Extensions and legacy Parcelize package (all closed via P1C1/P1C2-P/P1C2-R).
-- **Still open:** `com.schibsted.spain:barista:3.1.0` (androidTest, JCenter-only);
-  unused Sentry/Billing code (→ P1D); prebuilt rootfs profile remnant; network-dependent
-  unit tests; Play-readiness gaps (→ P1E); dynamic time-based `versionCode`.
+- **Resolved in P1D1:** `com.schibsted.spain:barista:3.1.0` (androidTest JCenter debt);
+  androidTest resolves from `google()` + `mavenCentral()` and builds in CI.
+- **Still open:** unused Sentry/Billing code (→ P1D2); prebuilt rootfs profile remnant;
+  network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based
+  `versionCode`.
 
 ## Next Safe Action
 
-**P1D — Dependency / AndroidX modernization.**
+**P1D2 — dependency / AndroidX modernization** (e.g. inventory and handle unused
+Sentry/Billing code and remaining dependency debt).
 
-Do **not** start P1D from this document. A phase must be explicitly authorized.
+Do **not** start P1D2 from this document. A phase must be explicitly authorized.
