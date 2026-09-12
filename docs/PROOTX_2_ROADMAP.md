@@ -1,9 +1,14 @@
 # ProotX 2.0 — Development Roadmap
 
-> Status: **P0 — Baseline freeze and development safety** (this document)
+> Status:
+>
+> - **P0 — Baseline freeze and development safety:** CLOSED / PASS
+> - **P0.5 — Project Control Plane:** CURRENT (documentation/state only)
+> - **P1 — Android Modernization:** NOT STARTED
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
+> Current status lives in [`PROJECT_STATE.md`](../PROJECT_STATE.md).
 
 ## Program principles
 
@@ -126,6 +131,12 @@ deferred to the appropriate later phase.
 8. **Play readiness gaps.** `targetSdk` is 30 and the launcher activity lacks an explicit
    `android:exported` declaration required from target SDK 31+, so store-readiness work is
    required before any Play release.
+9. **Dynamic `versionCode`.** `versionCode` is generated from wall-clock time at Gradle
+   configuration time in `app/build.gradle`
+   (`def vcode = (int)(((new Date().getTime()/1000) - 1559347200) / 10)`). This prevents a
+   clean separation between a *candidate* version and the *last physically accepted*
+   version (see `DECISIONS.md` D005). Recorded for a later release-contract milestone; not
+   fixed in P0.5.
 
 ## Non-goals for P0
 
