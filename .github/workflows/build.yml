@@ -85,6 +85,33 @@ jobs:
       - name: Build and test (legacy toolchain)
         run: ./gradlew clean assembleDebug testDebugUnitTest --no-daemon
 
+      - name: Report unit test results
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import glob
+          import xml.etree.ElementTree as ET
+
+          files = glob.glob("app/build/test-results/testDebugUnitTest/*.xml")
+          if not files:
+              print("UNIT TEST RESULTS: no result files found")
+              raise SystemExit(0)
+
+          tests = failures = errors = skipped = 0
+          for path in files:
+              root = ET.parse(path).getroot()
+              tests += int(root.get("tests", 0))
+              failures += int(root.get("failures", 0))
+              errors += int(root.get("errors", 0))
+              skipped += int(root.get("skipped", 0))
+
+          print(
+              "UNIT TEST RESULTS: "
+              f"suites={len(files)} tests={tests} failures={failures} "
+              f"errors={errors} skipped={skipped}"
+          )
+          PY
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
