@@ -3,7 +3,7 @@ package io.github.lord1egypt.prootx.model.entities
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import android.os.Parcelable
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.Parcelize
 
 @Parcelize
 @Entity(tableName = "filesystem")
