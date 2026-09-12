@@ -112,8 +112,17 @@ jobs:
           )
           PY
 
+      - name: Build debug androidTest APK
+        run: ./gradlew :app:assembleDebugAndroidTest --no-daemon
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: prootx-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Upload debug androidTest APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: prootx-debug-androidTest-apk
+          path: app/build/outputs/apk/androidTest/debug/*.apk
