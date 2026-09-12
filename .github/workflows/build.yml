@@ -24,14 +24,13 @@ jobs:
       - name: Install NDK
         run: sdkmanager "ndk;21.4.7075529"
 
+      - name: Configure local.properties
+        run: echo "ndk.dir=$ANDROID_SDK_ROOT/ndk/21.4.7075529" > local.properties
+
       - name: Build debug APK
-        env:
-          ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/21.4.7075529
         run: ./gradlew assembleDebug
 
       - name: Run unit tests
-        env:
-          ANDROID_NDK_HOME: ${{ env.ANDROID_SDK_ROOT }}/ndk/21.4.7075529
         run: ./gradlew testDebugUnitTest
 
       - name: Upload APK
