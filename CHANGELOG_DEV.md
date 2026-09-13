@@ -174,3 +174,18 @@
 - Local: **319 tests / 29 suites / 0 failures**; app + androidTest builds green. Remote
   (run `34730775325`, commit `aec54c4`): all steps success, both APKs uploaded.
 - P1D remains IN PROGRESS; no production source change.
+
+## P1D3 — Lifecycle Extensions Removal / ViewModelProvider Migration (2026-09-12) — PASS
+
+- Removed the deprecated `androidx.lifecycle:lifecycle-extensions:2.2.0-alpha01` dependency
+  and declared the granular artifacts actually used at stable **2.2.0**:
+  `lifecycle-viewmodel` and `lifecycle-livedata`.
+- Migrated `ViewModelProviders.of(...)` → `ViewModelProvider(...)` in `MainActivity` and six
+  Fragments; the `ViewModelStoreOwner` (`this`) is unchanged, so Activity/Fragment scopes are
+  preserved.
+- Added `LifecycleModernizationGuardTest`.
+- `lifecycle-extensions` is **ABSENT** from debug/release graphs; no other dependency version
+  changed (Room 2.1.0-beta01, Navigation 2.1.0-alpha05, etc. untouched).
+- Local: **320 tests / 30 suites / 0 failures**; app + androidTest builds green. Remote
+  (run `34731759494`, commit `94ef87e`): all steps success, both APKs uploaded.
+- P1D remains IN PROGRESS; no behavior/UI change.

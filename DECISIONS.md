@@ -288,3 +288,24 @@
 - **Trade-offs:** If Play services functionality is ever needed, a dedicated milestone must
   add the specific artifact and update the guard.
 - **Affected components:** `app/build.gradle`, tests, P1D3+.
+
+---
+
+## D018 — Granular Lifecycle artifacts; `ViewModelProvider` API
+
+- **Date:** 2026-09-12
+- **Status:** Accepted
+- **Decision:** ProotX does not use the deprecated monolithic
+  `androidx.lifecycle:lifecycle-extensions`. It declares only the granular artifacts the
+  source needs at stable **2.2.0** (`lifecycle-viewmodel`, `lifecycle-livedata`) and acquires
+  ViewModels with direct `ViewModelProvider(...)` construction. `LifecycleModernizationGuardTest`
+  prevents reintroduction.
+- **Reason:** `lifecycle-extensions` is deprecated and pulled in unused artifacts
+  (`lifecycle-process`, `lifecycle-service`); `ViewModelProviders.of(...)` is deprecated in
+  favor of `ViewModelProvider(...)`.
+- **Alternatives considered:** Keeping `lifecycle-extensions` (rejected — deprecated);
+  using `by viewModels()`/`fragment-ktx` delegates (deferred — would couple to Fragment KTX
+  versions and is out of scope).
+- **Trade-offs:** `lifecycle-runtime` remains transitive at the version navigation requests
+  (2.1.0-beta01) since the source does not use its APIs directly; no force was applied.
+- **Affected components:** `app/build.gradle`, `MainActivity`, `ui/*Fragment`, tests, P1D4+.

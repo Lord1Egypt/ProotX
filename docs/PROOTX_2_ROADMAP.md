@@ -14,7 +14,8 @@
 >   - **P1D — Dependency / AndroidX Modernization:** IN PROGRESS
 >     - **P1D1 — Barista Removal / AndroidTest Build Restoration:** CLOSED / PASS
 >     - **P1D2 — Dead Play Services Dependency Cleanup:** CLOSED / PASS
->     - **P1D3 — Dependency/AndroidX Modernization:** NOT STARTED
+>     - **P1D3 — Lifecycle Extensions / ViewModelProvider Migration:** CLOSED / PASS
+>     - **P1D4 — Dependency/AndroidX Modernization:** NOT STARTED
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -164,6 +165,10 @@ deferred to the appropriate later phase.
     `ENABLE_PLAY_SERVICES` BuildConfig flag were removed; `play-services-base` is now
     **ABSENT** from all configurations and its manifest injections are gone. Guarded by
     `DeadPlayServicesGuardTest` (`DECISIONS.md` D017).
+12. **Deprecated Lifecycle extensions / ViewModelProviders — RESOLVED in P1D3.** The
+    monolithic `lifecycle-extensions` artifact was replaced by granular
+    `lifecycle-viewmodel`/`lifecycle-livedata` 2.2.0, and `ViewModelProviders.of(...)` was
+    migrated to `ViewModelProvider(...)` with scopes preserved (`DECISIONS.md` D018).
 
 ## Non-goals for P0
 
