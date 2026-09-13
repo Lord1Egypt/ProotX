@@ -255,7 +255,7 @@ dependencies {
     def kotlin_jdk_version = '1.4.32'
 
     // Androidx versions
-    def room_version = '2.1.0-beta01'
+    def room_version = '2.1.0'
     def lifecycle_version = '2.2.0'
     def support_library_version = '1.1.0-alpha06'
     def preference_version = '1.1.0-alpha05'
