@@ -16,7 +16,8 @@
 >     - **P1D2 — Dead Play Services Dependency Cleanup:** CLOSED / PASS
 >     - **P1D3 — Lifecycle Extensions / ViewModelProvider Migration:** CLOSED / PASS
 >     - **P1D4 — Navigation 2.1.0 Stable Migration:** CLOSED / PASS
->     - **P1D5 — Dependency/AndroidX Modernization:** NOT STARTED
+>     - **P1D5 — Room 2.1.0 Stable Migration:** CLOSED / PASS
+>     - **P1D6 — Dependency/AndroidX Modernization:** NOT STARTED
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -174,6 +175,9 @@ deferred to the appropriate later phase.
     2.1.0-alpha05 to **2.1.0** stable; the Kotlin JVM target was aligned to 1.8. Beneficial
     transitive stabilization: `androidx.fragment` → 1.1.0 and `lifecycle-runtime` /
     `lifecycle-viewmodel-ktx` → 2.1.0 (`DECISIONS.md` D019).
+14. **Pre-release Room baseline — RESOLVED in P1D5.** `room_version` moved from 2.1.0-beta01
+    to **2.1.0** stable. Zero database source change; exported schema 7 byte-identical (no
+    drift); DB version 7 and migrations untouched (`DECISIONS.md` D020).
 
 ## Non-goals for P0
 

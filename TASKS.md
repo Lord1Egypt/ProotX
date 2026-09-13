@@ -84,7 +84,11 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
     - [x] Move shared `navigation_version` 2.1.0-alpha05 → 2.1.0 stable
     - [x] Align Kotlin `jvmTarget` to 1.8 (Navigation ktx inline bytecode)
     - [x] Guard stable Navigation baseline
-  - [ ] **P1D5 — dependency/AndroidX modernization** (Sentry/Billing inventory, etc.)
+  - [x] **P1D5 — Room 2.1.0 stable migration** — PASS
+    - [x] Move shared `room_version` 2.1.0-beta01 → 2.1.0 stable
+    - [x] Verify zero database source change and no schema drift (schema 7 byte-identical)
+    - [x] Guard stable Room baseline
+  - [ ] **P1D6 — dependency/AndroidX modernization** (Sentry/Billing inventory, etc.)
   - [ ] Update AndroidX and third-party dependencies to supported versions
   - [ ] Remove unused Sentry / Play Billing code and billing permission
 - [ ] **P1E — SDK 36 / manifest compatibility**

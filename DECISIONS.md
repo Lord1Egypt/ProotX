@@ -327,3 +327,22 @@
 - **Trade-offs:** None material; beneficial transitive stabilization of `fragment` (1.1.0)
   and `lifecycle-runtime`/`lifecycle-viewmodel-ktx` (2.1.0).
 - **Affected components:** root `build.gradle`, `app/build.gradle`, tests, P1D5+.
+
+---
+
+## D020 — Room pinned to stable 2.1.0; database schema and migrations immutable
+
+- **Date:** 2026-09-12
+- **Status:** Accepted
+- **Decision:** The shared `room_version` is **2.1.0** (stable) for room-runtime,
+  room-compiler and room-testing. The database version (7), entities, DAOs, queries,
+  migration classes (`Migration1To2`–`Migration6To7`), the `Data.db` filename and the
+  exported schema history remain unchanged. `RoomStabilityGuardTest` prevents an accidental
+  pre-release regression.
+- **Reason:** Stabilize off the 2.1.0-beta01 pre-release within the same Room line without
+  touching the database contract; schema 7 is byte-identical (no drift).
+- **Alternatives considered:** Staying on 2.1.0-beta01 (rejected — pre-release); a Room
+  architecture refactor (out of scope).
+- **Trade-offs:** None material; migration tests remain instrumented (device execution
+  deferred to the Golden Candidate gate).
+- **Affected components:** `app/build.gradle`, tests, P1D6+.

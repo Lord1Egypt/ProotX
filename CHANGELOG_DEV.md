@@ -204,3 +204,16 @@
 - Local: **321 tests / 31 suites / 0 failures**; app + androidTest builds green. Remote
   (run `34733003165`, commit `9717d5b`): all steps success, both APKs uploaded.
 - P1D remains IN PROGRESS; runtime/UI unchanged.
+
+## P1D5 — Room 2.1.0 Stable Migration (2026-09-12) — PASS
+
+- Moved the shared `room_version` from 2.1.0-beta01 to **2.1.0** stable (room-runtime,
+  room-compiler, room-testing remain driven by it).
+- Zero database source change: `ProotXDatabase` version 7, entities, DAOs, queries,
+  `Migration1To2`–`Migration6To7`, `Data.db` filename and schema export are untouched.
+- Exported schema 7 is byte-identical (sha256 `3909bb12…`); no schema drift. No
+  destructive-migration option added.
+- Added `RoomStabilityGuardTest`.
+- Local: **322 tests / 32 suites / 0 failures**; app + androidTest builds green. Remote
+  (run `34734146196`, commit `a60a027`): all steps success, both APKs uploaded.
+- P1D remains IN PROGRESS; database/runtime/UI unchanged.
