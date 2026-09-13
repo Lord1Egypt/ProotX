@@ -18,8 +18,8 @@
 >     - **P1D4 — Navigation 2.1.0 Stable Migration:** CLOSED / PASS
 >     - **P1D5 — Room 2.1.0 Stable Migration:** CLOSED / PASS
 >     - **P1D6 — AndroidX Preference 1.1.0 Stable Migration:** CLOSED / PASS
->     - **P1D7 — Material Components 1.1.0 Stable Migration:** BLOCKED
->     - **P1D7-U — SwipeRefreshLayout Ownership + Material Retry:** BLOCKED (second missing transitive)
+>     - **P1D7 — Material Components 1.1.0 Stable Migration:** CLOSED / PASS
+>       - **P1D7-U2 — Explicit Legacy Replacements + Material Final Retry:** CLOSED / PASS
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -183,14 +183,13 @@ deferred to the appropriate later phase.
 15. **Pre-release Preference baseline — RESOLVED in P1D6.** `preference_version` moved from
     1.1.0-alpha05 to **1.1.0** stable with zero source/XML change; appcompat transitively
     stabilized to 1.1.0 (`DECISIONS.md` D021).
-16. **Material 1.1.0 stable drops `androidx.legacy` transitives (P1D7 / P1D7-U blocker).**
+16. **Material 1.1.0 stable drops `androidx.legacy` transitives — RESOLVED in P1D7-U2.**
     Material 1.1.0 stable's POM removes `androidx.legacy:legacy-support-core-ui`/
-    `legacy-support-core-utils`, which had been the only provider of two artifacts the app
-    consumes directly: `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`
-    (`SwipeRefreshLayout`) and `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0`
-    (`LocalBroadcastManager`). The first requires an explicit direct dependency; after it was
-    applied, the second surfaced. Both must be declared explicitly (authorization pending;
-    `DECISIONS.md` D022).
+    `legacy-support-core-utils`. The app directly consumes two artifacts those supplied
+    (`androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`, `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0`),
+    so ProotX now declares both directly and Material is on **1.1.0** stable
+    (`DECISIONS.md` D022). `androidx.legacy` remains only via `:terminal-term` (runtime) and
+    `espresso-contrib` (androidTest), which are legitimate parents.
 
 ## Non-goals for P0
 

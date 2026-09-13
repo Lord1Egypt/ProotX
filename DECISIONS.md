@@ -372,21 +372,21 @@
 ## D022 — Material transitives are not an API ownership contract (explicit direct deps)
 
 - **Date:** 2026-09-12
-- **Status:** Proposed (pending authorization — P1D7/P1D7-U are BLOCKED)
-- **Decision:** The Material 1.1.0 stable migration requires explicitly declaring the two
-  androidx artifacts that production code consumes directly but that Material alpha06 had
-  supplied only transitively (via `androidx.legacy:legacy-support-core-ui` /
-  `legacy-support-core-utils`):
-  1. `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` (`frag_app_list.xml`,
-     `AppsListFragment`, `EspressoHelpers`);
-  2. `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0` (`MainActivity`,
-     `ServerService`).
-- **Reason:** Material 1.1.0 stable drops the `androidx.legacy` transitives. The app's direct
-  consumption of these APIs means it owns the dependency; relying on another library's
-  transitives is not an API contract.
+- **Status:** Accepted (P1D7-U2)
+- **Decision:** ProotX directly declares every library it directly consumes. Specifically it
+  owns `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` and
+  `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0`, which Material 1.1.0-alpha06
+  had supplied only transitively through `androidx.legacy:legacy-support-core-ui` /
+  `legacy-support-core-utils`. Material moved to **1.1.0** stable with these declarations in
+  place.
+- **Reason:** Material 1.1.0 stable drops the `androidx.legacy` transitives. The app consumes
+  `SwipeRefreshLayout` (`frag_app_list.xml`, `AppsListFragment`, `EspressoHelpers`) and
+  `LocalBroadcastManager` (`MainActivity`, `ServerService`) directly, so it owns those
+  dependencies; another library's transitives are not an API ownership contract.
 - **Alternatives considered:** Staying on Material 1.1.0-alpha06 (keeps a pre-release);
-  removing `SwipeRefreshLayout`/`LocalBroadcastManager` (rejected — behavior/UI change);
-  adding only one of the two (rejected — the build fails on the other).
-- **Trade-offs:** Adds two explicit androidx UI dependencies; no behavior change. Requires
-  authorization because it exceeds the milestone's single-dependency scope.
-- **Affected components:** `app/build.gradle`, P1D7 retry.
+  replacing `SwipeRefreshLayout`/`LocalBroadcastManager` (rejected — behavior/UI change);
+  declaring only one (rejected — the build fails on the other).
+- **Trade-offs:** Adds two explicit androidx UI dependencies; no behavior change.
+  `LocalBroadcastManager` is deprecated technology — its eventual replacement is recorded as
+  deferred debt, not done here.
+- **Affected components:** `app/build.gradle`, `P1D7-U2`, `P1D8+`.

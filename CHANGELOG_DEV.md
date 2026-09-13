@@ -258,3 +258,18 @@
   the experiment was stopped: both changes reverted; no commits; branch green.
 - Required next step: authorize `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0`
   in addition, then retry Material 1.1.0 stable.
+
+## P1D7-U2 — Explicit Legacy Replacements + Material Final Retry (2026-09-12) — PASS
+
+- Pre-flight audit of the `androidx.legacy` child artifacts found no third disappearing direct
+  consumer (only SwipeRefreshLayout + LocalBroadcastManager).
+- Declared both explicitly: `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` and
+  `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0` (validated under Material
+  alpha06).
+- Moved Material `1.1.0-alpha06` → **1.1.0** stable; the app's compile classpath no longer
+  needs `androidx.legacy` (it remains only via `:terminal-term` at runtime and
+  `espresso-contrib` in androidTest — legitimate parents, not excluded).
+- Added `MaterialDependencyOwnershipGuardTest`.
+- Local: **324 tests / 34 suites / 0 failures**; app + androidTest builds green. Remote
+  (run `34738845782`, commit `7be3462`): all steps success, both APKs uploaded.
+- **P1D7 is CLOSED.** No production source/resource change.

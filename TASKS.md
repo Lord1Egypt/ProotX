@@ -92,16 +92,14 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
     - [x] Move shared `preference_version` 1.1.0-alpha05 → 1.1.0 stable
     - [x] Verify zero source/XML change (settings keys/defaults/dependencies frozen)
     - [x] Guard stable Preference baseline
-  - [!] **P1D7 — Material Components 1.1.0 stable migration** — BLOCKED
-    - [!] Material 1.1.0 stable drops `legacy-support-core-ui`/`core-utils`, removing
-      transitive `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`
-    - Blocker: app uses `SwipeRefreshLayout` directly (`frag_app_list.xml`) → build fails;
-      requires an explicit `androidx.swiperefreshlayout` dependency (outside authorized scope)
-  - [!] **P1D7-U — SwipeRefreshLayout ownership + Material retry** — BLOCKED
-    - [x] Add explicit `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` (validated under Material alpha06)
-    - [!] Material 1.1.0 retry exposed a **second** missing transitive:
-      `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0` (consumed by
-      `MainActivity`/`ServerService`) — outside P1D7-U's single-dependency authorization → reverted
+  - [x] **P1D7 — Material Components 1.1.0 stable migration** — PASS
+    - [x] Material `1.1.0-alpha06` → `1.1.0` stable
+  - [x] **P1D7-U — SwipeRefreshLayout ownership + Material retry** — CLOSED (superseded by P1D7-U2)
+  - [x] **P1D7-U2 — Explicit legacy replacements + Material final retry** — PASS
+    - [x] Declare `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` directly
+    - [x] Declare `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0` directly
+    - [x] Material 1.1.0 stable (androidx.legacy no longer needed on the compile classpath)
+    - [x] Guard Material dependency ownership
   - [ ] **P1D8 — dependency/AndroidX modernization** (Sentry/Billing inventory, etc.)
   - [ ] Update AndroidX and third-party dependencies to supported versions
   - [ ] Remove unused Sentry / Play Billing code and billing permission
