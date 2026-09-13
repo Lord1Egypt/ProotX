@@ -100,9 +100,14 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
     - [x] Declare `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0` directly
     - [x] Material 1.1.0 stable (androidx.legacy no longer needed on the compile classpath)
     - [x] Guard Material dependency ownership
-  - [ ] **P1D8 — dependency/AndroidX modernization** (Sentry/Billing inventory, etc.)
+  - [x] **P1D8 — Arch Core testing 2.1.0 stabilization** — PASS
+    - [x] `core_testing_version` 2.0.0-beta01 → 2.1.0 (test + androidTest)
+    - [x] Arch Core family coherent at 2.1.0; production source/runtime unchanged
+    - [x] Guard stable Arch Core testing baseline
+  - [ ] **P1D9 — dependency/AndroidX modernization** (remaining dependency debt)
   - [ ] Update AndroidX and third-party dependencies to supported versions
-  - [ ] Remove unused Sentry / Play Billing code and billing permission
+  - [ ] Sentry/Billing: **ACTIVE** production code — requires a dedicated decision before any change
+        (not "unused")
 - [ ] **P1E — SDK 36 / manifest compatibility**
   - [ ] Raise `compileSdk`/`targetSdk`; add `android:exported` and related manifest work
 - [ ] **P1F — Modern native/NDK and 16 KB page readiness**

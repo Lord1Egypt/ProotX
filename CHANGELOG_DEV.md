@@ -273,3 +273,16 @@
 - Local: **324 tests / 34 suites / 0 failures**; app + androidTest builds green. Remote
   (run `34738845782`, commit `7be3462`): all steps success, both APKs uploaded.
 - **P1D7 is CLOSED.** No production source/resource change.
+
+## P1D8 — Arch Core Testing 2.1.0 Stabilization (2026-09-12) — PASS
+
+- Moved the test-only shared `core_testing_version` from 2.0.0-beta01 to **2.1.0** stable
+  (`testImplementation` and `androidTestImplementation` remain driven by it), resolving the
+  mixed Arch Core family (`core-testing` beta alongside `core-common`/`core-runtime` 2.1.0).
+- No test-source change and no production change; `InstantTaskExecutorRule` consumers compile
+  unchanged (8 JVM tests, 4 androidTest tests).
+- Added `ArchCoreTestingGuardTest`.
+- Local: **325 tests / 35 suites / 0 failures**; app + androidTest builds green. Remote
+  (run `34740381789`, commit `b53ca39`): all steps success, both APKs uploaded.
+- Note: Sentry and Billing are ACTIVE production dependencies; untouched.
+- P1D remains IN PROGRESS.

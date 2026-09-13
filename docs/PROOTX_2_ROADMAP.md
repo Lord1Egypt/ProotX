@@ -20,6 +20,7 @@
 >     - **P1D6 — AndroidX Preference 1.1.0 Stable Migration:** CLOSED / PASS
 >     - **P1D7 — Material Components 1.1.0 Stable Migration:** CLOSED / PASS
 >       - **P1D7-U2 — Explicit Legacy Replacements + Material Final Retry:** CLOSED / PASS
+>     - **P1D8 — Arch Core Testing 2.1.0 Stabilization:** CLOSED / PASS
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -131,10 +132,11 @@ deferred to the appropriate later phase.
    removed and replaced with `kotlin-parcelize` / `kotlinx.parcelize.Parcelize`. Two guard
    tests (`SyntheticViewImportsTest`, `LegacyAndroidExtensionsGuardTest`) prevent
    reintroduction.
-4. **Unused monetization and telemetry code.** Sentry integration (older `sentry-android`,
-   no DSN configured) and Google Play Billing code remain present, along with the
-   `com.android.vending.BILLING` permission. Legally/branding inert but should be removed
-   during modernization.
+4. **Sentry and Billing are ACTIVE — not unused.** `SentryLogger`/Sentry are used by
+   production logging/repository/runtime paths, and `BillingManager`/`BillingClient`/`Purchase`
+   are used by production purchase/contribution paths (plus the `com.android.vending.BILLING`
+   permission). Both are intentionally left untouched; any change requires a dedicated
+   milestone/decision.
 5. **Prebuilt rootfs blobs.** Released distribution rootfs archives were built before the
    profile script rename and still contain an internal `/etc/profile.d/prootx.sh` from the
    old build. Distribution assets must not be modified in this phase; regenerate them in a
@@ -190,6 +192,9 @@ deferred to the appropriate later phase.
     so ProotX now declares both directly and Material is on **1.1.0** stable
     (`DECISIONS.md` D022). `androidx.legacy` remains only via `:terminal-term` (runtime) and
     `espresso-contrib` (androidTest), which are legitimate parents.
+17. **Pre-release/misaligned `core-testing` — RESOLVED in P1D8.** The test-only
+    `androidx.arch.core:core-testing` moved from 2.0.0-beta01 to **2.1.0** stable, aligning it
+    with `core-common`/`core-runtime` (both already 2.1.0). Test-only; production unchanged.
 
 ## Non-goals for P0
 

@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-12 (P1D7-U2 — Explicit legacy replacements + Material final retry: PASS)
+Last updated: 2026-09-12 (P1D8 — Arch Core testing 2.1.0 stabilization: PASS)
 
 ## Current Objective
 
@@ -13,22 +13,20 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1D7-U2 — Explicit Legacy Replacements + Material Final Retry**: **PASS**.
-ProotX now directly declares `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` and
-`androidx.localbroadcastmanager:localbroadcastmanager:1.0.0`; Material moved to **1.1.0**
-stable. **P1D7 is CLOSED.**
+**P1D8 — Arch Core Testing 2.1.0 Stabilization**: **PASS**.
+The test-only shared `core_testing_version` moved from 2.0.0-beta01 to **2.1.0** stable; Arch
+Core family now coherent at 2.1.0. No production change.
 
 ## Current Milestone
 
-**P1D8 — dependency / AndroidX modernization**: NOT STARTED.
+**P1D9 — dependency / AndroidX modernization**: NOT STARTED.
 
 ## What Was Completed
 
-- Added the two explicit direct dependencies the app consumes (previously only transitive via
-  Material alpha's `androidx.legacy` graph).
-- Moved Material `1.1.0-alpha06` → **1.1.0** stable; `androidx.legacy` is no longer required
-  by the app's compile classpath.
-- Added `MaterialDependencyOwnershipGuardTest`.
+- Moved `core_testing_version` `2.0.0-beta01` → `2.1.0` (both `testImplementation` and
+  `androidTestImplementation` remain driven by it).
+- Resolved the mixed Arch Core family.
+- Added `ArchCoreTestingGuardTest`.
 
 ## What Was Intentionally NOT Changed
 
@@ -43,7 +41,7 @@ stable. **P1D7 is CLOSED.**
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (P1D7-U2) | `7be3462d2d755ab82551e24bde8f1cb46befafc4` |
+| Feature HEAD (P1D8) | `b53ca3926842af0cd88a6b526b2cdf0e6e23b7ff` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -52,13 +50,14 @@ stable. **P1D7 is CLOSED.**
 
 Commit `94abf5fa520255bb10d087a6be3ba2bc70b0e127`, package
 `io.github.lord1egypt.prootx`, version `1.0.0`. Baseline tests **313 / 24 suites**; current
-tests **324 / 34 suites** (guard/contract tests).
+tests **325 / 35 suites** (guard/contract tests).
 
 ## Current Toolchain
 
 Gradle **6.7.1** · AGP **4.2.2** · Kotlin **1.4.32** (jvmTarget 1.8) · Moshi **1.9.3** ·
 Navigation **2.1.0** · Room **2.1.0** · Preference **1.1.0** · Material **1.1.0** ·
-SwipeRefreshLayout **1.0.0** / LocalBroadcastManager **1.0.0** (direct) · Lifecycle **2.2.0** ·
+SwipeRefreshLayout **1.0.0** / LocalBroadcastManager **1.0.0** (direct) · Arch Core testing
+**2.1.0** (test-only) · Lifecycle **2.2.0** ·
 plugin **`kotlin-parcelize`** · JDK **8** (build) · compileSdk **30** · targetSdk **30** ·
 minSdk **21** · NDK **21.4.7075529** · build-tools **30.0.2**. Repositories: `google()`,
 `mavenCentral()`.
@@ -68,9 +67,10 @@ minSdk **21** · NDK **21.4.7075529** · build-tools **30.0.2**. Repositories: `
 See [`docs/PROOTX_2_ROADMAP.md`](docs/PROOTX_2_ROADMAP.md#deferred-findings). Resolved: CI
 SDK setup (P1A), `jcenter()` (P1B), Kotlin/Android Extensions (P1C), Barista (P1D1), dead
 Play Services (P1D2), Lifecycle extensions (P1D3), Navigation pre-release (P1D4), Room
-pre-release (P1D5), Preference pre-release (P1D6), Material pre-release (P1D7). Still open:
-unused Sentry/Billing code (→ P1D8); prebuilt rootfs profile remnant; network-dependent unit
-tests; Play-readiness gaps (→ P1E); dynamic time-based `versionCode`;
+pre-release (P1D5), Preference pre-release (P1D6), Material pre-release (P1D7), Arch Core
+testing pre-release (P1D8). **Sentry and Billing are ACTIVE production dependencies, not
+unused; both were left untouched.** Still open: prebuilt rootfs profile remnant;
+network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based `versionCode`;
 `LocalBroadcastManager` modernization (deprecated tech, deferred).
 
 **Deferred physical checks:** the `EditTextPreference` numeric input and all Material widget
@@ -90,12 +90,13 @@ verified on a device at the Golden Candidate gate; no physical acceptance is cla
 7. Published history is immutable: no force-push, no history rewrite.
 8. One milestone at a time; respect STOP gates.
 9. Established durable decisions: D010, D011, D012/D015, D013/D014, D016, D017, D018, D019,
-   D020, D021 (Preference 1.1.0), D022 (directly consumed libraries must be directly declared).
+   D020, D021, D022.
 
 ## Next Safe Action
 
-**P1D8 — dependency / AndroidX modernization** (inventory and handle unused Sentry/Billing and
-remaining dependency debt). Do not begin without explicit authorization.
+**P1D9 — dependency / AndroidX modernization** (remaining dependency debt; note Sentry and
+Billing are active and require a dedicated decision before any change). Do not begin without
+explicit authorization.
 
 ## Resume Procedure
 

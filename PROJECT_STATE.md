@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-12 (P1D7-U2 — Explicit legacy replacements + Material final retry: PASS)
+Last updated: 2026-09-12 (P1D8 — Arch Core testing 2.1.0 stabilization)
 
 ## Project Identity
 
@@ -38,26 +38,23 @@ Last updated: 2026-09-12 (P1D7-U2 — Explicit legacy replacements + Material fi
 | P1D5 — Room 2.1.0 Stable Migration | **CLOSED / PASS** |
 | P1D6 — AndroidX Preference 1.1.0 Stable Migration | **CLOSED / PASS** |
 | P1D7 — Material Components 1.1.0 Stable Migration | **CLOSED / PASS** |
+| P1D8 — Arch Core Testing 2.1.0 Stabilization | **CLOSED / PASS** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1D7-U2 — Explicit Legacy Replacements + Material Final Retry: COMPLETE. P1D7 is CLOSED.**
-ProotX now declares the two libraries it consumes directly —
-`androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` and
-`androidx.localbroadcastmanager:localbroadcastmanager:1.0.0` — which Material 1.1.0-alpha06
-had supplied only through its `androidx.legacy` transitives. Material then moved to **1.1.0**
-stable; the app's compile classpath no longer needs `androidx.legacy` (it remains only via
-`:terminal-term` at runtime and `espresso-contrib` in androidTest). Next milestone is **P1D8**
-(not started).
+**P1D8 — Arch Core Testing 2.1.0 Stabilization: COMPLETE.** The test-only shared
+`core_testing_version` moved from 2.0.0-beta01 to **2.1.0** stable, resolving the mixed Arch
+Core family (core-testing beta alongside core-common/core-runtime 2.1.0). No production
+source/runtime change. Next milestone is **P1D9** (not started).
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `7be3462d2d755ab82551e24bde8f1cb46befafc4` | P1D7-U2 commits (explicit deps, Material 1.1.0, guard); updated by the follow-up control-plane commit |
+| Feature HEAD | `b53ca3926842af0cd88a6b526b2cdf0e6e23b7ff` | P1D8 commits (core-testing 2.1.0, guard); updated by the follow-up control-plane commit |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -75,7 +72,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Package | `io.github.lord1egypt.prootx` |
 | Source origin | Last self-contained public UserLAnd **v2.8.3** codebase (GPLv3) |
 | Unit tests (baseline) | **313 tests / 24 suites / 0 failures / 0 errors / 0 skipped** |
-| Unit tests (current) | **324 tests / 34 suites / 0 failures / 0 errors / 0 skipped** (+ P1C1/P1C2-R/P1D1/P1D2/P1D3/P1D4/P1D5/P1D6/P1D7 guards) |
+| Unit tests (current) | **325 tests / 35 suites / 0 failures / 0 errors / 0 skipped** (+ P1C1/P1C2-R/P1D1..P1D8 guards) |
 | Baseline build | `./gradlew clean assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** |
 
 ## Current Toolchain
@@ -92,6 +89,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Material Components | 1.1.0 (stable) |
 | SwipeRefreshLayout (direct) | 1.0.0 |
 | LocalBroadcastManager (direct) | 1.0.0 |
+| Arch Core testing (test-only) | 2.1.0 |
 | AndroidX Lifecycle (direct) | 2.2.0 (`lifecycle-viewmodel`, `lifecycle-livedata`) |
 | Parcelize plugin | `kotlin-parcelize` (legacy `kotlin-android-extensions` removed) |
 | JDK for the Gradle build | 8 |
@@ -115,14 +113,14 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 the Gradle build. `google()` + `mavenCentral()` only. Pinned packages:
 `platforms;android-30`, `platforms;android-29`, `build-tools;30.0.2`, `ndk;21.4.7075529`.
 
-Verified remote evidence (P1D7-U2):
+Verified remote evidence (P1D8):
 
 | Field | Value |
 |---|---|
-| Run | `34738845782` (push, commit `7be3462`) — **success** |
+| Run | `34740381789` (push, commit `b53ca39`) — **success** |
 | Log proof | `Gradle 6.7.1`; JDK 17 bootstrap + JDK 8 build; two `BUILD SUCCESSFUL` (app + androidTest) |
-| Remote test summary | `suites=34 tests=324 failures=0 errors=0 skipped=0` |
-| Artifacts | `prootx-debug-apk` (APK 18,264,947 bytes; ZIP 17,449,104 bytes) and `prootx-debug-androidTest-apk` (APK 1,819,901 bytes; ZIP 1,367,426 bytes) |
+| Remote test summary | `suites=35 tests=325 failures=0 errors=0 skipped=0` |
+| Artifacts | `prootx-debug-apk` (APK 18,264,935 bytes; ZIP 17,449,100 bytes) and `prootx-debug-androidTest-apk` (APK 1,819,890 bytes; ZIP 1,367,415 bytes) |
 | Artifact identity | app: `io.github.lord1egypt.prootx` / 1.0.0 / ABIs arm64-v8a, armeabi-v7a, x86, x86_64; androidTest: `io.github.lord1egypt.prootx.test` |
 
 The CI workflow now also runs `:app:assembleDebugAndroidTest` and uploads both APKs, so
@@ -174,13 +172,18 @@ The canonical list lives in
   consumes directly (`swiperefreshlayout:1.0.0`, `localbroadcastmanager:1.0.0`) that Material
   alpha previously supplied via `androidx.legacy`; Material's legacy transitive graph is not an
   API ownership contract (`DECISIONS.md` D022 accepted).
-- **Still open:** unused Sentry/Billing code (→ P1D8); prebuilt rootfs profile remnant;
-  network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based
-  `versionCode`; LocalBroadcastManager modernization (deprecated tech; deferred).
+- **Resolved in P1D8:** pre-release/misaligned `core-testing` (2.0.0-beta01 → **2.1.0** stable);
+  Arch Core family now coherent at 2.1.0. Test-only.
+- **Correction:** Sentry and Billing are **ACTIVE** production dependencies (SentryLogger /
+  Sentry; BillingManager / BillingClient / Purchase) — they are **not** unused and were left
+  untouched.
+- **Still open:** prebuilt rootfs profile remnant; network-dependent unit tests; Play-readiness
+  gaps (→ P1E); dynamic time-based `versionCode`; LocalBroadcastManager modernization
+  (deprecated tech; deferred).
 
 ## Next Safe Action
 
-**P1D8 — dependency / AndroidX modernization** (e.g. inventory and handle the remaining unused
-Sentry/Billing code and other dependency debt).
+**P1D9 — dependency / AndroidX modernization** (remaining dependency debt; Sentry and Billing
+are active and require a dedicated inventory/decision before any change).
 
-Do **not** start P1D8 from this document. A phase must be explicitly authorized.
+Do **not** start P1D9 from this document. A phase must be explicitly authorized.
