@@ -279,6 +279,10 @@ dependencies {
     implementation "androidx.preference:preference:$preference_version"
 
     implementation "com.google.android.material:material:$support_library_version"
+    // Directly consumed by the app; previously supplied only by Material alpha's
+    // androidx.legacy transitives (removed in Material 1.1.0 stable).
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.0.0'
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
     ktlint "com.pinterest:ktlint:0.32.0"
     implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
     implementation "com.squareup.moshi:moshi:$moshi_version"
