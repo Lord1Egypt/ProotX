@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-12 (P1D6 — AndroidX Preference 1.1.0 stable migration)
+Last updated: 2026-09-12 (P1D7 — Material 1.1.0 stable migration: BLOCKED)
 
 ## Project Identity
 
@@ -37,20 +37,26 @@ Last updated: 2026-09-12 (P1D6 — AndroidX Preference 1.1.0 stable migration)
 | P1D4 — Navigation 2.1.0 Stable Migration | **CLOSED / PASS** |
 | P1D5 — Room 2.1.0 Stable Migration | **CLOSED / PASS** |
 | P1D6 — AndroidX Preference 1.1.0 Stable Migration | **CLOSED / PASS** |
+| P1D7 — Material Components 1.1.0 Stable Migration | **BLOCKED** |
 
 ## Current Milestone
 
-**P1D6 — AndroidX Preference 1.1.0 Stable Migration: COMPLETE.** The shared
-`preference_version` moved from 1.1.0-alpha05 to **1.1.0** stable with zero source/XML change;
-beneficial transitive stabilization of appcompat to 1.1.0. Next milestone is **P1D7**
-(not started).
+**P1D7 — Material Components 1.1.0 Stable Migration: BLOCKED.** Bumping
+`com.google.android.material:material` 1.1.0-alpha06 → 1.1.0 removes the
+`androidx.legacy:legacy-support-core-ui`/`legacy-support-core-utils` transitives, which were
+the only source of `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`. The app uses
+`SwipeRefreshLayout` directly (`frag_app_list.xml`), so the build fails with
+`cannot find symbol: class SwipeRefreshLayout`. The minimal fix is to declare that dependency
+explicitly, which is **outside** the authorized "only Material moves" scope. No changes were
+committed; Material was reverted to 1.1.0-alpha06 and the branch remains green. Prior
+milestone **P1D6** is COMPLETE.
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `787ab91dea741802497b1882abdc3aeac7e8835a` | P1D6 commits (Preference 1.1.0, guard); updated by the follow-up control-plane commit |
+| Feature HEAD | `c50c8a2ce2206035ea946faa628eba493f57cf2f` | P1D6 docs tip; P1D7 blocked with no change (updated by the follow-up control-plane commit) |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -160,13 +166,22 @@ The canonical list lives in
   byte-identical; DB version 7, migrations and `Data.db` unchanged.
 - **Resolved in P1D6:** pre-release Preference baseline (1.1.0-alpha05 → **1.1.0** stable).
   Zero source/XML change; appcompat transitively stabilized to 1.1.0.
+- **P1D7 BLOCKER (new):** Material **1.1.0** stable drops the
+  `androidx.legacy:legacy-support-core-ui`/`legacy-support-core-utils` transitives that
+  supplied `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`; the app's direct use of
+  `SwipeRefreshLayout` (`frag_app_list.xml`) then fails to compile
+  (`cannot find symbol: class SwipeRefreshLayout`). Minimal fix: declare
+  `androidx.swiperefreshlayout:swiperefreshlayout` explicitly. Requires authorization
+  (outside the "only Material moves" scope).
 - **Still open:** unused Sentry/Billing code (→ P1D7); prebuilt rootfs profile remnant;
   network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based
   `versionCode`.
 
 ## Next Safe Action
 
-**P1D7 — dependency / AndroidX modernization** (e.g. inventory and handle the remaining
-unused Sentry/Billing code and other dependency debt).
+**Authorization decision for P1D7:** permit adding the explicit
+`androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` dependency (restoring the dependency
+Material alpha06 previously supplied transitively) so the Material 1.1.0 stable migration can
+proceed; otherwise leave Material at 1.1.0-alpha06.
 
-Do **not** start P1D7 from this document. A phase must be explicitly authorized.
+Do **not** apply either change from this document. A phase must be explicitly authorized.

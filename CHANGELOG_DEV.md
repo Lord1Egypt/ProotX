@@ -231,3 +231,17 @@
   (run `34734985029`, commit `787ab91`): all steps success, both APKs uploaded.
 - Physical settings-screen verification (numeric input) deferred to the Golden Candidate
   gate. P1D remains IN PROGRESS; runtime/UI intentionally unchanged.
+
+## P1D7 — Material Components 1.1.0 Stable Migration (2026-09-12) — BLOCKED
+
+- Attempted Material `1.1.0-alpha06` → `1.1.0` stable.
+- Build failed: generated `FragAppListBinding` — `cannot find symbol: class SwipeRefreshLayout`.
+- Root cause: Material 1.1.0 stable's POM drops `androidx.legacy:legacy-support-core-ui`
+  and `legacy-support-core-utils`; those were the only provider of
+  `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`. The app uses `SwipeRefreshLayout`
+  directly (`frag_app_list.xml`, `AppsListFragment`, `EspressoHelpers`).
+- Minimal fix is an explicit `androidx.swiperefreshlayout:swiperefreshlayout` dependency —
+  outside the milestone's "only Material moves" scope. Per the STOP rules, no dependency
+  change was made; Material was reverted to 1.1.0-alpha06 and the branch is green.
+- Required next step: authorize the explicit swiperefreshlayout dependency (then retry
+  P1D7), or leave Material at 1.1.0-alpha06. No P1D7 commits.

@@ -18,7 +18,7 @@
 >     - **P1D4 — Navigation 2.1.0 Stable Migration:** CLOSED / PASS
 >     - **P1D5 — Room 2.1.0 Stable Migration:** CLOSED / PASS
 >     - **P1D6 — AndroidX Preference 1.1.0 Stable Migration:** CLOSED / PASS
->     - **P1D7 — Dependency/AndroidX Modernization:** NOT STARTED
+>     - **P1D7 — Material Components 1.1.0 Stable Migration:** BLOCKED (needs explicit swiperefreshlayout)
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -182,6 +182,13 @@ deferred to the appropriate later phase.
 15. **Pre-release Preference baseline — RESOLVED in P1D6.** `preference_version` moved from
     1.1.0-alpha05 to **1.1.0** stable with zero source/XML change; appcompat transitively
     stabilized to 1.1.0 (`DECISIONS.md` D021).
+16. **Material 1.1.0 stable drops `androidx.legacy` transitives (P1D7 blocker).** Material
+    1.1.0 stable's POM removes `androidx.legacy:legacy-support-core-ui`/
+    `legacy-support-core-utils`, which had been the only provider of
+    `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`. The app uses `SwipeRefreshLayout`
+    directly, so the build fails (`cannot find symbol: class SwipeRefreshLayout`). Requires an
+    explicit `androidx.swiperefreshlayout` dependency (authorization pending; `DECISIONS.md`
+    D022).
 
 ## Non-goals for P0
 

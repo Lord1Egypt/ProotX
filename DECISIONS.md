@@ -366,3 +366,22 @@
   device at the Golden Candidate gate.
 - **Affected components:** `app/build.gradle`, `ui/SettingsFragment`, `res/xml/preferences.xml`,
   tests, P1D7+.
+
+---
+
+## D022 — Explicit `swiperefreshlayout` dependency required for Material 1.1.0
+
+- **Date:** 2026-09-12
+- **Status:** Proposed (pending authorization — P1D7 is BLOCKED)
+- **Decision:** The Material 1.1.0 stable migration requires declaring
+  `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` explicitly, because Material 1.1.0
+  drops the `androidx.legacy:legacy-support-core-ui`/`legacy-support-core-utils` transitives
+  that previously supplied it.
+- **Reason:** The app uses `SwipeRefreshLayout` directly (`frag_app_list.xml`,
+  `AppsListFragment`, `EspressoHelpers`). Without the transitive, the generated
+  `FragAppListBinding` fails to compile (`cannot find symbol: class SwipeRefreshLayout`).
+- **Alternatives considered:** Staying on Material 1.1.0-alpha06 (keeps a pre-release);
+  removing `SwipeRefreshLayout` (rejected — behavior/UI change, out of scope).
+- **Trade-offs:** Adds one explicit androidx UI dependency; no behavior change. Requires
+  authorization because it is outside the "only Material moves" milestone scope.
+- **Affected components:** `app/build.gradle`, P1D7 retry.

@@ -92,7 +92,12 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
     - [x] Move shared `preference_version` 1.1.0-alpha05 → 1.1.0 stable
     - [x] Verify zero source/XML change (settings keys/defaults/dependencies frozen)
     - [x] Guard stable Preference baseline
-  - [ ] **P1D7 — dependency/AndroidX modernization** (Sentry/Billing inventory, etc.)
+  - [!] **P1D7 — Material Components 1.1.0 stable migration** — BLOCKED
+    - [!] Material 1.1.0 stable drops `legacy-support-core-ui`/`core-utils`, removing
+      transitive `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`
+    - Blocker: app uses `SwipeRefreshLayout` directly (`frag_app_list.xml`) → build fails;
+      requires an explicit `androidx.swiperefreshlayout` dependency (outside authorized scope)
+  - [ ] **P1D8 — dependency/AndroidX modernization** (Sentry/Billing inventory, etc.)
   - [ ] Update AndroidX and third-party dependencies to supported versions
   - [ ] Remove unused Sentry / Play Billing code and billing permission
 - [ ] **P1E — SDK 36 / manifest compatibility**
