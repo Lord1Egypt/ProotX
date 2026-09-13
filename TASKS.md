@@ -104,7 +104,11 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
     - [x] `core_testing_version` 2.0.0-beta01 → 2.1.0 (test + androidTest)
     - [x] Arch Core family coherent at 2.1.0; production source/runtime unchanged
     - [x] Guard stable Arch Core testing baseline
-  - [ ] **P1D9 — dependency/AndroidX modernization** (remaining dependency debt)
+  - [x] **P1D9 — AndroidX Core KTX 1.1.0 alignment** — PASS
+    - [x] `ktx_version` 1.0.2 → 1.1.0 (matches resolved `core` 1.1.0)
+    - [x] No direct `collection`/`core` dependency needed
+    - [x] Guard Core KTX alignment
+  - [ ] **P1D Final Dependency Closure Audit** — NOT STARTED (determines whether P1D closes before P1E)
   - [ ] Update AndroidX and third-party dependencies to supported versions
   - [ ] Sentry/Billing: **ACTIVE** production code — requires a dedicated decision before any change
         (not "unused")

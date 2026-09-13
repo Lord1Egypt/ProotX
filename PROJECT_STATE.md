@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-12 (P1D8 — Arch Core testing 2.1.0 stabilization)
+Last updated: 2026-09-12 (P1D9 — AndroidX Core KTX 1.1.0 alignment)
 
 ## Project Identity
 
@@ -39,22 +39,23 @@ Last updated: 2026-09-12 (P1D8 — Arch Core testing 2.1.0 stabilization)
 | P1D6 — AndroidX Preference 1.1.0 Stable Migration | **CLOSED / PASS** |
 | P1D7 — Material Components 1.1.0 Stable Migration | **CLOSED / PASS** |
 | P1D8 — Arch Core Testing 2.1.0 Stabilization | **CLOSED / PASS** |
+| P1D9 — AndroidX Core KTX 1.1.0 Alignment | **CLOSED / PASS** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1D8 — Arch Core Testing 2.1.0 Stabilization: COMPLETE.** The test-only shared
-`core_testing_version` moved from 2.0.0-beta01 to **2.1.0** stable, resolving the mixed Arch
-Core family (core-testing beta alongside core-common/core-runtime 2.1.0). No production
-source/runtime change. Next milestone is **P1D9** (not started).
+**P1D9 — AndroidX Core KTX 1.1.0 Alignment: COMPLETE.** The direct `androidx.core:core-ktx`
+declaration moved from 1.0.2 to **1.1.0** stable, matching the already-resolved
+`androidx.core:core` 1.1.x family. No source change; no direct `core`/`collection` dependency
+added. Next action is the **P1D Final Dependency Closure Audit** (not started).
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `b53ca3926842af0cd88a6b526b2cdf0e6e23b7ff` | P1D8 commits (core-testing 2.1.0, guard); updated by the follow-up control-plane commit |
+| Feature HEAD | `99f27c0dba03d7ed456c7389a696ee3875eb4ba0` | P1D9 commits (Core KTX 1.1.0, guard); updated by the follow-up control-plane commit |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -72,7 +73,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Package | `io.github.lord1egypt.prootx` |
 | Source origin | Last self-contained public UserLAnd **v2.8.3** codebase (GPLv3) |
 | Unit tests (baseline) | **313 tests / 24 suites / 0 failures / 0 errors / 0 skipped** |
-| Unit tests (current) | **325 tests / 35 suites / 0 failures / 0 errors / 0 skipped** (+ P1C1/P1C2-R/P1D1..P1D8 guards) |
+| Unit tests (current) | **326 tests / 36 suites / 0 failures / 0 errors / 0 skipped** (+ P1C1/P1C2-R/P1D1..P1D9 guards) |
 | Baseline build | `./gradlew clean assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** |
 
 ## Current Toolchain
@@ -90,6 +91,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | SwipeRefreshLayout (direct) | 1.0.0 |
 | LocalBroadcastManager (direct) | 1.0.0 |
 | Arch Core testing (test-only) | 2.1.0 |
+| Core KTX (direct) | 1.1.0 (aligned with `androidx.core:core` 1.1.0) |
 | AndroidX Lifecycle (direct) | 2.2.0 (`lifecycle-viewmodel`, `lifecycle-livedata`) |
 | Parcelize plugin | `kotlin-parcelize` (legacy `kotlin-android-extensions` removed) |
 | JDK for the Gradle build | 8 |
@@ -113,14 +115,14 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 the Gradle build. `google()` + `mavenCentral()` only. Pinned packages:
 `platforms;android-30`, `platforms;android-29`, `build-tools;30.0.2`, `ndk;21.4.7075529`.
 
-Verified remote evidence (P1D8):
+Verified remote evidence (P1D9):
 
 | Field | Value |
 |---|---|
-| Run | `34740381789` (push, commit `b53ca39`) — **success** |
+| Run | `34741460145` (push, commit `99f27c0`) — **success** |
 | Log proof | `Gradle 6.7.1`; JDK 17 bootstrap + JDK 8 build; two `BUILD SUCCESSFUL` (app + androidTest) |
-| Remote test summary | `suites=35 tests=325 failures=0 errors=0 skipped=0` |
-| Artifacts | `prootx-debug-apk` (APK 18,264,935 bytes; ZIP 17,449,100 bytes) and `prootx-debug-androidTest-apk` (APK 1,819,890 bytes; ZIP 1,367,415 bytes) |
+| Remote test summary | `suites=36 tests=326 failures=0 errors=0 skipped=0` |
+| Artifacts | `prootx-debug-apk` (APK 18,269,905 bytes; ZIP 17,452,869 bytes) and `prootx-debug-androidTest-apk` (APK 1,819,889 bytes; ZIP 1,367,406 bytes) |
 | Artifact identity | app: `io.github.lord1egypt.prootx` / 1.0.0 / ABIs arm64-v8a, armeabi-v7a, x86, x86_64; androidTest: `io.github.lord1egypt.prootx.test` |
 
 The CI workflow now also runs `:app:assembleDebugAndroidTest` and uploads both APKs, so
@@ -174,6 +176,8 @@ The canonical list lives in
   API ownership contract (`DECISIONS.md` D022 accepted).
 - **Resolved in P1D8:** pre-release/misaligned `core-testing` (2.0.0-beta01 → **2.1.0** stable);
   Arch Core family now coherent at 2.1.0. Test-only.
+- **Resolved in P1D9:** misaligned `androidx.core:core-ktx` (1.0.2 → **1.1.0** stable), now
+  matching the `androidx.core:core` 1.1.x family; `collection` resolves 1.1.0.
 - **Correction:** Sentry and Billing are **ACTIVE** production dependencies (SentryLogger /
   Sentry; BillingManager / BillingClient / Purchase) — they are **not** unused and were left
   untouched.
@@ -183,7 +187,5 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1D9 — dependency / AndroidX modernization** (remaining dependency debt; Sentry and Billing
-are active and require a dedicated inventory/decision before any change).
-
-Do **not** start P1D9 from this document. A phase must be explicitly authorized.
+**P1D Final Dependency Closure Audit — NOT STARTED.** This audit will determine whether P1D
+can close before P1E. Do **not** start it from this document.

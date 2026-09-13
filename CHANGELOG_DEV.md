@@ -286,3 +286,15 @@
   (run `34740381789`, commit `b53ca39`): all steps success, both APKs uploaded.
 - Note: Sentry and Billing are ACTIVE production dependencies; untouched.
 - P1D remains IN PROGRESS.
+
+## P1D9 — AndroidX Core KTX 1.1.0 Alignment (2026-09-12) — PASS
+
+- Moved the direct `androidx.core:core-ktx` declaration from 1.0.2 to **1.1.0** stable
+  (`ktx_version`), matching the already-resolved `androidx.core:core` 1.1.x family.
+- No source change; `bundleOf` (core-ktx) and `ContextCompat`/`NotificationCompat` (core)
+  consumers compile unchanged. No direct `androidx.collection` usage, so no direct
+  `collection`/`core` dependency was added.
+- Added `CoreKtxAlignmentGuardTest`.
+- Local: **326 tests / 36 suites / 0 failures**; app + androidTest builds green. Remote
+  (run `34741460145`, commit `99f27c0`): all steps success, both APKs uploaded.
+- P1D remains IN PROGRESS; next action is the P1D Final Dependency Closure Audit.

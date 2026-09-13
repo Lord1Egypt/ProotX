@@ -21,6 +21,7 @@
 >     - **P1D7 — Material Components 1.1.0 Stable Migration:** CLOSED / PASS
 >       - **P1D7-U2 — Explicit Legacy Replacements + Material Final Retry:** CLOSED / PASS
 >     - **P1D8 — Arch Core Testing 2.1.0 Stabilization:** CLOSED / PASS
+>     - **P1D9 — AndroidX Core KTX 1.1.0 Alignment:** CLOSED / PASS
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -195,6 +196,10 @@ deferred to the appropriate later phase.
 17. **Pre-release/misaligned `core-testing` — RESOLVED in P1D8.** The test-only
     `androidx.arch.core:core-testing` moved from 2.0.0-beta01 to **2.1.0** stable, aligning it
     with `core-common`/`core-runtime` (both already 2.1.0). Test-only; production unchanged.
+18. **Misaligned `androidx.core:core-ktx` — RESOLVED in P1D9.** The direct `core-ktx`
+    declaration moved from 1.0.2 to **1.1.0** stable, matching the resolved
+    `androidx.core:core` 1.1.x family. No direct `collection`/`core` dependency was required;
+    no source change.
 
 ## Non-goals for P0
 
