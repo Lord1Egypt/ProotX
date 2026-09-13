@@ -10,7 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.navArgs
 import io.github.lord1egypt.prootx.databinding.FragAppDetailsBinding
 import io.github.lord1egypt.prootx.R
@@ -36,7 +36,7 @@ class AppDetailsFragment : Fragment() {
         val appDetails = AppDetails(activityContext.filesDir.path, activityContext.resources)
         val buildVersion = Build.VERSION.SDK_INT
         val factory = AppDetailsViewmodelFactory(sessionDao, appDetails, buildVersion, activityContext.getSharedPreferences("apps", Context.MODE_PRIVATE))
-        ViewModelProviders.of(this, factory)
+        ViewModelProvider(this, factory)
                 .get(AppDetailsViewModel::class.java)
     }
 

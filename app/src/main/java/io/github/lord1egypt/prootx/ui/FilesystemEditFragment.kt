@@ -2,7 +2,7 @@ package io.github.lord1egypt.prootx.ui
 
 import android.app.AlertDialog
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Bundle
@@ -60,7 +60,7 @@ class FilesystemEditFragment : Fragment() {
 
     private val filesystemEditViewModel: FilesystemEditViewModel by lazy {
         val ulaDatabase = ProotXDatabase.getInstance(activityContext)
-        ViewModelProviders.of(this, FilesystemEditViewmodelFactory(ulaDatabase)).get(FilesystemEditViewModel::class.java)
+        ViewModelProvider(this, FilesystemEditViewmodelFactory(ulaDatabase)).get(FilesystemEditViewModel::class.java)
     }
 
     private val distributionList by lazy {

@@ -2,7 +2,7 @@ package io.github.lord1egypt.prootx.ui
 
 import android.app.Activity
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import android.graphics.Color
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -38,7 +38,7 @@ class SessionEditFragment : Fragment() {
 
     private val sessionEditViewModel: SessionEditViewModel by lazy {
         val ulaDatabase = ProotXDatabase.getInstance(activityContext)
-        ViewModelProviders.of(this, SessionEditViewmodelFactory(ulaDatabase)).get(SessionEditViewModel::class.java)
+        ViewModelProvider(this, SessionEditViewmodelFactory(ulaDatabase)).get(SessionEditViewModel::class.java)
     }
 
     private val filesystemChangeObserver = Observer<List<Filesystem>> {

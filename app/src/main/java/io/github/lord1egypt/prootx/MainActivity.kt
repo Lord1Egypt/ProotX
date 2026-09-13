@@ -3,7 +3,7 @@ package io.github.lord1egypt.prootx
 import android.app.AlertDialog
 import android.app.DownloadManager
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -140,7 +140,7 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
 
         val appsStartupFsm = AppsStartupFsm(ulaDatabase, filesystemManager, prootxFiles)
         val sessionStartupFsm = SessionStartupFsm(ulaDatabase, assetRepository, filesystemManager, assetDownloader, storageCalculator)
-        ViewModelProviders.of(this, MainActivityViewModelFactory(appsStartupFsm, sessionStartupFsm))
+        ViewModelProvider(this, MainActivityViewModelFactory(appsStartupFsm, sessionStartupFsm))
                 .get(MainActivityViewModel::class.java)
     }
 

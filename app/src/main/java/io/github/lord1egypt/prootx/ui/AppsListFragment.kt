@@ -2,7 +2,7 @@ package io.github.lord1egypt.prootx.ui
 
 import android.app.AlertDialog
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.ViewModelProvider
 import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -60,7 +60,7 @@ class AppsListFragment : Fragment(), AppsListAdapter.AppsClickHandler {
         val githubFetcher = GithubAppsFetcher("${activityContext.filesDir}")
 
         val appsRepository = AppsRepository(appsDao, githubFetcher, appsPreferences)
-        ViewModelProviders.of(this, AppsListViewModelFactory(appsRepository))
+        ViewModelProvider(this, AppsListViewModelFactory(appsRepository))
                 .get(AppsListViewModel::class.java)
     }
 
