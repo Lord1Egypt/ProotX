@@ -268,3 +268,23 @@
 - **Trade-offs:** Test helpers are slightly more verbose; a full Parcel/device round-trip is
   still deferred to the Golden Candidate gate.
 - **Affected components:** `app/build.gradle`, `app/src/androidTest`, CI, P1D.
+
+---
+
+## D017 — No direct Play Services base dependency; `ENABLE_PLAY_SERVICES` removed
+
+- **Date:** 2026-09-12
+- **Status:** Accepted
+- **Decision:** ProotX does not declare `com.google.android.gms:play-services-base`
+  directly, and the `ENABLE_PLAY_SERVICES` BuildConfig flag is removed. Both were unused
+  (no production/test consumer) and are enforced by `DeadPlayServicesGuardTest`.
+- **Reason:** The dependency and flag were dead; removing them shrinks the APK (~445 KB)
+  and removes the `GoogleApiActivity` / `com.google.android.gms.version` manifest injections
+  that came from play-services-base. `play-services-base` is now absent from all
+  configurations.
+- **Alternatives considered:** Keeping the dependency "in case it is needed" (rejected —
+  dead weight); force-excluding it transitively (unnecessary — it is fully absent, so no
+  exclusions were added).
+- **Trade-offs:** If Play services functionality is ever needed, a dedicated milestone must
+  add the specific artifact and update the guard.
+- **Affected components:** `app/build.gradle`, tests, P1D3+.

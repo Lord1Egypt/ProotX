@@ -72,7 +72,11 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
     - [x] Migrate Barista usage to AndroidX Espresso (core/contrib/intents 3.2.0)
     - [x] Restore `:app:assembleDebugAndroidTest` and gate it in CI
     - [x] Add Barista regression guard test
-  - [ ] **P1D2 — dependency/AndroidX modernization** (Sentry/Billing inventory, etc.)
+  - [x] **P1D2 — Dead Play Services dependency cleanup** — PASS
+    - [x] Remove unused direct `com.google.android.gms:play-services-base` dependency
+    - [x] Remove stale `ENABLE_PLAY_SERVICES` BuildConfig flag (default + debug)
+    - [x] Verify `play-services-base` ABSENT in all configurations; guard reintroduction
+  - [ ] **P1D3 — dependency/AndroidX modernization** (Sentry/Billing inventory, etc.)
   - [ ] Update AndroidX and third-party dependencies to supported versions
   - [ ] Remove unused Sentry / Play Billing code and billing permission
 - [ ] **P1E — SDK 36 / manifest compatibility**

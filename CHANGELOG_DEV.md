@@ -160,3 +160,17 @@
 - Local: app + androidTest builds green; **318 tests / 28 suites / 0 failures**. Remote
   (run `34712929161`, commit `45abb83`): all steps success, both APKs uploaded.
 - P1D remains IN PROGRESS; no production source change.
+
+## P1D2 — Dead Play Services Dependency Cleanup (2026-09-12) — PASS
+
+- Removed the unused direct `com.google.android.gms:play-services-base:17.2.1` dependency
+  and the stale `ENABLE_PLAY_SERVICES` BuildConfig fields (default + debug override), after
+  an audit found zero production/test consumers of `com.google.android.gms.*` or the flag.
+- Verified `play-services-base` is **ABSENT** from `debugCompileClasspath`,
+  `debugRuntimeClasspath` and `releaseRuntimeClasspath`; its merged-manifest entries
+  (`GoogleApiActivity`, `com.google.android.gms.version`) are gone. Debug APK size dropped
+  ~445 KB. No forced exclusions; no other dependency changed.
+- Added `DeadPlayServicesGuardTest`.
+- Local: **319 tests / 29 suites / 0 failures**; app + androidTest builds green. Remote
+  (run `34730775325`, commit `aec54c4`): all steps success, both APKs uploaded.
+- P1D remains IN PROGRESS; no production source change.

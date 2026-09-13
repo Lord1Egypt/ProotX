@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-12 (P1D1 — Barista removal / androidTest build restoration)
+Last updated: 2026-09-12 (P1D2 — Dead Play Services dependency cleanup)
 
 ## Project Identity
 
@@ -32,21 +32,22 @@ Last updated: 2026-09-12 (P1D1 — Barista removal / androidTest build restorati
 | P1C2 — Kotlin + Legacy Parcelize + Plugin Removal | **CLOSED / PASS** |
 | P1D — Dependency / AndroidX Modernization | **IN PROGRESS** |
 | P1D1 — Barista Removal / AndroidTest Build Restoration | **CLOSED / PASS** |
+| P1D2 — Dead Play Services Dependency Cleanup | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1D1 — Barista Removal / AndroidTest Build Restoration: COMPLETE.** The JCenter-only
-`com.schibsted.spain:barista:3.1.0` androidTest dependency was removed and its usage
-migrated to direct AndroidX Espresso; `:app:assembleDebugAndroidTest` now resolves and
-builds from `google()` + `mavenCentral()` and is enforced in CI. Next milestone is **P1D2**
-(dependency/AndroidX modernization; not started).
+**P1D2 — Dead Play Services Dependency Cleanup: COMPLETE.** The unused direct
+`com.google.android.gms:play-services-base:17.2.1` dependency and the stale
+`ENABLE_PLAY_SERVICES` BuildConfig fields were removed (zero consumers found).
+`play-services-base` is now **ABSENT** from all configurations and its merged-manifest
+entries are gone. Next milestone is **P1D3** (not started).
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `45abb83d63c178992192808c7f225edf42a4a3b8` | P1D1 commits (Barista→Espresso, CI androidTest gate, guard); updated by the follow-up control-plane commit |
+| Feature HEAD | `aec54c44fa625c764fab9e6985739c9efe13ec2b` | P1D2 commits (dependency removals, guard); updated by the follow-up control-plane commit |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -64,7 +65,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Package | `io.github.lord1egypt.prootx` |
 | Source origin | Last self-contained public UserLAnd **v2.8.3** codebase (GPLv3) |
 | Unit tests (baseline) | **313 tests / 24 suites / 0 failures / 0 errors / 0 skipped** |
-| Unit tests (current) | **318 tests / 28 suites / 0 failures / 0 errors / 0 skipped** (+ P1C1/P1C2-R/P1D1 guards) |
+| Unit tests (current) | **319 tests / 29 suites / 0 failures / 0 errors / 0 skipped** (+ P1C1/P1C2-R/P1D1/P1D2 guards) |
 | Baseline build | `./gradlew clean assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** |
 
 ## Current Toolchain
@@ -97,14 +98,14 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 the Gradle build. `google()` + `mavenCentral()` only. Pinned packages:
 `platforms;android-30`, `platforms;android-29`, `build-tools;30.0.2`, `ndk;21.4.7075529`.
 
-Verified remote evidence (P1D1):
+Verified remote evidence (P1D2):
 
 | Field | Value |
 |---|---|
-| Run | `34712929161` (push, commit `45abb83`) — **success** |
+| Run | `34730775325` (push, commit `aec54c4`) — **success** |
 | Log proof | `Gradle 6.7.1`; JDK 17 bootstrap + JDK 8 build; two `BUILD SUCCESSFUL` (app + androidTest) |
-| Remote test summary | `suites=28 tests=318 failures=0 errors=0 skipped=0` |
-| Artifacts | `prootx-debug-apk` (app-debug.apk, 18,588,898 bytes) and `prootx-debug-androidTest-apk` (app-debug-androidTest.apk, 1,754,708 bytes) |
+| Remote test summary | `suites=29 tests=319 failures=0 errors=0 skipped=0` |
+| Artifacts | `prootx-debug-apk` (app-debug.apk, 18,144,347 bytes) and `prootx-debug-androidTest-apk` (app-debug-androidTest.apk, 1,754,697 bytes) |
 | Artifact identity | app: `io.github.lord1egypt.prootx` / 1.0.0 / ABIs arm64-v8a, armeabi-v7a, x86, x86_64; androidTest: `io.github.lord1egypt.prootx.test` |
 
 The CI workflow now also runs `:app:assembleDebugAndroidTest` and uploads both APKs, so
@@ -140,13 +141,16 @@ The canonical list lives in
   Extensions and legacy Parcelize package (all closed via P1C1/P1C2-P/P1C2-R).
 - **Resolved in P1D1:** `com.schibsted.spain:barista:3.1.0` (androidTest JCenter debt);
   androidTest resolves from `google()` + `mavenCentral()` and builds in CI.
-- **Still open:** unused Sentry/Billing code (→ P1D2); prebuilt rootfs profile remnant;
+- **Resolved in P1D2:** dead direct `com.google.android.gms:play-services-base:17.2.1`
+  dependency and stale `ENABLE_PLAY_SERVICES` BuildConfig flag (now **ABSENT**; its
+  merged-manifest entries removed).
+- **Still open:** unused Sentry/Billing code (→ P1D3); prebuilt rootfs profile remnant;
   network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based
   `versionCode`.
 
 ## Next Safe Action
 
-**P1D2 — dependency / AndroidX modernization** (e.g. inventory and handle unused
-Sentry/Billing code and remaining dependency debt).
+**P1D3 — dependency / AndroidX modernization** (e.g. inventory and handle the remaining
+unused Sentry/Billing code and other dependency debt).
 
-Do **not** start P1D2 from this document. A phase must be explicitly authorized.
+Do **not** start P1D3 from this document. A phase must be explicitly authorized.

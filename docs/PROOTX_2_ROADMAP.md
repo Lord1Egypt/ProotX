@@ -13,7 +13,8 @@
 >     - **P1C2 — Kotlin + Legacy Parcelize + Plugin Removal:** CLOSED / PASS
 >   - **P1D — Dependency / AndroidX Modernization:** IN PROGRESS
 >     - **P1D1 — Barista Removal / AndroidTest Build Restoration:** CLOSED / PASS
->     - **P1D2 — Dependency/AndroidX Modernization:** NOT STARTED
+>     - **P1D2 — Dead Play Services Dependency Cleanup:** CLOSED / PASS
+>     - **P1D3 — Dependency/AndroidX Modernization:** NOT STARTED
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -158,6 +159,11 @@ deferred to the appropriate later phase.
     cell **Kotlin 1.4.32 + Moshi 1.9.3** passes kapt and a full build, so **Moshi 1.9.3 is
     the bridge** across the Kotlin 1.3 → 1.4 boundary. Kotlin is now 1.4.32 and Moshi 1.9.3
     (see `DECISIONS.md` D013/D014).
+11. **Dead Play Services dependency — RESOLVED in P1D2.** The unused direct
+    `com.google.android.gms:play-services-base:17.2.1` dependency and the stale
+    `ENABLE_PLAY_SERVICES` BuildConfig flag were removed; `play-services-base` is now
+    **ABSENT** from all configurations and its manifest injections are gone. Guarded by
+    `DeadPlayServicesGuardTest` (`DECISIONS.md` D017).
 
 ## Non-goals for P0
 
