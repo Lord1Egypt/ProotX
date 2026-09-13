@@ -34,7 +34,6 @@ android {
         testInstrumentationRunnerArguments clearPackageData: 'true'
 
         vectorDrawables.useSupportLibrary = true
-        buildConfigField 'boolean', 'ENABLE_PLAY_SERVICES', 'true'
 
         //these are used to help determine the resolution
         buildConfigField 'boolean', 'FORCE_PORTRAIT_GEOMETRY', 'true'
@@ -82,7 +81,6 @@ android {
             debuggable true
             minifyEnabled false
             testCoverageEnabled true
-            buildConfigField 'boolean', 'ENABLE_PLAY_SERVICES', 'false'
         }
         beta {
             versionNameSuffix "-beta-$defaultConfig.versionCode"
@@ -285,7 +283,6 @@ dependencies {
     implementation "org.slf4j:slf4j-nop:$slf4j_version"
 
     implementation "com.android.billingclient:billing-ktx:$billing_version"
-    implementation "com.google.android.gms:play-services-base:17.2.1"
 
     def mockito_version = '2.23.0'
     def mockito_kotlin_version = '2.1.0'
