@@ -217,3 +217,17 @@
 - Local: **322 tests / 32 suites / 0 failures**; app + androidTest builds green. Remote
   (run `34734146196`, commit `a60a027`): all steps success, both APKs uploaded.
 - P1D remains IN PROGRESS; database/runtime/UI unchanged.
+
+## P1D6 — AndroidX Preference 1.1.0 Stable Migration (2026-09-12) — PASS
+
+- Moved the shared `preference_version` from 1.1.0-alpha05 to **1.1.0** stable
+  (`androidx.preference:preference` remains driven by it).
+- Zero source/XML change: `SettingsFragment`, `preferences.xml`, preference keys, defaults,
+  dependencies, `inputType="number"`, divider overrides and persistence are unchanged.
+- Beneficial transitive stabilization: `androidx.appcompat` / `appcompat-resources`
+  1.1.0-alpha05 → 1.1.0.
+- Added `PreferenceStabilityGuardTest`.
+- Local: **323 tests / 33 suites / 0 failures**; app + androidTest builds green. Remote
+  (run `34734985029`, commit `787ab91`): all steps success, both APKs uploaded.
+- Physical settings-screen verification (numeric input) deferred to the Golden Candidate
+  gate. P1D remains IN PROGRESS; runtime/UI intentionally unchanged.

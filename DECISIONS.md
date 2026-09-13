@@ -346,3 +346,23 @@
 - **Trade-offs:** None material; migration tests remain instrumented (device execution
   deferred to the Golden Candidate gate).
 - **Affected components:** `app/build.gradle`, tests, P1D6+.
+
+---
+
+## D021 — Preference pinned to stable 1.1.0; settings semantics frozen
+
+- **Date:** 2026-09-12
+- **Status:** Accepted
+- **Decision:** The shared `preference_version` is **1.1.0** (stable) for
+  `androidx.preference:preference`. Preference keys, defaults, dependencies, persistence
+  backend, XML and `SettingsFragment` remain frozen. `PreferenceStabilityGuardTest` prevents
+  an accidental pre-release regression.
+- **Reason:** Stabilize off the 1.1.0-alpha05 pre-release within the same Preference line
+  without touching settings behavior; appcompat transitively stabilized to 1.1.0.
+- **Alternatives considered:** Staying on 1.1.0-alpha05 (rejected — pre-release); migrating
+  to `preference-ktx`/DataStore (out of scope); pre-emptively reworking the
+  `EditTextPreference` numeric input (deferred — physical verification).
+- **Trade-offs:** The `inputType="number"` behavior is unchanged and must be verified on a
+  device at the Golden Candidate gate.
+- **Affected components:** `app/build.gradle`, `ui/SettingsFragment`, `res/xml/preferences.xml`,
+  tests, P1D7+.

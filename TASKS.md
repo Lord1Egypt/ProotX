@@ -88,7 +88,11 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
     - [x] Move shared `room_version` 2.1.0-beta01 → 2.1.0 stable
     - [x] Verify zero database source change and no schema drift (schema 7 byte-identical)
     - [x] Guard stable Room baseline
-  - [ ] **P1D6 — dependency/AndroidX modernization** (Sentry/Billing inventory, etc.)
+  - [x] **P1D6 — AndroidX Preference 1.1.0 stable migration** — PASS
+    - [x] Move shared `preference_version` 1.1.0-alpha05 → 1.1.0 stable
+    - [x] Verify zero source/XML change (settings keys/defaults/dependencies frozen)
+    - [x] Guard stable Preference baseline
+  - [ ] **P1D7 — dependency/AndroidX modernization** (Sentry/Billing inventory, etc.)
   - [ ] Update AndroidX and third-party dependencies to supported versions
   - [ ] Remove unused Sentry / Play Billing code and billing permission
 - [ ] **P1E — SDK 36 / manifest compatibility**

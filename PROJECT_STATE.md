@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-12 (P1D5 — Room 2.1.0 stable migration)
+Last updated: 2026-09-12 (P1D6 — AndroidX Preference 1.1.0 stable migration)
 
 ## Project Identity
 
@@ -36,20 +36,21 @@ Last updated: 2026-09-12 (P1D5 — Room 2.1.0 stable migration)
 | P1D3 — Lifecycle Extensions Removal / ViewModelProvider Migration | **CLOSED / PASS** |
 | P1D4 — Navigation 2.1.0 Stable Migration | **CLOSED / PASS** |
 | P1D5 — Room 2.1.0 Stable Migration | **CLOSED / PASS** |
+| P1D6 — AndroidX Preference 1.1.0 Stable Migration | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1D5 — Room 2.1.0 Stable Migration: COMPLETE.** The shared Room version moved from
-2.1.0-beta01 to **2.1.0** stable (runtime/compiler/testing). No database source change:
-version 7, entities, DAOs, migrations, `Data.db` and the exported schema are unchanged
-(schema 7 byte-identical). Next milestone is **P1D6** (not started).
+**P1D6 — AndroidX Preference 1.1.0 Stable Migration: COMPLETE.** The shared
+`preference_version` moved from 1.1.0-alpha05 to **1.1.0** stable with zero source/XML change;
+beneficial transitive stabilization of appcompat to 1.1.0. Next milestone is **P1D7**
+(not started).
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `a60a027c10ca2f88c1dcba60b5a524793ca4b18f` | P1D5 commits (Room 2.1.0, guard); updated by the follow-up control-plane commit |
+| Feature HEAD | `787ab91dea741802497b1882abdc3aeac7e8835a` | P1D6 commits (Preference 1.1.0, guard); updated by the follow-up control-plane commit |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -67,7 +68,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Package | `io.github.lord1egypt.prootx` |
 | Source origin | Last self-contained public UserLAnd **v2.8.3** codebase (GPLv3) |
 | Unit tests (baseline) | **313 tests / 24 suites / 0 failures / 0 errors / 0 skipped** |
-| Unit tests (current) | **322 tests / 32 suites / 0 failures / 0 errors / 0 skipped** (+ P1C1/P1C2-R/P1D1/P1D2/P1D3/P1D4/P1D5 guards) |
+| Unit tests (current) | **323 tests / 33 suites / 0 failures / 0 errors / 0 skipped** (+ P1C1/P1C2-R/P1D1/P1D2/P1D3/P1D4/P1D5/P1D6 guards) |
 | Baseline build | `./gradlew clean assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** |
 
 ## Current Toolchain
@@ -80,6 +81,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Moshi (runtime + codegen) | 1.9.3 |
 | AndroidX Navigation | 2.1.0 (stable) |
 | AndroidX Room | 2.1.0 (stable; runtime/compiler/testing) |
+| AndroidX Preference | 1.1.0 (stable) |
 | AndroidX Lifecycle (direct) | 2.2.0 (`lifecycle-viewmodel`, `lifecycle-livedata`) |
 | Parcelize plugin | `kotlin-parcelize` (legacy `kotlin-android-extensions` removed) |
 | JDK for the Gradle build | 8 |
@@ -103,14 +105,14 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 the Gradle build. `google()` + `mavenCentral()` only. Pinned packages:
 `platforms;android-30`, `platforms;android-29`, `build-tools;30.0.2`, `ndk;21.4.7075529`.
 
-Verified remote evidence (P1D5):
+Verified remote evidence (P1D6):
 
 | Field | Value |
 |---|---|
-| Run | `34734146196` (push, commit `a60a027`) — **success** |
+| Run | `34734985029` (push, commit `787ab91`) — **success** |
 | Log proof | `Gradle 6.7.1`; JDK 17 bootstrap + JDK 8 build; two `BUILD SUCCESSFUL` (app + androidTest) |
-| Remote test summary | `suites=32 tests=322 failures=0 errors=0 skipped=0` |
-| Artifacts | `prootx-debug-apk` (app-debug.apk, 18,139,625 bytes) and `prootx-debug-androidTest-apk` (app-debug-androidTest.apk, 1,754,687 bytes) |
+| Remote test summary | `suites=33 tests=323 failures=0 errors=0 skipped=0` |
+| Artifacts | `prootx-debug-apk` (app-debug.apk, 18,143,963 bytes) and `prootx-debug-androidTest-apk` (app-debug-androidTest.apk, 1,755,947 bytes) |
 | Artifact identity | app: `io.github.lord1egypt.prootx` / 1.0.0 / ABIs arm64-v8a, armeabi-v7a, x86, x86_64; androidTest: `io.github.lord1egypt.prootx.test` |
 
 The CI workflow now also runs `:app:assembleDebugAndroidTest` and uploads both APKs, so
@@ -156,13 +158,15 @@ The canonical list lives in
   `lifecycle-viewmodel-ktx` → 2.1.0.
 - **Resolved in P1D5:** pre-release Room baseline (2.1.0-beta01 → **2.1.0** stable). Schema 7
   byte-identical; DB version 7, migrations and `Data.db` unchanged.
-- **Still open:** unused Sentry/Billing code (→ P1D6); prebuilt rootfs profile remnant;
+- **Resolved in P1D6:** pre-release Preference baseline (1.1.0-alpha05 → **1.1.0** stable).
+  Zero source/XML change; appcompat transitively stabilized to 1.1.0.
+- **Still open:** unused Sentry/Billing code (→ P1D7); prebuilt rootfs profile remnant;
   network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based
   `versionCode`.
 
 ## Next Safe Action
 
-**P1D6 — dependency / AndroidX modernization** (e.g. inventory and handle the remaining
+**P1D7 — dependency / AndroidX modernization** (e.g. inventory and handle the remaining
 unused Sentry/Billing code and other dependency debt).
 
-Do **not** start P1D6 from this document. A phase must be explicitly authorized.
+Do **not** start P1D7 from this document. A phase must be explicitly authorized.

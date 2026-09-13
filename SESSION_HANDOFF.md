@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-12 (P1D5 — Room 2.1.0 stable migration: PASS)
+Last updated: 2026-09-12 (P1D6 — AndroidX Preference 1.1.0 stable migration: PASS)
 
 ## Current Objective
 
@@ -13,38 +13,38 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1D5 — Room 2.1.0 Stable Migration**: **PASS**.
-Shared `room_version` moved from 2.1.0-beta01 to **2.1.0** stable with zero database source
-change and no schema drift. **P1D remains IN PROGRESS.**
+**P1D6 — AndroidX Preference 1.1.0 Stable Migration**: **PASS**.
+Shared `preference_version` moved from 1.1.0-alpha05 to **1.1.0** stable with zero
+source/XML change; appcompat transitively stabilized to 1.1.0. **P1D remains IN PROGRESS.**
 
 ## Current Milestone
 
-**P1D6 — dependency / AndroidX modernization**: NOT STARTED.
+**P1D7 — dependency / AndroidX modernization**: NOT STARTED.
 
 ## What Was Completed
 
-- Changed the shared `room_version` to `2.1.0` (room-runtime, room-compiler, room-testing
-  all remain driven by it).
-- Verified zero database source change: `ProotXDatabase` version 7, entities, DAOs, queries,
-  `Migration1To2`–`Migration6To7`, `Data.db` filename and schema export untouched.
-- Verified exported schema 7 is byte-identical (sha256 `3909bb12…`); no schema regeneration
-  drift.
-- Added `RoomStabilityGuardTest`.
+- Changed the shared `preference_version` to `1.1.0` (`androidx.preference:preference` stays
+  driven by it).
+- Verified zero source/XML change: `SettingsFragment` and `preferences.xml` are unchanged
+  (same keys, defaults, dependencies, `inputType="number"`, divider overrides).
+- Added `PreferenceStabilityGuardTest`.
+- Beneficial transitive stabilization: `androidx.appcompat` / `appcompat-resources`
+  1.1.0-alpha05 → 1.1.0.
 
 ## What Was Intentionally NOT Changed
 
 - Kotlin 1.4.32 (jvmTarget 1.8), Moshi 1.9.3, Gradle 6.7.1, AGP 4.2.2, Lifecycle 2.2.0,
-  Navigation 2.1.0, and all other dependency versions; SDK/NDK/build-tools.
-- Database version, entities, DAOs, queries, migrations, filename, builder/callbacks.
-- No `fallbackToDestructiveMigration`, no `allowMainThreadQueries`.
-- Runtime, UI, navigation, PRoot, network, billing, Sentry, assets.
+  Navigation 2.1.0, Room 2.1.0, and all other dependency versions; SDK/NDK/build-tools.
+- Preference keys/defaults/dependencies/persistence, SharedPreferences names, AutoApp
+  clearing, Proot debug settings. No DataStore migration; no `preference-ktx` added.
+- Runtime, UI, navigation, database, PRoot, network, billing, Sentry, assets.
 
 ## Current Repository State
 
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (P1D5) | `a60a027c10ca2f88c1dcba60b5a524793ca4b18f` |
+| Feature HEAD (P1D6) | `787ab91dea741802497b1882abdc3aeac7e8835a` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -53,23 +53,28 @@ change and no schema drift. **P1D remains IN PROGRESS.**
 
 Commit `94abf5fa520255bb10d087a6be3ba2bc70b0e127`, package
 `io.github.lord1egypt.prootx`, version `1.0.0`. Baseline tests **313 / 24 suites**; current
-tests **322 / 32 suites** (guard/contract tests).
+tests **323 / 33 suites** (guard/contract tests).
 
 ## Current Toolchain
 
 Gradle **6.7.1** · AGP **4.2.2** · Kotlin **1.4.32** (jvmTarget 1.8) · Moshi **1.9.3** ·
-Navigation **2.1.0** · Room **2.1.0** · Lifecycle **2.2.0** · plugin **`kotlin-parcelize`** ·
-JDK **8** (build) · compileSdk **30** · targetSdk **30** · minSdk **21** · NDK
-**21.4.7075529** · build-tools **30.0.2**. Repositories: `google()`, `mavenCentral()`.
+Navigation **2.1.0** · Room **2.1.0** · Preference **1.1.0** · Lifecycle **2.2.0** · plugin
+**`kotlin-parcelize`** · JDK **8** (build) · compileSdk **30** · targetSdk **30** · minSdk
+**21** · NDK **21.4.7075529** · build-tools **30.0.2**. Repositories: `google()`,
+`mavenCentral()`.
 
 ## Known Deferred Findings
 
 See [`docs/PROOTX_2_ROADMAP.md`](docs/PROOTX_2_ROADMAP.md#deferred-findings). Resolved: CI
 SDK setup (P1A), `jcenter()` (P1B), Kotlin/Android Extensions (P1C), Barista (P1D1), dead
-Play Services (P1D2), Lifecycle extensions/ViewModelProviders (P1D3), Navigation pre-release
-(P1D4), Room pre-release (P1D5). Still open: unused Sentry/Billing code (→ P1D6); prebuilt
-rootfs profile remnant; network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic
-time-based `versionCode`.
+Play Services (P1D2), Lifecycle extensions (P1D3), Navigation pre-release (P1D4), Room
+pre-release (P1D5), Preference pre-release (P1D6). Still open: unused Sentry/Billing code
+(→ P1D7); prebuilt rootfs profile remnant; network-dependent unit tests; Play-readiness gaps
+(→ P1E); dynamic time-based `versionCode`.
+
+**Deferred physical check:** the `EditTextPreference` `android:inputType="number"` behavior
+(settings screen numeric input) should be verified on a device at the Golden Candidate gate;
+it could not be proven without a device and the XML was intentionally left unchanged.
 
 ## Important Invariants
 
@@ -83,14 +88,12 @@ time-based `versionCode`.
    without a dedicated assets milestone.
 7. Published history is immutable: no force-push, no history rewrite.
 8. One milestone at a time; respect STOP gates.
-9. Established durable decisions: D010 (two-JDK CI), D011 (Gradle/AGP bridge), D012/D015
-   (View Binding / kotlin-parcelize), D013/D014 (Kotlin+Moshi), D016 (Espresso), D017 (no
-   direct play-services-base), D018 (granular Lifecycle/ViewModelProvider), D019 (Navigation
-   2.1.0 + jvmTarget 1.8), D020 (Room 2.1.0, schema/migrations immutable).
+9. Established durable decisions: D010, D011, D012/D015, D013/D014, D016, D017, D018, D019,
+   D020, and D021 (Preference 1.1.0 stable; settings semantics frozen).
 
 ## Next Safe Action
 
-**P1D6 — dependency / AndroidX modernization** (inventory and handle unused Sentry/Billing
+**P1D7 — dependency / AndroidX modernization** (inventory and handle unused Sentry/Billing
 and remaining dependency debt). Do not begin without explicit authorization.
 
 ## Resume Procedure
