@@ -189,3 +189,18 @@
 - Local: **320 tests / 30 suites / 0 failures**; app + androidTest builds green. Remote
   (run `34731759494`, commit `94ef87e`): all steps success, both APKs uploaded.
 - P1D remains IN PROGRESS; no behavior/UI change.
+
+## P1D4 — Navigation 2.1.0 Stable Migration (2026-09-12) — PASS
+
+- Moved the shared `navigation_version` from 2.1.0-alpha05 to **2.1.0** stable (Safe Args
+  Gradle plugin + `navigation-fragment-ktx` + `navigation-ui-ktx` remain driven by it).
+- Aligned the Kotlin compile target with the existing Java 1.8 target
+  (`kotlinOptions.jvmTarget = '1.8'`), required because Navigation 2.1.0's ktx inline
+  bytecode targets JVM 1.8.
+- No navigation source/graph change (nav graph XML byte-identical).
+- Beneficial transitive stabilization: `androidx.fragment` → 1.1.0; `lifecycle-runtime` /
+  `lifecycle-viewmodel-ktx` → 2.1.0. Direct Lifecycle artifacts remain 2.2.0.
+- Added `NavigationStabilityGuardTest`.
+- Local: **321 tests / 31 suites / 0 failures**; app + androidTest builds green. Remote
+  (run `34733003165`, commit `9717d5b`): all steps success, both APKs uploaded.
+- P1D remains IN PROGRESS; runtime/UI unchanged.

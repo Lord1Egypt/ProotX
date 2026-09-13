@@ -309,3 +309,21 @@
 - **Trade-offs:** `lifecycle-runtime` remains transitive at the version navigation requests
   (2.1.0-beta01) since the source does not use its APIs directly; no force was applied.
 - **Affected components:** `app/build.gradle`, `MainActivity`, `ui/*Fragment`, tests, P1D4+.
+
+---
+
+## D019 — Navigation pinned to stable 2.1.0; Kotlin JVM target 1.8
+
+- **Date:** 2026-09-12
+- **Status:** Accepted
+- **Decision:** The shared `navigation_version` is **2.1.0** (stable) for the Safe Args
+  plugin and the runtime Navigation artifacts. The Kotlin compile target is set to
+  `jvmTarget = '1.8'` to match the already-declared Java 1.8 source/target.
+- **Reason:** Stabilize off the 2.1.0-alpha05 pre-release within the same Navigation line;
+  Navigation 2.1.0's ktx inline bytecode targets JVM 1.8, so mismatched Kotlin 1.6 caused a
+  compile failure. `NavigationStabilityGuardTest` prevents accidental pre-release regression.
+- **Alternatives considered:** Jumping to a newer Navigation generation (rejected — out of
+  scope); leaving the Kotlin target at 1.6 (rejected — incompatible with 2.1.0 bytecode).
+- **Trade-offs:** None material; beneficial transitive stabilization of `fragment` (1.1.0)
+  and `lifecycle-runtime`/`lifecycle-viewmodel-ktx` (2.1.0).
+- **Affected components:** root `build.gradle`, `app/build.gradle`, tests, P1D5+.

@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-12 (P1D3 — Lifecycle extensions removal / ViewModelProvider migration)
+Last updated: 2026-09-12 (P1D4 — Navigation 2.1.0 stable migration)
 
 ## Project Identity
 
@@ -34,21 +34,22 @@ Last updated: 2026-09-12 (P1D3 — Lifecycle extensions removal / ViewModelProvi
 | P1D1 — Barista Removal / AndroidTest Build Restoration | **CLOSED / PASS** |
 | P1D2 — Dead Play Services Dependency Cleanup | **CLOSED / PASS** |
 | P1D3 — Lifecycle Extensions Removal / ViewModelProvider Migration | **CLOSED / PASS** |
+| P1D4 — Navigation 2.1.0 Stable Migration | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1D3 — Lifecycle Extensions Removal / ViewModelProvider Migration: COMPLETE.** The
-deprecated `androidx.lifecycle:lifecycle-extensions` artifact was replaced by granular
-`lifecycle-viewmodel`/`lifecycle-livedata` **2.2.0** (stable), and `ViewModelProviders.of(...)`
-was migrated to direct `ViewModelProvider(...)` in the Activity and six Fragments with scopes
-preserved. Next milestone is **P1D4** (not started).
+**P1D4 — Navigation 2.1.0 Stable Migration: COMPLETE.** The shared `navigation_version`
+moved from 2.1.0-alpha05 to **2.1.0** stable (Safe Args plugin + `navigation-fragment-ktx` +
+`navigation-ui-ktx`); the Kotlin compile target was aligned to JVM 1.8. Beneficial transitive
+stabilization: `androidx.fragment` → 1.1.0 and `lifecycle-runtime`/`lifecycle-viewmodel-ktx`
+→ 2.1.0. Next milestone is **P1D5** (not started).
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `94ef87ed807cc92fb6c76651c973b261bba2e395` | P1D3 commits (granular Lifecycle, ViewModelProvider, guard); updated by the follow-up control-plane commit |
+| Feature HEAD | `9717d5b6740cf80be08a755e742b383a169394ce` | P1D4 commits (Navigation 2.1.0, Kotlin jvmTarget, guard); updated by the follow-up control-plane commit |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -66,7 +67,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Package | `io.github.lord1egypt.prootx` |
 | Source origin | Last self-contained public UserLAnd **v2.8.3** codebase (GPLv3) |
 | Unit tests (baseline) | **313 tests / 24 suites / 0 failures / 0 errors / 0 skipped** |
-| Unit tests (current) | **320 tests / 30 suites / 0 failures / 0 errors / 0 skipped** (+ P1C1/P1C2-R/P1D1/P1D2/P1D3 guards) |
+| Unit tests (current) | **321 tests / 31 suites / 0 failures / 0 errors / 0 skipped** (+ P1C1/P1C2-R/P1D1/P1D2/P1D3/P1D4 guards) |
 | Baseline build | `./gradlew clean assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** |
 
 ## Current Toolchain
@@ -77,6 +78,8 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Android Gradle Plugin | 4.2.2 |
 | Kotlin | 1.4.32 |
 | Moshi (runtime + codegen) | 1.9.3 |
+| AndroidX Navigation | 2.1.0 (stable) |
+| AndroidX Lifecycle (direct) | 2.2.0 (`lifecycle-viewmodel`, `lifecycle-livedata`) |
 | Parcelize plugin | `kotlin-parcelize` (legacy `kotlin-android-extensions` removed) |
 | JDK for the Gradle build | 8 |
 | `compileSdk` / `targetSdk` (app) | 30 / 30 |
@@ -99,14 +102,14 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 the Gradle build. `google()` + `mavenCentral()` only. Pinned packages:
 `platforms;android-30`, `platforms;android-29`, `build-tools;30.0.2`, `ndk;21.4.7075529`.
 
-Verified remote evidence (P1D3):
+Verified remote evidence (P1D4):
 
 | Field | Value |
 |---|---|
-| Run | `34731759494` (push, commit `94ef87e`) — **success** |
+| Run | `34733003165` (push, commit `9717d5b`) — **success** |
 | Log proof | `Gradle 6.7.1`; JDK 17 bootstrap + JDK 8 build; two `BUILD SUCCESSFUL` (app + androidTest) |
-| Remote test summary | `suites=30 tests=320 failures=0 errors=0 skipped=0` |
-| Artifacts | `prootx-debug-apk` (app-debug.apk, 18,138,719 bytes) and `prootx-debug-androidTest-apk` (app-debug-androidTest.apk, 1,754,696 bytes) |
+| Remote test summary | `suites=31 tests=321 failures=0 errors=0 skipped=0` |
+| Artifacts | `prootx-debug-apk` (app-debug.apk, 18,139,920 bytes) and `prootx-debug-androidTest-apk` (app-debug-androidTest.apk, 1,754,693 bytes) |
 | Artifact identity | app: `io.github.lord1egypt.prootx` / 1.0.0 / ABIs arm64-v8a, armeabi-v7a, x86, x86_64; androidTest: `io.github.lord1egypt.prootx.test` |
 
 The CI workflow now also runs `:app:assembleDebugAndroidTest` and uploads both APKs, so
@@ -147,13 +150,16 @@ The canonical list lives in
   merged-manifest entries removed).
 - **Resolved in P1D3:** deprecated `lifecycle-extensions` and `ViewModelProviders` (replaced
   by granular Lifecycle 2.2.0 + `ViewModelProvider`).
-- **Still open:** unused Sentry/Billing code (→ P1D4); prebuilt rootfs profile remnant;
+- **Resolved in P1D4:** pre-release Navigation baseline (2.1.0-alpha05 → **2.1.0** stable).
+  Beneficial transitive stabilization: `androidx.fragment` → 1.1.0, `lifecycle-runtime` /
+  `lifecycle-viewmodel-ktx` → 2.1.0.
+- **Still open:** unused Sentry/Billing code (→ P1D5); prebuilt rootfs profile remnant;
   network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based
   `versionCode`.
 
 ## Next Safe Action
 
-**P1D4 — dependency / AndroidX modernization** (e.g. inventory and handle the remaining
+**P1D5 — dependency / AndroidX modernization** (e.g. inventory and handle the remaining
 unused Sentry/Billing code and other dependency debt).
 
-Do **not** start P1D4 from this document. A phase must be explicitly authorized.
+Do **not** start P1D5 from this document. A phase must be explicitly authorized.

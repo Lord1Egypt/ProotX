@@ -15,7 +15,8 @@
 >     - **P1D1 — Barista Removal / AndroidTest Build Restoration:** CLOSED / PASS
 >     - **P1D2 — Dead Play Services Dependency Cleanup:** CLOSED / PASS
 >     - **P1D3 — Lifecycle Extensions / ViewModelProvider Migration:** CLOSED / PASS
->     - **P1D4 — Dependency/AndroidX Modernization:** NOT STARTED
+>     - **P1D4 — Navigation 2.1.0 Stable Migration:** CLOSED / PASS
+>     - **P1D5 — Dependency/AndroidX Modernization:** NOT STARTED
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -169,6 +170,10 @@ deferred to the appropriate later phase.
     monolithic `lifecycle-extensions` artifact was replaced by granular
     `lifecycle-viewmodel`/`lifecycle-livedata` 2.2.0, and `ViewModelProviders.of(...)` was
     migrated to `ViewModelProvider(...)` with scopes preserved (`DECISIONS.md` D018).
+13. **Pre-release Navigation baseline — RESOLVED in P1D4.** `navigation_version` moved from
+    2.1.0-alpha05 to **2.1.0** stable; the Kotlin JVM target was aligned to 1.8. Beneficial
+    transitive stabilization: `androidx.fragment` → 1.1.0 and `lifecycle-runtime` /
+    `lifecycle-viewmodel-ktx` → 2.1.0 (`DECISIONS.md` D019).
 
 ## Non-goals for P0
 

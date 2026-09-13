@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-12 (P1D3 — Lifecycle extensions removal / ViewModelProvider migration: PASS)
+Last updated: 2026-09-12 (P1D4 — Navigation 2.1.0 stable migration: PASS)
 
 ## Current Objective
 
@@ -13,38 +13,40 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1D3 — Lifecycle Extensions Removal / ViewModelProvider Migration**: **PASS**.
-`lifecycle-extensions` removed; granular Lifecycle 2.2.0 added; `ViewModelProviders.of`
-migrated to `ViewModelProvider(...)` with scopes preserved. **P1D remains IN PROGRESS.**
+**P1D4 — Navigation 2.1.0 Stable Migration**: **PASS**.
+Shared `navigation_version` moved from 2.1.0-alpha05 to **2.1.0** stable; Kotlin compile
+target aligned to JVM 1.8; beneficial transitive stabilization of fragment/lifecycle.
+**P1D remains IN PROGRESS.**
 
 ## Current Milestone
 
-**P1D4 — dependency / AndroidX modernization**: NOT STARTED.
+**P1D5 — dependency / AndroidX modernization**: NOT STARTED.
 
 ## What Was Completed
 
-- Removed `androidx.lifecycle:lifecycle-extensions:2.2.0-alpha01`; declared
-  `lifecycle-viewmodel:2.2.0` and `lifecycle-livedata:2.2.0` (stable).
-- Migrated `ViewModelProviders.of(...)` → `ViewModelProvider(...)` in `MainActivity` and the
-  six view-using Fragments (owner/scope unchanged).
-- Added `LifecycleModernizationGuardTest`.
+- Changed the shared `navigation_version` to `2.1.0` (Safe Args plugin +
+  `navigation-fragment-ktx` + `navigation-ui-ktx` all remain driven by that variable).
+- Aligned the Kotlin compile target with the already-declared Java 1.8 target
+  (`kotlinOptions.jvmTarget = '1.8'`) — required because Navigation 2.1.0's ktx inline
+  bytecode targets JVM 1.8.
+- Added `NavigationStabilityGuardTest`.
+- Beneficial transitive stabilization: `androidx.fragment` 1.1.0-beta01 → 1.1.0;
+  `lifecycle-runtime` / `lifecycle-viewmodel-ktx` 2.1.0-beta01 → 2.1.0.
 
 ## What Was Intentionally NOT Changed
 
-- Kotlin 1.4.32, Moshi 1.9.3, Gradle 6.7.1, AGP 4.2.2, JDK 8 build / JDK 17 bootstrap,
-  compileSdk 30, targetSdk 30, minSdk 21, NDK 21.4.7075529, build-tools 30.0.2.
-- Room 2.1.0-beta01, Navigation 2.1.0-alpha05, and all other dependency versions.
-- ViewModel classes and factories; app behavior, UI, runtime, PRoot, assets.
-- Sentry, Billing, Gson (active production use; future milestone).
-- No `by viewModels()`/`activityViewModels()` delegates (out of scope).
-- androidTest dependencies.
+- No navigation source/graph change (nav graph byte-identical; destinations/actions/Safe
+  Args consumers unchanged).
+- Direct Lifecycle artifacts remain 2.2.0; Room 2.1.0-beta01; all other dependency
+  versions; Kotlin 1.4.32; Moshi 1.9.3; Gradle 6.7.1; AGP 4.2.2; SDK/NDK/build-tools.
+- Runtime, UI, PRoot, database, network, billing, Sentry, assets.
 
 ## Current Repository State
 
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (P1D3) | `94ef87ed807cc92fb6c76651c973b261bba2e395` |
+| Feature HEAD (P1D4) | `9717d5b6740cf80be08a755e742b383a169394ce` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -53,22 +55,24 @@ migrated to `ViewModelProvider(...)` with scopes preserved. **P1D remains IN PRO
 
 Commit `94abf5fa520255bb10d087a6be3ba2bc70b0e127`, package
 `io.github.lord1egypt.prootx`, version `1.0.0`. Baseline tests **313 / 24 suites**; current
-tests **320 / 30 suites** (guard/contract tests).
+tests **321 / 31 suites** (guard/contract tests).
 
 ## Current Toolchain
 
-Gradle **6.7.1** · AGP **4.2.2** · Kotlin **1.4.32** · Moshi **1.9.3** · plugin
-**`kotlin-parcelize`** · Lifecycle **2.2.0 (viewmodel/livedata)** · JDK **8** (build) ·
-compileSdk **30** · targetSdk **30** · minSdk **21** · NDK **21.4.7075529** · build-tools
-**30.0.2**. Repositories: `google()`, `mavenCentral()` only.
+Gradle **6.7.1** · AGP **4.2.2** · Kotlin **1.4.32** (jvmTarget 1.8) · Moshi **1.9.3** ·
+Navigation **2.1.0** stable · Lifecycle **2.2.0** (viewmodel/livedata) · plugin
+**`kotlin-parcelize`** · JDK **8** (build) · compileSdk **30** · targetSdk **30** · minSdk
+**21** · NDK **21.4.7075529** · build-tools **30.0.2**. Repositories: `google()`,
+`mavenCentral()` only.
 
 ## Known Deferred Findings
 
 See [`docs/PROOTX_2_ROADMAP.md`](docs/PROOTX_2_ROADMAP.md#deferred-findings). Resolved: CI
 SDK setup (P1A), `jcenter()` (P1B), Kotlin/Android Extensions (P1C), Barista (P1D1), dead
-Play Services (P1D2), Lifecycle extensions/ViewModelProviders (P1D3). Still open: unused
-Sentry/Billing code (→ P1D4); prebuilt rootfs profile remnant; network-dependent unit
-tests; Play-readiness gaps (→ P1E); dynamic time-based `versionCode`.
+Play Services (P1D2), Lifecycle extensions/ViewModelProviders (P1D3), Navigation pre-release
+baseline (P1D4). Still open: unused Sentry/Billing code (→ P1D5); prebuilt rootfs profile
+remnant; network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based
+`versionCode`.
 
 ## Important Invariants
 
@@ -83,13 +87,14 @@ tests; Play-readiness gaps (→ P1E); dynamic time-based `versionCode`.
 7. Published history is immutable: no force-push, no history rewrite.
 8. One milestone at a time; respect STOP gates.
 9. CI runs the Android SDK tooling under a modern JDK and the application build under JDK 8
-   (`D010`). Gradle 6.7.1 / AGP 4.2.2 is a bridge (`D011`). View Binding / `kotlin-parcelize`
+   (`D010`). Gradle 6.7.1 / AGP 4.2.2 bridge (`D011`). View Binding / `kotlin-parcelize`
    (`D012`, `D015`); Kotlin+Moshi together (`D013`, `D014`); Espresso not Barista (`D016`);
-   no direct play-services-base (`D017`); granular Lifecycle + `ViewModelProvider` (`D018`).
+   no direct play-services-base (`D017`); granular Lifecycle + `ViewModelProvider` (`D018`);
+   Navigation stable 2.1.0 (`D019`).
 
 ## Next Safe Action
 
-**P1D4 — dependency / AndroidX modernization** (inventory and handle unused Sentry/Billing
+**P1D5 — dependency / AndroidX modernization** (inventory and handle unused Sentry/Billing
 and remaining dependency debt). Do not begin without explicit authorization.
 
 ## Resume Procedure
