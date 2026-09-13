@@ -245,3 +245,16 @@
   change was made; Material was reverted to 1.1.0-alpha06 and the branch is green.
 - Required next step: authorize the explicit swiperefreshlayout dependency (then retry
   P1D7), or leave Material at 1.1.0-alpha06. No P1D7 commits.
+
+## P1D7-U — SwipeRefreshLayout Ownership + Material Retry (2026-09-12) — BLOCKED
+
+- Added the authorized explicit `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`
+  (validated under Material 1.1.0-alpha06; `FragAppListBinding` compiled).
+- Retried Material 1.1.0 stable. `SwipeRefreshLayout` now resolved, but a **second** removed
+  transitive surfaced: `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0` (also
+  supplied by `androidx.legacy:legacy-support-core-utils`), consumed directly by
+  `MainActivity` and `ServerService` → `Unresolved reference: LocalBroadcastManager`.
+- That second dependency is outside P1D7-U's single-dependency authorization, so per Part H
+  the experiment was stopped: both changes reverted; no commits; branch green.
+- Required next step: authorize `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0`
+  in addition, then retry Material 1.1.0 stable.

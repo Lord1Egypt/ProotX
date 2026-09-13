@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-12 (P1D7 — Material 1.1.0 stable migration: BLOCKED)
+Last updated: 2026-09-12 (P1D7-U — SwipeRefreshLayout ownership + Material retry: BLOCKED)
 
 ## Project Identity
 
@@ -38,18 +38,19 @@ Last updated: 2026-09-12 (P1D7 — Material 1.1.0 stable migration: BLOCKED)
 | P1D5 — Room 2.1.0 Stable Migration | **CLOSED / PASS** |
 | P1D6 — AndroidX Preference 1.1.0 Stable Migration | **CLOSED / PASS** |
 | P1D7 — Material Components 1.1.0 Stable Migration | **BLOCKED** |
+| P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **BLOCKED** |
 
 ## Current Milestone
 
-**P1D7 — Material Components 1.1.0 Stable Migration: BLOCKED.** Bumping
-`com.google.android.material:material` 1.1.0-alpha06 → 1.1.0 removes the
-`androidx.legacy:legacy-support-core-ui`/`legacy-support-core-utils` transitives, which were
-the only source of `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`. The app uses
-`SwipeRefreshLayout` directly (`frag_app_list.xml`), so the build fails with
-`cannot find symbol: class SwipeRefreshLayout`. The minimal fix is to declare that dependency
-explicitly, which is **outside** the authorized "only Material moves" scope. No changes were
-committed; Material was reverted to 1.1.0-alpha06 and the branch remains green. Prior
-milestone **P1D6** is COMPLETE.
+**P1D7-U — SwipeRefreshLayout Ownership + Material Retry: BLOCKED.** Adding the authorized
+explicit `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` successfully restored
+`SwipeRefreshLayout` (`FragAppListBinding` compiled), but Material 1.1.0 stable then exposed a
+**second** removed transitive: `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0`
+(supplied by `androidx.legacy:legacy-support-core-utils`, dropped with Material 1.1.0), which
+`MainActivity`/`ServerService` consume directly — so the build now fails with
+`Unresolved reference: LocalBroadcastManager`. P1D7-U authorizes only the SwipeRefreshLayout
+dependency, so per Part H this is a STOP. No dependency/source change was committed; Material
+was reverted to 1.1.0-alpha06 and the branch is green.
 
 ## Repository State
 
@@ -166,22 +167,24 @@ The canonical list lives in
   byte-identical; DB version 7, migrations and `Data.db` unchanged.
 - **Resolved in P1D6:** pre-release Preference baseline (1.1.0-alpha05 → **1.1.0** stable).
   Zero source/XML change; appcompat transitively stabilized to 1.1.0.
-- **P1D7 BLOCKER (new):** Material **1.1.0** stable drops the
-  `androidx.legacy:legacy-support-core-ui`/`legacy-support-core-utils` transitives that
-  supplied `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`; the app's direct use of
-  `SwipeRefreshLayout` (`frag_app_list.xml`) then fails to compile
-  (`cannot find symbol: class SwipeRefreshLayout`). Minimal fix: declare
-  `androidx.swiperefreshlayout:swiperefreshlayout` explicitly. Requires authorization
-  (outside the "only Material moves" scope).
+- **P1D7 / P1D7-U BLOCKER:** Material **1.1.0** stable drops the
+  `androidx.legacy:legacy-support-core-ui`/`legacy-support-core-utils` transitives. Those were
+  the only provider of TWO artifacts the app consumes directly:
+  1. `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` (`frag_app_list.xml` /
+     `AppsListFragment`) — the P1D7-U authorized fix;
+  2. `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0` (`MainActivity` /
+     `ServerService`) — discovered after (1) was applied; NOT authorized in P1D7-U.
+  Resolution requires declaring **both** dependencies explicitly (or another decision).
 - **Still open:** unused Sentry/Billing code (→ P1D7); prebuilt rootfs profile remnant;
   network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based
   `versionCode`.
 
 ## Next Safe Action
 
-**Authorization decision for P1D7:** permit adding the explicit
-`androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` dependency (restoring the dependency
-Material alpha06 previously supplied transitively) so the Material 1.1.0 stable migration can
-proceed; otherwise leave Material at 1.1.0-alpha06.
+**Authorization decision for P1D7 / P1D7-U:** extend authorization to declare
+`androidx.localbroadcastmanager:localbroadcastmanager:1.0.0` in addition to the already
+authorized `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` (both are genuine direct
+consumers of what Material alpha06 supplied transitively), then retry Material 1.1.0 stable.
+Otherwise leave Material at 1.1.0-alpha06.
 
 Do **not** apply either change from this document. A phase must be explicitly authorized.

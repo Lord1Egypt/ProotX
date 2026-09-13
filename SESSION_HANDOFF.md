@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-12 (P1D7 — Material 1.1.0 stable migration: BLOCKED)
+Last updated: 2026-09-12 (P1D7-U — SwipeRefreshLayout ownership + Material retry: BLOCKED)
 
 ## Current Objective
 
@@ -19,22 +19,22 @@ source/XML change; appcompat transitively stabilized to 1.1.0. **P1D remains IN 
 
 ## Current Milestone
 
-**P1D7 — Material Components 1.1.0 Stable Migration**: **BLOCKED**.
+**P1D7-U — SwipeRefreshLayout Ownership + Material Retry**: **BLOCKED**.
 
-Material 1.1.0 stable removes the `androidx.legacy:legacy-support-core-ui` /
-`legacy-support-core-utils` transitives, which were the only source of
-`androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`. The app uses `SwipeRefreshLayout`
-directly (`frag_app_list.xml`), so the build fails with
-`cannot find symbol: class SwipeRefreshLayout` (generated `FragAppListBinding`). The minimal
-fix — declaring `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` explicitly — is
-outside the "only Material moves" scope. Material was reverted to 1.1.0-alpha06; no changes
-committed; branch is green.
+The authorized explicit `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` restored
+`SwipeRefreshLayout` (FragAppListBinding compiled). Material 1.1.0 stable then exposed a
+**second** removed transitive: `androidx.localbroadcastmanager:localbroadcastmanager:1.0.0`
+(from `androidx.legacy:legacy-support-core-utils`), consumed directly by `MainActivity` and
+`ServerService` → `Unresolved reference: LocalBroadcastManager`. That second dependency is
+outside P1D7-U's single-dependency authorization, so per Part H this is a STOP. Material was
+reverted to 1.1.0-alpha06; no changes committed; branch green.
 
 ## What Was Completed
 
 - P1D6 (Preference 1.1.0 stable) is complete; see the committed history.
-- For P1D7 the Material 1.1.0-alpha06 → 1.1.0 bump was applied and reproduced the failure,
-  root-caused, then reverted (no commit).
+- For P1D7-U the authorized SwipeRefreshLayout dependency was added and validated (Material
+  alpha06), the Material 1.1.0 retry was attempted, the second missing dependency
+  (`localbroadcastmanager`) was root-caused, and everything was reverted (no commit).
 
 ## What Was Intentionally NOT Changed
 
@@ -98,10 +98,10 @@ it could not be proven without a device and the XML was intentionally left uncha
 
 ## Next Safe Action
 
-**Authorization decision for P1D7:** permit adding the explicit
-`androidx.swiperefreshlayout:swiperefreshlayout:1.0.0` dependency (restoring what Material
-alpha06 supplied transitively) so Material 1.1.0 stable can be applied; otherwise leave
-Material at 1.1.0-alpha06. Do not apply either change without explicit authorization.
+**Authorization decision for P1D7-U:** extend authorization to declare
+`androidx.localbroadcastmanager:localbroadcastmanager:1.0.0` in addition to the already
+authorized `androidx.swiperefreshlayout:swiperefreshlayout:1.0.0`, then retry Material 1.1.0
+stable. Do not apply the changes without explicit authorization.
 
 ## Resume Procedure
 
