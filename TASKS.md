@@ -149,8 +149,14 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         CI platform 30 → 36; API-36 `PackageInfo.versionName` nullability contract made
         explicit with `info.versionName!!`; local gates + JaCoCo PASS; remote run
         `35013165950`; 37 suites / 327 tests; runtime/UI unchanged)
-  - [ ] **P1E5 — API 31+ manifest / PendingIntent / receiver compatibility** — NOT STARTED / READY TO START
-  - [ ] P1E6 — storage/permission runtime compatibility — NOT STARTED
+  - [x] **P1E5 — API 31+ manifest / PendingIntent / receiver compatibility** — CLOSED / PASS
+        (`MainActivity` + `TermuxActivity` `android:exported="true"`; `ssh://` BROWSABLE entry
+        point preserved; six PendingIntents explicitly immutable with one retaining
+        `FLAG_UPDATE_CURRENT`; receiver classification documented, Termux custom-receiver flag
+        deferred to targetSdk-34 work; disposable targetSdk 31 probe passed then reverted;
+        targetSdk remains 30; local gates + JaCoCo PASS; `assembleDebugAndroidTest` PASS; remote
+        run `35020171430`; 37 suites / 327 tests; runtime/UI unchanged)
+  - [ ] P1E6 — storage/permission runtime compatibility — NOT STARTED / READY TO START
   - [ ] P1E7 — FGS type/permission + notification permission — NOT STARTED
   - [ ] P1E8 — targetSdk 33/34 behavior migration — NOT STARTED
   - [ ] P1E9 — targetSdk 35/36 behavior + final SDK 36 regression — NOT STARTED

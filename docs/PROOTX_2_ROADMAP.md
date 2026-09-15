@@ -41,8 +41,10 @@
 >     - **P1E4 — COMPILESDK 36 MIGRATION:** CLOSED / PASS
 >       (app compileSdk 36; targetSdk 30; terminal 29/29/21; implementation `6d30b33`;
 >       remote CI `35013165950`; local JaCoCo regression PASS);
->     - **P1E5 — API 31+ MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY:** NOT STARTED /
->       READY TO START
+>     - **P1E5 — API 31+ MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY:** CLOSED / PASS
+>       (MainActivity + TermuxActivity `exported="true"`; `ssh://` preserved; six immutable
+>       PendingIntents; targetSdk stays 30; implementation `6e8a055`; remote CI `35020171430`)
+>     - **P1E6 — STORAGE / PERMISSION RUNTIME COMPATIBILITY:** READY TO START
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -261,6 +263,17 @@ deferred to the appropriate later phase.
     compatibility/dependency milestones; P1E4 made no opportunistic behavior change. Existing
     native-strip, manifest, Gradle 9, Kotlin annotation/`capitalize`, `ndk.dir`, and action/Node
     maintenance warnings also remain deferred.
+23. **P1E5 receiver/export and tooling follow-ups — DEFERRED, non-blocking.** The
+    `TermuxActivity` custom `com.termux.app.reload_style` receiver is classified as
+    `RECEIVER_NOT_EXPORTED` for future targetSdk-34 work, but the explicit flag cannot be applied
+    while `:terminal-term` compiles against API 29. `LocalBroadcastManager` (in-process) and the
+    `MainActivity` `DownloadManager` system-broadcast receiver remain unchanged. The custom
+    `jacocoCoverageReportForCi` task lists AGP 8's instrumented
+    `intermediates/classes/debug/jacocoDebug` output in its `classDirectories`, so it fails with
+    `Cannot process instrumented class` when run after `assembleDebug`; it passes from a
+    `clean` report-only state. This is a pre-existing build-tooling limitation (P1E3-era) and was
+    **not** remediated in P1E5. Lint debt (14 pre-existing errors, 131 warnings, 3 hints)
+    remains deferred, including the intentional `ExpiredTargetSdkVersion` while targetSdk is 30.
 
 ## Non-goals for P0
 

@@ -570,3 +570,27 @@
 - **Affected components:** `gradle/wrapper`, `build.gradle`, `app/build.gradle`,
   `termux-app/*/build.gradle`, 4 production source files + `MainActivityTest.kt` +
   `MoshiKspGuardTest.kt`, P1E3.
+
+## D030 — TermuxActivity `ssh://` entry point is an intended feature; receiver export flag deferred to targetSdk-34
+
+- **Date:** 2026-09-16
+- **Status:** Accepted (P1E5, CLOSED / PASS)
+- **Decision:** `com.termux.app.TermuxActivity` remains an exported component
+  (`android:exported="true"`) so its existing `VIEW`/`DEFAULT`/`BROWSABLE` `ssh://` deep-link
+  entry point keeps working; the embedded-terminal SSH entry point is an intended product
+  feature. All six application-owned `PendingIntent`s are explicitly immutable (five
+  `FLAG_IMMUTABLE`; the stop-sessions service intent `FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE`).
+  The `TermuxActivity` custom `com.termux.app.reload_style` receiver is classified as
+  `RECEIVER_NOT_EXPORTED`, but the explicit flag is **deferred** to the targetSdk-34 milestone.
+- **Reason:** P1E0 left the TermuxActivity export as an open product question; P1E5 resolves it in
+  favor of preserving the SSH deep link. The dynamic-receiver export flag only exists from API 33/
+  34, while `:terminal-term` still compiles against **API 29**, so adding it now would require a
+  terminal `compileSdk` increase that P1E5 is not authorized to make. App `targetSdk` stays **30**.
+- **Alternatives considered:** `exported="false"` or removing the filter/module (rejected — would
+  drop the current SSH entry point); applying `RECEIVER_NOT_EXPORTED` now (rejected — API 29
+  compile target); raising terminal `compileSdk` (rejected — out of scope).
+- **Trade-offs:** the custom receiver keeps its current default export behavior until the
+  targetSdk-34 milestone; the deferred flag is tracked in `TASKS.md`/`PROJECT_STATE.md`.
+- **Affected components:** `app/src/main/AndroidManifest.xml`,
+  `termux-app/terminal-term/src/main/AndroidManifest.xml`, `NotificationConstructor.kt`,
+  `TermuxService.java`, P1E5/P1E8.

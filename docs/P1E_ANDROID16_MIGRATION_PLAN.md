@@ -405,7 +405,7 @@ should be validated on a device; no UI redesign is authorized in P1E.
 | **P1E2** | **Kotlin 2.x codegen readiness**: migrate Moshi codegen **KAPT → KSP** (Room may stay KAPT); verify no KAPT-only codegen remains before Kotlin 2.2 | Codegen toolchain | Build + tests green on Kotlin 1.9 with KSP |
 | **P1E3** | Gradle **8.11.1**, AGP **8.10.1**, Kotlin **2.2.20**, KSP **2.2.20-2.0.4**, JDK **17**, build-tools **35.0.0**; four namespaces, app-only `buildConfig true`, JaCoCo Gradle-8 DSL/path fixes, non-transitive R ownership, Kotlin 2 source API substitutions; compileSdk/targetSdk still **30** | Build-system API change | **CLOSED / PASS**; build + 327 tests green; NDK 21.4 validated |
 | **P1E4** | app-only `compileSdk 36`, targetSdk stays **30**, terminal modules stay **29/29/21**; CI installs `platforms;android-36`; one API-36 nullability source-contract edit | Platform compile | **CLOSED / PASS**; build + 327 tests green; no intentional behavior change |
-| **P1E5** | API 31 manifest/intent: `android:exported` (MainActivity `true`; TermuxActivity decided), PendingIntent `FLAG_IMMUTABLE` (6×), dynamic receiver export flags | Manifest/intent | Build + tests; androidTest build |
+| **P1E5** | API 31 manifest/intent: `android:exported` (`MainActivity` `true`; `TermuxActivity` `true`, `ssh://` preserved), PendingIntent `FLAG_IMMUTABLE` (6×), dynamic receiver export flags classified/deferred | Manifest/intent | **CLOSED / PASS**; build + 327 tests green; androidTest build; disposable targetSdk 31 probe passed then reverted |
 | **P1E6** | Storage/permission runtime: remove/repair `PermissionHandler` gate + storage permissions + terminal request | Runtime permission | Session launch works without storage perms; tests green |
 | **P1E7** | FGS compatibility: `foregroundServiceType="specialUse"` + `FOREGROUND_SERVICE_SPECIAL_USE` + subtype property; `startForegroundService`; `POST_NOTIFICATIONS` | FGS/notification | Build + tests; FGS declaration validated |
 | **P1E8** | targetSdk **33/34**: `POST_NOTIFICATIONS` runtime request; receiver flags; FGS start restrictions | Target behavior | Build + tests; notification UX validated |
@@ -693,5 +693,46 @@ Accepted implementation: `6d30b333b0a1d0b8ab0be966af4c3052dcf29500`; remote CI r
 - Remote CI proved JDK 17, Gradle 8.11.1, API 36/API 29/Build Tools 35.0.0/NDK 21.4 setup,
   canonical tests, androidTest build, and both artifact uploads.
 
-**Next:** P1E5 — API 31+ MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY — **NOT STARTED /
-READY TO START**. Do not start without explicit authorization.
+## 23. P1E5 API 31+ manifest / PendingIntent / receiver implementation result — CLOSED / PASS
+
+Accepted implementation: `6e8a0559bc691266d403a216c56ec4377ce0c98b`; remote CI run
+`35020171430` — SUCCESS.
+
+- `MainActivity` and `TermuxActivity` declare `android:exported="true"`. TermuxActivity retains
+  its existing `VIEW`/`DEFAULT`/`BROWSABLE` `ssh://` deep-link `intent-filter`; no SSH support was
+  removed. The embedded-terminal SSH entry point is therefore an accepted product feature.
+- All six application-owned `PendingIntent`s now carry explicit mutability: the
+  `NotificationConstructor.kt` session-list and settings intents use `FLAG_IMMUTABLE`, its
+  stop-sessions service intent uses `FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE`, and the
+  `TermuxService.java` content/exit/wake-lock intents use `FLAG_IMMUTABLE`. Mutable count **0**;
+  unspecified-mutability count **0**. A repository-wide inventory found no additional
+  application-owned `PendingIntent` creation.
+- Receiver classification (per §10.4): the `LocalBroadcastManager` result receiver is in-process
+  and unchanged; `MainActivity`'s `DownloadManager.ACTION_DOWNLOAD_COMPLETE` registration is a
+  system broadcast and unchanged; the `TermuxActivity` custom `com.termux.app.reload_style`
+  receiver is classified `RECEIVER_NOT_EXPORTED` for API-34 work, but the explicit flag is
+  deferred because `:terminal-term` compiles against API 29 and the flag does not exist there.
+- Disposable targetSdk 31 probe: `:app:processDebugMainManifest` and `:app:assembleDebug` both
+  passed, proving no other merged component with an `intent-filter` lacks `android:exported`.
+  The probe was reverted; persistent targetSdk remains **30** and `git diff` shows no targetSdk
+  change.
+- Exactly four functional files changed; no Gradle, dependency, SDK-level, Room/schema/migration,
+  `Data.db`, resource, runtime, UI, storage-permission, or FGS change. `:app:lintDebug` surfaces
+  only pre-existing debt (14 errors / 131 warnings / 3 hints) with **no**
+  `UnspecifiedImmutableFlag`, `ExportedActivity`, `ExportedService`, or `ExportedReceiver`
+  finding.
+- Local gates: `:app:assembleDebugAndroidTest` completed (`BUILD SUCCESSFUL`), `:app:ktlint`
+  passed, `:app:downloadAssets` passed, and `:app:jacocoCoverageReportForCi` executed and emitted
+  non-empty XML (788,365 B, 391 classes) plus HTML. The custom JaCoCo report task fails if AGP 8's
+  instrumented `intermediates/classes/debug/jacocoDebug` directory is present; it passes from a
+  `clean` report-only state. No JaCoCo configuration was altered (deferred build-tooling cleanup).
+- Merged debug manifest final state: `MainActivity` true, `TermuxActivity` true, `TermuxService`
+  false, `ProotXDocProvider` true, `ServerService` non-exported default, targetSdk 30.
+- Canonical build evidence was retained without a rerun (**37 suites / 327 tests / 0 failures /
+  0 errors / 0 skipped**), because no functional file changed after the accepted run. Remote CI
+  proved JDK 17, Gradle 8.11.1, API 36/API 29/Build Tools 35.0.0/NDK 21.4 setup, canonical tests,
+  androidTest build, and both artifact uploads.
+- No intentional runtime or UI change.
+
+**Next:** P1E6 — STORAGE / PERMISSION RUNTIME COMPATIBILITY — **NOT STARTED / READY TO START**.
+Do not start without explicit authorization.

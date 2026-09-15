@@ -556,3 +556,49 @@
   deferred. No intentional runtime or UI change.
 - **P1E4 CLOSED / PASS. P1E IN PROGRESS. P1E5 API 31+ MANIFEST / PENDINGINTENT / RECEIVER
   COMPATIBILITY NOT STARTED / READY TO START.**
+
+## P1E5 — API 31+ Manifest / PendingIntent / Receiver Compatibility (2026-09-16) — PASS
+
+- Added `android:exported="true"` to `MainActivity` (`app/src/main/AndroidManifest.xml`) and to
+  `TermuxActivity` (`termux-app/terminal-term/src/main/AndroidManifest.xml`), preserving
+  TermuxActivity's existing `VIEW`/`DEFAULT`/`BROWSABLE` `ssh://` deep-link entry point.
+- Made all six application-owned `PendingIntent` creations explicitly immutable:
+  `NotificationConstructor.kt` session-list and settings (`FLAG_IMMUTABLE`) and stop-sessions
+  (`FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE`); `TermuxService.java` notification content, exit
+  service, and wake-lock toggle (`FLAG_IMMUTABLE`). Mutable count: **0**; unspecified-mutability
+  count: **0**.
+- Exactly four functional files changed; no Gradle, dependency, SDK-level, Room/schema/
+  migration, resource, runtime, or UI change. Repository-wide `PendingIntent` inventory confirms
+  no additional application-owned creation exists.
+- Receiver classification (documented, not changed): `LocalBroadcastManager` server-result
+  registration is in-process; `MainActivity`'s `DownloadManager.ACTION_DOWNLOAD_COMPLETE`
+  registration listens to a system broadcast; the `TermuxActivity` custom
+  `com.termux.app.reload_style` receiver is classified `RECEIVER_NOT_EXPORTED` and its explicit
+  flag is deferred to targetSdk-34 work because `:terminal-term` compiles against API 29.
+- Disposable probe: temporarily raised `:app` targetSdk 30 → 31; `:app:processDebugMainManifest`
+  and `:app:assembleDebug` both passed, proving Android 12 exported-component requirements are
+  satisfied; reverted to targetSdk 30 with a clean `git diff`. targetSdk remains **30**.
+- Completed the previously interrupted `:app:assembleDebugAndroidTest` (`BUILD SUCCESSFUL`).
+  Local gates passed: `:app:ktlint`, `:app:downloadAssets` (four ABI assets), and
+  `:app:jacocoCoverageReportForCi` (executed, non-empty 788,365-byte XML / 391 classes + HTML).
+- `:app:lintDebug` is diagnostic and fails on pre-existing legacy debt (14 errors, 131 warnings,
+  3 hints: `Range` ×3, `UseRequireInsteadOfGet` ×10, and an intentional `ExpiredTargetSdkVersion`
+  because targetSdk stays 30). No `UnspecifiedImmutableFlag`, `ExportedActivity`,
+  `ExportedService`, or `ExportedReceiver` finding exists.
+- Merged debug manifest: `MainActivity` exported `true`, `TermuxActivity` exported `true`,
+  `TermuxService` exported `false`, `ProotXDocProvider` exported `true`, `ServerService`
+  non-exported default; `targetSdkVersion="30"`. Local debug APK 19,915,145 bytes, SHA-256
+  `860fb93744f8a83823d7476e797fa51d04f96a32c86b3fb04997f8cdeeaadc88`, package
+  `io.github.lord1egypt.prootx`, versionName 1.0.0, SDK 36/30/21, four ABIs, 16/16 required
+  payloads. androidTest APK 1,825,890 bytes, SHA-256
+  `f2518d7aa35a1419ba1ab270e71b7b65fddaff0c65b5e19d5aec314d24403769`, package
+  `io.github.lord1egypt.prootx.test`.
+- Canonical `clean assembleDebug testDebugUnitTest` evidence retained (**37 suites / 327 tests /
+  0 failures / 0 errors / 0 skipped**); the canonical build was not rerun because no functional
+  file changed after the accepted run. Remote CI run `35020171430` at implementation
+  `6e8a0559bc691266d403a216c56ec4377ce0c98b`: **SUCCESS**; explicit API 36/API 29/Build Tools
+  35.0.0/NDK 21.4 setup, canonical build, exact tests, androidTest build, and both artifact
+  uploads passed.
+- No intentional runtime or UI change.
+- **P1E5 CLOSED / PASS. P1E IN PROGRESS. P1E6 STORAGE / PERMISSION RUNTIME COMPATIBILITY READY
+  TO START.**

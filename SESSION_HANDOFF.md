@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-15 (P1E4 compileSdk 36 migration: CLOSED / PASS — P1E IN PROGRESS)
+Last updated: 2026-09-16 (P1E5 API 31+ manifest / PendingIntent / receiver compatibility: CLOSED / PASS — P1E IN PROGRESS)
 
 ## Current Objective
 
@@ -13,19 +13,24 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1E4 — compileSdk 36 Migration**: **CLOSED / PASS** at implementation SHA
-`6d30b333b0a1d0b8ab0be966af4c3052dcf29500`. The app alone now compiles against API 36;
-targetSdk/minSdk remain 30/21 and terminal modules remain 29/29/21. API 36 makes
-`PackageInfo.versionName` nullable, so `AppsListFragment` preserves its existing non-null
-String invariant with `info.versionName!!`. Remote CI run `35013165950` passed the canonical
-clean build, **37 suites / 327 tests / 0 failures / 0 errors / 0 skipped**, androidTest build,
-and both artifact uploads. The separate local JaCoCo regression gate also executed and emitted
-XML/HTML for 331 classes.
+**P1E5 — API 31+ Manifest / PendingIntent / Receiver Compatibility**: **CLOSED / PASS** at
+implementation SHA `6e8a0559bc691266d403a216c56ec4377ce0c98b`. The change is limited to exactly
+four functional files: `MainActivity` and `TermuxActivity` gain `android:exported="true"`
+(TermuxActivity keeps its `VIEW`/`DEFAULT`/`BROWSABLE` `ssh://` deep link), and the six
+application-owned `PendingIntent` creations are explicitly immutable — five `FLAG_IMMUTABLE`
+and the stop-sessions service intent `FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE`. targetSdk remains
+**30**; terminal modules remain **29/29/21**; no Gradle, dependency, Room/schema, runtime, or UI
+change. The interrupted `:app:assembleDebugAndroidTest` build completed (`BUILD SUCCESSFUL`);
+ktlint, `downloadAssets`, and JaCoCo gates passed; a disposable targetSdk 31
+`processDebugMainManifest` + `assembleDebug` probe proved the Android 12 exported-component
+requirement is satisfied, then reverted. Remote CI run `35020171430` passed the canonical clean
+build, **37 suites / 327 tests / 0 failures / 0 errors / 0 skipped**, androidTest build, and
+both artifact uploads.
 
 ## Current Milestone
 
-**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS. P1E4 is closed; **P1E5 — API 31+
-MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY** is **NOT STARTED / READY TO START**.
+**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS. P1E5 is closed; **P1E6 — STORAGE /
+PERMISSION RUNTIME COMPATIBILITY** is **NOT STARTED / READY TO START**.
 
 ## What Was Completed
 
@@ -40,19 +45,31 @@ MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY** is **NOT STARTED / READY TO 
 - P1E4 raised only `:app` compileSdk 30 → 36 and CI platform 30 → 36; all dependency and
   toolchain pins remain unchanged. The only source compatibility edit is
   `return info.versionName!!`.
+- P1E5 added `android:exported="true"` to `MainActivity` (launcher) and `TermuxActivity`
+  (`ssh://` BROWSABLE entry point preserved) and made all six application-owned `PendingIntent`s
+  explicitly immutable. It also probed targetSdk 31 and reverted. No dependency, Gradle, Room,
+  schema, runtime, UI, or terminal-SDK change.
+- P1E5 receiver classification: `MainActivity`'s `LocalBroadcastManager` registration is
+  in-process (unaffected); its `DownloadManager` `ACTION_DOWNLOAD_COMPLETE` registration listens
+  to a system broadcast and is left unchanged; the `TermuxActivity` custom
+  `com.termux.app.reload_style` receiver is classified for future work as
+  `RECEIVER_NOT_EXPORTED` but the flag is deferred until `:terminal-term` compiles against an
+  API that offers it.
 
 ## What Was Intentionally NOT Changed
 
-- targetSdk/minSdk (30/21), terminal SDKs (29/29/21), NDK 21.4, source manifests,
-  resources, dependency versions, Runtime/UI behavior.
-- No `android:exported`, PendingIntent, FGS, storage or notification work (those are later P1E
-  milestones). Room stays on KAPT; Moshi stays on KSP2.
+- targetSdk/minSdk (30/21), terminal SDKs (29/29/21), NDK 21.4, resources, dependency versions,
+  Room schema 1–7, migrations, Runtime/UI behavior.
+- No FGS type/permission, storage/permission-runtime, notification-permission, receiver-export
+  flag, targetSdk raise, edge-to-edge, or predictive-back work (those are later P1E milestones).
+  Room stays on KAPT; Moshi stays on KSP2.
 
 ## Current Repository State
 
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
+| Accepted P1E5 implementation | `6e8a0559bc691266d403a216c56ec4377ce0c98b` |
 | Accepted P1E4 implementation | `6d30b333b0a1d0b8ab0be966af4c3052dcf29500` |
 | Accepted P1E3 implementation | `1828cdd4441a291433d07bd8a3e4efa96bcbfc76` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -126,9 +143,9 @@ verified on a device at the Golden Candidate gate; no physical acceptance is cla
 
 ## Next Safe Action
 
-**P1E5 — API 31+ MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY — NOT STARTED / READY TO
-START.** Sentry and Billing remain active and out of scope. Do not begin without explicit
-authorization.
+**P1E6 — STORAGE / PERMISSION RUNTIME COMPATIBILITY — NOT STARTED / READY TO START.** It owns
+the `PermissionHandler` storage gate and the `READ/WRITE_EXTERNAL_STORAGE` declarations. Sentry
+and Billing remain active and out of scope. Do not begin without explicit authorization.
 
 ## Resume Procedure
 

@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-15 (P1E4 compileSdk 36 migration — CLOSED / PASS; P1E IN PROGRESS)
+Last updated: 2026-09-16 (P1E5 API 31+ manifest / PendingIntent / receiver compatibility — CLOSED / PASS; P1E IN PROGRESS)
 
 ## Project Identity
 
@@ -50,28 +50,33 @@ Last updated: 2026-09-15 (P1E4 compileSdk 36 migration — CLOSED / PASS; P1E IN
 | P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe | **CLOSED / BRIDGE_FOUND** |
 | P1E3 — AGP 8.10 / Kotlin 2.2 Implementation | **CLOSED / PASS** |
 | P1E4 — compileSdk 36 Migration | **CLOSED / PASS** |
-| P1E5 — API 31+ Manifest / PendingIntent / Receiver Compatibility | **NOT STARTED / READY TO START** |
+| P1E5 — API 31+ Manifest / PendingIntent / Receiver Compatibility | **CLOSED / PASS** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1E4 — compileSdk 36 Migration: CLOSED / PASS.** Implementation commit `6d30b333b0a1d0b8ab0be966af4c3052dcf29500`
-raises only the application compileSdk to 36, changes CI's application platform package to
-`platforms;android-36`, and makes the existing non-null version-name invariant explicit with
-`info.versionName!!` for the API-36 nullable SDK contract. App targetSdk/minSdk remain **30/21**;
-terminal modules remain **29/29/21**. Toolchain and dependency versions are unchanged from
-P1E3. Local validation passed all compile/codegen/androidTest/ktlint/download/JaCoCo gates and
-the canonical **37-suite / 327-test / 0-failure / 0-error / 0-skipped** build. Remote CI run
-`35013165950` passed the explicit API 36/API 29/Build Tools 35.0.0/NDK 21.4 setup, canonical
-build/tests, androidTest APK, and both artifact uploads. Next: **P1E5 — API 31+ MANIFEST /
-PENDINGINTENT / RECEIVER COMPATIBILITY — NOT STARTED / READY TO START**.
+**P1E5 — API 31+ Manifest / PendingIntent / Receiver Compatibility: CLOSED / PASS.**
+Implementation commit `6e8a0559bc691266d403a216c56ec4377ce0c98b` touches exactly four functional
+files and is behavior-neutral: `MainActivity` and `TermuxActivity` gain `android:exported="true"`
+(the latter preserving its existing `VIEW`/`DEFAULT`/`BROWSABLE` `ssh://` deep link), and six
+notification `PendingIntent` creations receive explicit mutability — five
+`FLAG_IMMUTABLE` and the stop-sessions service intent
+`FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE`. The app still targets **targetSdk 30** (no raise);
+terminal modules remain **29/29/21**. The `assembleDebugAndroidTest` build completes
+(`BUILD SUCCESSFUL`), ktlint/`downloadAssets`/JaCoCo gates pass, and a disposable targetSdk 31
+manifest/assemble probe proved the Android 12 exported-component requirement is satisfied before
+being reverted to 30. Local canonical evidence remains **37 suites / 327 tests / 0 failures /
+0 errors / 0 skipped**; remote CI run `35020171430` passed with the same summary plus androidTest
+APK and both artifact uploads. Next: **P1E6 — STORAGE / PERMISSION RUNTIME COMPATIBILITY —
+NOT STARTED / READY TO START**.
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
+| Accepted P1E5 implementation | `6e8a0559bc691266d403a216c56ec4377ce0c98b` | `exported` on MainActivity/TermuxActivity + six immutable PendingIntents; targetSdk remains 30 |
 | Accepted P1E4 implementation | `6d30b333b0a1d0b8ab0be966af4c3052dcf29500` | app compileSdk 36; targetSdk remains 30 |
 | Accepted P1E3 implementation | `1828cdd4441a291433d07bd8a3e4efa96bcbfc76` | AGP 8 / Kotlin 2 implementation + JaCoCo AGP-8 path remediation |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
@@ -144,15 +149,24 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 `tools platform-tools` install broke when the legacy `tools` package was retired);
 `platform-tools` is owned explicitly by the pinned `sdkmanager` step. Triggers unchanged.
 
-Verified remote evidence (P1E4):
+Verified remote evidence (P1E5):
 
 | Field | Value |
 |---|---|
-| Run | `35013165950` (push, commit `6d30b33`) — **SUCCESS** |
+| Run | `35020171430` (push, commit `6e8a055`) — **SUCCESS** |
 | Log proof | JDK 17; Gradle 8.11.1; API 36 + API 29, Build Tools 35.0.0 and NDK 21.4 installed; canonical clean build and `assembleDebugAndroidTest` passed |
 | Remote test summary | `suites=37 tests=327 failures=0 errors=0 skipped=0` |
-| Artifacts | `prootx-debug-apk` and `prootx-debug-androidTest-apk` uploaded |
-| JaCoCo | Standard CI does not run the report task. Separate local P1E4 regression proof: `jacocoCoverageReportForCi` executed, consumed the AGP 8 `.exec`, and produced XML/HTML for 331 classes |
+| Artifacts | `prootx-debug-apk` (19,096,964 B) and `prootx-debug-androidTest-apk` (1,371,730 B) uploaded |
+| JaCoCo | Standard CI does not run the report task. Separate local P1E5 proof: `jacocoCoverageReportForCi` executed, consumed the AGP 8 `.exec`, and produced non-empty XML (788,365 B, 391 classes) plus HTML |
+
+**JaCoCo tooling caveat (pre-existing, non-blocking).** The custom `jacocoCoverageReportForCi`
+task points its `classDirectories` at `build/intermediates/classes/debug`, which under AGP 8
+contains the instrumented `jacocoDebug` output produced by the debug-variant `jacocoDebug`
+transform (`testCoverageEnabled true`). If that instrumented directory is present (i.e. after
+`assembleDebug`), JaCoCo aborts with `Cannot process instrumented class`. The task passes when
+run from a state where only the non-instrumented unit-test classes are present (e.g.
+`clean :app:jacocoCoverageReportForCi`). No JaCoCo configuration was altered; recorded for a
+future build-tooling cleanup.
 
 The workflow also runs `:app:assembleDebugAndroidTest` and uploads both APKs, so androidTest
 dependency resolution is a standing gate.
@@ -174,8 +188,9 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-**None.** P1E4 is closed; remote CI is green (run `35013165950`) and the separate local
-JaCoCo regression gate passed.
+**None.** P1E5 is closed; remote CI is green (run `35020171430`). The local JaCoCo regression
+gate passes when the AGP 8 instrumented-class directory is absent (see the JaCoCo tooling
+caveat above); this is pre-existing and non-blocking.
 
 ## Deferred Findings
 
@@ -244,6 +259,19 @@ The canonical list lives in
 - **Resolved in P1E4:** the app now compiles against API 36 while targetSdk remains 30. API 36
   declares `PackageInfo.versionName` nullable; `AppsListFragment` preserves ProotX's existing
   non-null return invariant with `info.versionName!!`. No intentional runtime or UI change.
+- **Resolved in P1E5:** `MainActivity` and `TermuxActivity` now declare `android:exported="true"`
+  (TermuxActivity's `ssh://` BROWSABLE deep link preserved); the six application-owned
+  `PendingIntent`s are explicitly immutable (the stop-sessions service intent retains
+  `FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE`). targetSdk remains 30; the debug and androidTest
+  manifests merge and build, and a disposable targetSdk 31 probe passed. No runtime or UI change.
+- **Deferred after P1E5:** the `TermuxActivity` custom `com.termux.app.reload_style` receiver is
+  classified as `RECEIVER_NOT_EXPORTED` for future targetSdk-34 work, but the explicit flag is
+  **not** applied yet because `:terminal-term` still compiles against API 29 (the flag is only
+  available from API 33/34). `LocalBroadcastManager` (in-process) and `MainActivity`'s
+  system `DownloadManager` receiver are deliberately unchanged. The JaCoCo instrumented-class
+  class-directory caveat is recorded above; lint debt (14 pre-existing errors, 131 warnings,
+  3 hints — `Range`, `UseRequireInsteadOfGet`, and the intentional `ExpiredTargetSdkVersion`)
+  remains deferred.
 - **Deferred after P1E3:** manifest `package` warnings; `JavaExec.main` → `mainClass` before
   Gradle 9; legacy Android DSL/`lintOptions` cleanup; `String.capitalize()`; configuration-time
   custom tasks; action/Node maintenance warnings; `ndk.dir`; OkHttp 3.14.7 + Okio 3.7.0
@@ -257,6 +285,6 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1E5 — API 31+ MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY — NOT STARTED / READY TO
-START.** It owns the next narrowly scoped platform-compatibility changes. Do **not** start it
-without explicit authorization.
+**P1E6 — STORAGE / PERMISSION RUNTIME COMPATIBILITY — NOT STARTED / READY TO START.** It owns the
+next narrowly scoped runtime-permission changes (`PermissionHandler` storage gate and the
+`READ/WRITE_EXTERNAL_STORAGE` declarations). Do **not** start it without explicit authorization.

@@ -1,6 +1,6 @@
 # ProotX Build Environment
 
-> Current state: **P1E4 toolchain** (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20, JDK 17,
+> Current state: **P1E5 toolchain** (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20, JDK 17,
 > app compileSdk 36 / targetSdk 30).
 
 ## Summary
@@ -137,11 +137,27 @@ tasks consume that path while retaining their connected-test inputs. The explici
 `1828cdd`, loaded the `.exec`, processed 331 classes, and generated parseable XML plus HTML.
 The standard GitHub workflow does not run this report task.
 
+**JaCoCo class-directory caveat (P1E5):** the custom report tasks list
+`build/intermediates/classes/debug` in `classDirectories`; under AGP 8 that directory contains
+the debug variant's instrumented `jacocoDebug` output (`testCoverageEnabled true`). Running the
+report after `assembleDebug` therefore fails with `Cannot process instrumented class`. The gate
+passes from a `clean` report-only state (e.g. `./gradlew clean :app:jacocoCoverageReportForCi`).
+No JaCoCo configuration was changed in P1E5; this is recorded for a future build-tooling cleanup.
+
+## Manifest / intent state (P1E5)
+
+`MainActivity` and `TermuxActivity` declare `android:exported="true"`; `TermuxActivity` retains
+its `ssh://` BROWSABLE deep link. The six application-owned `PendingIntent`s are explicitly
+immutable (the stop-sessions service intent retains
+`FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE`). App `targetSdk` remains **30** and terminal modules
+remain **29/29/21**; a disposable targetSdk 31 manifest/assemble probe proved the Android 12
+exported-component requirement is satisfied and was reverted.
+
 ## Baseline result (reference)
 
 The frozen baseline at tag `v1.0.0-baseline` measured **313 tests / 24 suites / 0 failures**.
-The current P1E4 toolchain measures **327 tests / 37 suites / 0 failures / 0 errors / 0
-skipped**. Remote CI run `35013165950` passed at `6d30b33` and uploaded the debug and
-androidTest APK artifacts. P1E4 local validation also proved the API-36 SDK platform,
-code-generation gates, four ABIs, and the separate JaCoCo report regression gate. See
+The P1E5 toolchain measures **327 tests / 37 suites / 0 failures / 0 errors / 0 skipped**.
+Remote CI run `35020171430` passed at `6e8a055` and uploaded the debug and androidTest APK
+artifacts. P1E5 local validation also proved the API-36 SDK platform, the androidTest APK build,
+four ABIs, 16/16 native payloads, and the separate JaCoCo report regression gate. See
 `PROJECT_STATE.md`.
