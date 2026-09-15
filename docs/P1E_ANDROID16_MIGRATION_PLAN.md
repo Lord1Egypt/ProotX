@@ -1,13 +1,13 @@
 # ProotX — P1E Android 16 (SDK 36) Migration Plan
 
-> **Status:** P1E6 implementation CLOSED / PASS; P1E remains IN PROGRESS. This document is the
+> **Status:** P1E7 implementation CLOSED / PASS; P1E remains IN PROGRESS. This document is the
 > approved migration design and implementation record. Current state lives in
 > `PROJECT_STATE.md`. Do not execute a later step without explicit authorization.
 
-Current accepted implementation: `2202d6bda33512d3312827bf2bd6dc17f47dbae9`, remote CI
-`35028617203` green, 38 suites / 329 tests / 0 failures / 0 errors / 0 skipped. Frozen
-application baseline remains unchanged. Next milestone: **P1E7 — FOREGROUND SERVICE /
-NOTIFICATION COMPATIBILITY — NOT STARTED / READY TO START**.
+Current accepted implementation: `0e70b7e1e3f398eb6fdb92730542cae0da6f1975`, remote CI
+`35032934977` green, 39 suites / 337 tests / 0 failures / 0 errors / 0 skipped. Frozen
+application baseline remains unchanged. Next milestone: **P1E8 — TARGETSDK 33/34 RUNTIME
+COMPATIBILITY — NOT STARTED / READY TO START**.
 
 ---
 
@@ -233,8 +233,8 @@ later targetSdk milestones).
 
 | Service | Declared type | Start path | Work | Notification | Runs without UI | FGS perms |
 |---|---|---|---|---|---|---|
-| `io.github.lord1egypt.prootx.ServerService` | **none** | `startService` from `MainActivity` / `SessionListFragment` / `FilesystemListFragment` / `AppsListFragment`; `getService` PendingIntent ("stopAll") | starts PRoot server via `LocalServerManager`, holds sessions | `startForeground(id 1000, persistent)` | yes (`stopWithTask=true`, `START_STICKY`) | `FOREGROUND_SERVICE` only |
-| `com.termux.app.TermuxService` | **none** | `startService` + `bindService` from `TermuxActivity` | terminal sessions, wake/wifi lock | `startForeground(id 2000)` in `onCreate` | yes | `FOREGROUND_SERVICE` only |
+| `io.github.lord1egypt.prootx.ServerService` | **`specialUse`** | `startForegroundService` (API 26+) from `MainActivity.startSession()`; `startService` for already-running commands from `MainActivity.restartRunningSession` / `SessionListFragment` / `FilesystemListFragment` / `AppsListFragment`; `getService` PendingIntent ("stopAll") | starts PRoot server via `LocalServerManager`, holds sessions | `startForeground(id 1000, persistent, FOREGROUND_SERVICE_TYPE_MANIFEST)` | yes (`stopWithTask=true`, `START_STICKY`) | `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_SPECIAL_USE` |
+| `com.termux.app.TermuxService` | **`specialUse`** (API-36 app manifest overlay) | `startForegroundService` (API 26+) + `bindService` from `TermuxActivity` | terminal sessions, wake/wifi lock | `startForeground(id 2000, ..., FOREGROUND_SERVICE_TYPE_MANIFEST)` in `onCreate` | yes | `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_SPECIAL_USE` |
 
 - At target 34+, a foreground service **must declare `android:foregroundServiceType`** and hold
   the matching `FOREGROUND_SERVICE_*` permission; `foregroundServiceType` is also required in
@@ -245,10 +245,13 @@ later targetSdk milestones).
   `<property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="…"/>`
   describing "persistent Linux (PRoot) session / remote terminal server".
   `dataSync` is **not** appropriate (wrong semantics, subject to Android 15 timeouts).
-- `ServerService` also must use **`startForegroundService()`** (not `startService`) for
-  robustness on API 26+ (P1E6); notification action "stopAll" should be reviewed.
-- **ServerService manifest requires the FGS permission** and the app currently lacks any
-  `foregroundServiceType`; `TermuxService` likewise.
+- **Implemented in P1E7.** `ServerService` and `TermuxService` declare `specialUse`, the app and
+  terminal module hold `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_SPECIAL_USE`, and the initial
+  launch paths use `startForegroundService()` on API 26+. The notification action "stopAll" was
+  reviewed and kept as an already-running-service command (`startService` semantics via
+  `PendingIntent.getService`), not converted to a foreground launch.
+- **P1E7 outcome:** the app now declares `FOREGROUND_SERVICE_SPECIAL_USE` and both services have a
+  `foregroundServiceType`. See §25 for the implementation result.
 - **NDK / P1F boundary:** the AGP 8.10 default NDK is `27.0.12077973`; the project pins
   `21.4.7075529`. AGP 8.10 may warn/require a newer NDK for `ndkBuild`. Whether NDK 21.4
   remains buildable under AGP 8.10 **must be validated in P1E2**. If it is rejected, NDK
@@ -269,12 +272,17 @@ later targetSdk milestones).
 ## 10. Notifications / storage / visibility / receivers
 
 ### 10.1 Notifications (PART N)
-- Channel id `"ProotX"`, importance `LOW` for `ServerService`; both services post ongoing
-  notifications.
+- Channel id `"ProotX"`, importance `LOW`, created by **each service itself** (`ServerService`
+  and `TermuxService`), so neither depends on `MainActivity` having run first.
 - Android 13+ (target 33+): `POST_NOTIFICATIONS` is required for the user to **see** the
   notifications. The FGS itself can run without it, but visibility/first-run UX is affected.
-- Plan: declare `POST_NOTIFICATIONS`, request it on first session start (P1E7), handle denial
-  gracefully (service still runs; notification may be hidden). Do not add it in P1E0.
+- **Corrected sequencing (P1E7):** `POST_NOTIFICATIONS` is **not** declared or requested while
+  targetSdk is 30. An app targeting API ≤ 32 does not control the notification-permission dialog
+  timing the way a target-33+ app does, so declaring it early could surface premature,
+  system-timed first-run UX. P1E7 owns FGS structural compatibility, service-owned channels, and
+  immediate foreground promotion; **P1E8** owns the declaration, the runtime request, and the
+  permission UX together with the targetSdk 33/34 raise (see `DECISIONS.md` D031). This
+  supersedes the earlier "request it on first session start (P1E7)" wording.
 
 ### 10.2 Storage (PART O) — HIGH priority
 - Only app-private/app-scoped storage is used:
@@ -376,7 +384,7 @@ should be validated on a device; no UI redesign is authorized in P1E.
 | `installLocation="internalOnly"` | app + terminal-term | fine | keep |
 | `android:max_aspect` | app + terminal-term | legacy Samsung hint; harmless | keep or drop (cosmetic) |
 | `android:resizeableActivity="true"` | terminal-term | API 36 ignores on large screens | validate |
-| `FOREGROUND_SERVICE` perm | app has it; terminal-term has it | needed; types/perms missing | add SFU perm + type in P1E6 |
+| `FOREGROUND_SERVICE` perm | app has it; terminal-term has it | needed; types/perms missing | **added in P1E7** (`FOREGROUND_SERVICE_SPECIAL_USE` + `specialUse` type for both services) |
 | `VIBRATE` | merged from terminal-term | unused by app | optional cleanup |
 
 ---
@@ -409,8 +417,8 @@ should be validated on a device; no UI redesign is authorized in P1E.
 | **P1E4** | app-only `compileSdk 36`, targetSdk stays **30**, terminal modules stay **29/29/21**; CI installs `platforms;android-36`; one API-36 nullability source-contract edit | Platform compile | **CLOSED / PASS**; build + 327 tests green; no intentional behavior change |
 | **P1E5** | API 31 manifest/intent: `android:exported` (`MainActivity` `true`; `TermuxActivity` `true`, `ssh://` preserved), PendingIntent `FLAG_IMMUTABLE` (6×), dynamic receiver export flags classified/deferred | Manifest/intent | **CLOSED / PASS**; build + 327 tests green; androidTest build; disposable targetSdk 31 probe passed then reverted |
 | **P1E6** | Storage/permission runtime: remove/repair `PermissionHandler` gate + storage permissions + terminal request | Runtime permission | **CLOSED / PASS**; app/session/SAF flows work without storage perms; 329 tests green; disposable targetSdk 33 probe passed then reverted |
-| **P1E7** | FGS compatibility: `foregroundServiceType="specialUse"` + `FOREGROUND_SERVICE_SPECIAL_USE` + subtype property; `startForegroundService`; `POST_NOTIFICATIONS` | FGS/notification | Build + tests; FGS declaration validated |
-| **P1E8** | targetSdk **33/34**: `POST_NOTIFICATIONS` runtime request; receiver flags; FGS start restrictions | Target behavior | Build + tests; notification UX validated |
+| **P1E7** | FGS structural compatibility: `foregroundServiceType="specialUse"` + `FOREGROUND_SERVICE_SPECIAL_USE` + subtype property for both services; service-owned channels; initial launch via `startForegroundService`; immediate `ServerService` promotion; `FOREGROUND_SERVICE_TYPE_MANIFEST` on API 29+. **`POST_NOTIFICATIONS` intentionally deferred** (see §10.1) | FGS/notification | **CLOSED / PASS**; build + 337 tests green; disposable targetSdk 34 probe passed then reverted; FGS declarations validated in merged manifest + APK |
+| **P1E8** | targetSdk **33/34** runtime: `POST_NOTIFICATIONS` declaration + runtime request + permission UX; targetSdk 31+ FGS background-start restrictions; `TermuxActivity` custom receiver `RECEIVER_NOT_EXPORTED`; targetSdk 33/34 behavior | Target behavior | Build + tests; notification UX validated |
 | **P1E9** | targetSdk **35/36** behavior: edge-to-edge, predictive back (`OnBackPressedCallback`), large-screen orientation/resizability; final SDK 36 regression build; Golden Candidate prep | Regression/behavior | Full local+remote green; P1G physical acceptance queued |
 
 ### 15.1 Exact P1E1 implementation (proven by P1E1-P)
@@ -775,5 +783,44 @@ Accepted implementation: `2202d6bda33512d3312827bf2bd6dc17f47dbae9`; remote CI r
   the two permission `IllegalState`s, their tests, and the unused
   `alert_permissions_necessary_*` strings) is deferred as dead legacy follow-up.
 
-**Next:** P1E7 — FOREGROUND SERVICE / NOTIFICATION COMPATIBILITY — **NOT STARTED / READY TO
-START**. Do not start without explicit authorization.
+## 25. P1E7 foreground service / notification compatibility result — CLOSED / PASS
+
+Accepted implementation: `0e70b7e1e3f398eb6fdb92730542cae0da6f1975`; remote CI run
+`35032934977` — SUCCESS.
+
+- Declared `FOREGROUND_SERVICE_SPECIAL_USE` (retaining `FOREGROUND_SERVICE`) and typed
+  `ServerService` and `TermuxService` as `android:foregroundServiceType="specialUse"`, each with
+  a specific `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` property. `TermuxService` is overlaid from the
+  API-36 app manifest; `:terminal-term` stays compileSdk 29 and its manifest is unchanged, and
+  the overlay merges into exactly one `exported=false` component.
+- `POST_NOTIFICATIONS` is intentionally **absent** — not declared and not requested. This is the
+  sequencing correction recorded in `DECISIONS.md` D031: P1E7 owns FGS structural compatibility
+  and channel ownership; P1E8 owns the targetSdk 33/34 raise plus the `POST_NOTIFICATIONS`
+  declaration and runtime request.
+- Each service creates its own `"ProotX"` channel (`IMPORTANCE_LOW`); `MainActivity`'s redundant
+  channel initialization was removed.
+- Initial session (`MainActivity.startSession`) and terminal (`TermuxActivity.onCreate`) launches
+  use `startForegroundService` on API 26+; already-running-service commands keep `startService`.
+  `ServerService` promotes to the foreground synchronously in `onStartCommand` for `type="start"`
+  before asynchronous session work. Promotion uses `FOREGROUND_SERVICE_TYPE_MANIFEST` on API 29+
+  (two-argument below) in both services.
+- Notification PendingIntents are unchanged (six immutable, mutable count 0); the trampoline audit
+  found no notification action that launches an activity. `autoStart()`/`onNewIntent()` remains the
+  documented targetSdk 31+ `ForegroundServiceStartNotAllowedException` risk for P1E8.
+- Disposable targetSdk 34 probe passed and was reverted with no Gradle diff. Added
+  `ForegroundServiceCompatibilityGuardTest` (8 tests). Canonical `clean assembleDebug
+  testDebugUnitTest` = **39 suites / 337 tests / 0 failures / 0 errors / 0 skipped**; local JaCoCo
+  report executed (non-empty 782,925-byte XML + HTML); androidTest APK built.
+- Debug APK 19,913,063 bytes, SHA-256
+  `6c3dc42adaaa1b866319f73768b714846768373ea659bef388af154dac63ff52`, package
+  `io.github.lord1egypt.prootx`, versionName 1.0.0, SDK 36/30/21, four ABIs, 16/16 required
+  payloads; permissions ACCESS_NETWORK_STATE, INTERNET, BILLING, CHANGE_WIFI_STATE,
+  FOREGROUND_SERVICE, FOREGROUND_SERVICE_SPECIAL_USE, WAKE_LOCK, VIBRATE. androidTest APK
+  1,825,680 bytes, SHA-256
+  `5720dd54a6b07a1f8569b5e65e481c80e69a5d8cd1f1f6ac125c0195f474ebcd`, package
+  `io.github.lord1egypt.prootx.test`.
+- No Gradle, dependency, SDK-level, Room/schema/migration, `Data.db`, resource, runtime-behavior,
+  or UI change. `targetSdk` remains **30**; terminal modules remain **29/29/21**.
+
+**Next:** P1E8 — TARGETSDK 33/34 RUNTIME COMPATIBILITY — **NOT STARTED / READY TO START**. Do not
+start without explicit authorization.

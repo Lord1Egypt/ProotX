@@ -1,6 +1,6 @@
 # ProotX Build Environment
 
-> Current state: **P1E6 toolchain** (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20, JDK 17,
+> Current state: **P1E7 toolchain** (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20, JDK 17,
 > app compileSdk 36 / targetSdk 30).
 
 ## Summary
@@ -33,7 +33,10 @@ Moshi 1.8.0 → 1.9.3. **P1E1** migrated the bridge to Gradle **7.6.4** / AGP **
 **1.9.25** / Moshi **1.15.2** on **JDK 17**. P1E2 moved Moshi codegen to KSP. **P1E3**
 migrated to Gradle **8.11.1** / AGP **8.10.1** / Kotlin **2.2.20** / KSP
 **2.2.20-2.0.4** while preserving SDK levels and NDK. **P1E4** then raised only the app
-compileSdk **30 → 36**, keeping targetSdk 30, minSdk 21, and terminal SDKs 29/29/21.
+compileSdk **30 → 36**, keeping targetSdk 30, minSdk 21, and terminal SDKs 29/29/21. **P1E6**
+removed the obsolete legacy broad-storage permission dependency. **P1E7** made the two real
+foreground services structurally compatible with the Android 12–16 FGS rules without changing
+SDK levels.
 
 ## JDK requirement
 
@@ -162,11 +165,27 @@ immutable (the stop-sessions service intent retains
 remain **29/29/21**; a disposable targetSdk 31 manifest/assemble probe proved the Android 12
 exported-component requirement is satisfied and was reverted.
 
+## Foreground-service state (P1E7)
+
+The app declares `android.permission.FOREGROUND_SERVICE` and
+`android.permission.FOREGROUND_SERVICE_SPECIAL_USE`. `io.github.lord1egypt.prootx.ServerService`
+and `com.termux.app.TermuxService` are both typed `android:foregroundServiceType="specialUse"`
+with a `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` property; the terminal service is overlaid from the
+API-36 app manifest because `:terminal-term` still compiles against API 29 (its manifest remains
+unchanged), and merges into exactly one `exported=false` component. Each service creates its own
+`"ProotX"` channel at `IMPORTANCE_LOW`; the initial session/terminal launches use
+`startForegroundService` on API 26+; `ServerService` promotes synchronously before asynchronous
+work; and promotion uses `ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST` on API 29+ (two-argument
+`startForeground` below). `POST_NOTIFICATIONS` is **not** declared in P1E7 — it is deferred to
+P1E8 with the targetSdk 33/34 raise (`DECISIONS.md` D031). App `targetSdk` remains **30**;
+terminal modules remain **29/29/21**. A disposable targetSdk 34 probe built cleanly with the
+expected merged services/permissions and was reverted.
+
 ## Baseline result (reference)
 
 The frozen baseline at tag `v1.0.0-baseline` measured **313 tests / 24 suites / 0 failures**.
-The P1E6 toolchain measures **329 tests / 38 suites / 0 failures / 0 errors / 0 skipped**.
-Remote CI run `35028617203` passed at `2202d6b` and uploaded the debug and androidTest APK
-artifacts. P1E6 local validation also proved the API-36 SDK platform, the androidTest APK build,
-four ABIs, 16/16 native payloads, the absence of legacy storage permissions in the APK, and the
-separate JaCoCo report regression gate. See `PROJECT_STATE.md`.
+The P1E7 toolchain measures **337 tests / 39 suites / 0 failures / 0 errors / 0 skipped**.
+Remote CI run `35032934977` passed at `0e70b7e` and uploaded the debug and androidTest APK
+artifacts. P1E7 local validation also proved the API-36 SDK platform, the androidTest APK build,
+four ABIs, 16/16 native payloads, the FGS `specialUse` declarations in the APK, the absence of
+`POST_NOTIFICATIONS`, and the separate JaCoCo report regression gate. See `PROJECT_STATE.md`.

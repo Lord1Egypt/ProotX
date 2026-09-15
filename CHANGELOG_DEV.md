@@ -661,3 +661,73 @@
   follow-up.
 - **P1E6 CLOSED / PASS. P1E IN PROGRESS. P1E7 FOREGROUND SERVICE / NOTIFICATION COMPATIBILITY
   READY TO START.**
+
+## P1E7 — Foreground Service / Notification Compatibility (2026-09-16) — PASS
+
+- Declared `<uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />`
+  in `app/src/main/AndroidManifest.xml` alongside the retained `FOREGROUND_SERVICE`.
+  `POST_NOTIFICATIONS` is intentionally **not** declared or requested in P1E7.
+- Typed `io.github.lord1egypt.prootx.ServerService` as
+  `android:foregroundServiceType="specialUse"` with a
+  `android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE` property ("Runs user-initiated local Linux
+  sessions and keeps their local SSH VNC and X11 server processes alive while the user uses those
+  sessions"); `android:stopWithTask="true"` and the non-exported default are unchanged.
+- Overlaid `com.termux.app.TermuxService` from the API-36 app manifest with
+  `android:foregroundServiceType="specialUse"` and a subtype property ("Keeps user-initiated
+  interactive terminal sessions and their child processes alive while the user switches between
+  ProotX terminal and client applications"), preserving `android:exported="false"`. The
+  `:terminal-term` manifest is **unchanged** (the module still compiles against API 29, whose AAPT
+  cannot recognize the newer enum); the overlay merges into exactly one component.
+- `ServerService.onCreate()` now calls `notificationManager.createServiceNotificationChannel()`, so
+  the service owns its own foreground-notification prerequisite; `MainActivity`'s now-redundant
+  `NotificationConstructor` channel-initialization property and call were removed (the class is
+  still used by `ServerService`).
+- `ServerService` promotes to the foreground **synchronously** in `onStartCommand` for
+  `type = "start"` via a new `promoteToForeground()` helper, before the asynchronous
+  `startSession` coroutine is scheduled; the redundant `startForeground` call inside `startSession`
+  was removed. Promotion uses three-argument `startForeground(..., ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST)`
+  on API 29+ and the existing two-argument call below.
+- Only the initial session launch changed in `MainActivity.startSession()`:
+  `startForegroundService(serviceIntent)` on API 26+, `startService(serviceIntent)` below. The
+  already-running-service commands (`restartRunningSession`, `stopApp`, `filesystemIsBeingDeleted`,
+  `kill`, and the notification `stopAll` PendingIntent) keep their existing `startService`
+  semantics.
+- `TermuxActivity` now calls `startForegroundService(serviceIntent)` on API 26+ for the initial
+  terminal-service start and retains `doBindService(serviceIntent)`; `TermuxService.onCreate()`
+  creates the shared `"ProotX"` channel (`IMPORTANCE_LOW`) itself before promoting, and uses
+  `ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST` on API 29+ (two-argument `startForeground` below).
+  SSH parsing, session behavior, and binding semantics are unchanged.
+- Notification PendingIntents are unchanged (six immutable; mutable count **0**), and the
+  notification trampoline audit found no notification action that launches an activity.
+- Disposable targetSdk 34 probe: `:app:processDebugMainManifest` and `:app:assembleDebug` both
+  passed; the merged manifest had one `ServerService` (`foregroundServiceType=specialUse` +
+  subtype property), one `TermuxService` (`exported=false`, `specialUse`, subtype property),
+  `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_SPECIAL_USE` present, and `POST_NOTIFICATIONS`
+  absent; reverted to targetSdk **30** with no Gradle diff.
+- Added `app/src/test/java/io/github/lord1egypt/prootx/architecture/ForegroundServiceCompatibilityGuardTest.kt`
+  (8 tests) guarding the permission set, `POST_NOTIFICATIONS` absence, both `specialUse`
+  declarations + subtype properties, the single-component overlay, service-owned channels,
+  `startForegroundService`/`FOREGROUND_SERVICE_TYPE_MANIFEST` usage, and the unchanged terminal SDK
+  levels.
+- Local gates passed: Kotlin/Java/unit/androidTest compilation, KSP2 Moshi, KAPT Room, Safe Args,
+  Parcelize, ViewBinding, BuildConfig, `:app:assembleDebugAndroidTest`, `:app:ktlint`,
+  `:app:downloadAssets`, and `:app:jacocoCoverageReportForCi` (executed from the clean/report-only
+  state; non-empty 782,925-byte XML + HTML). Canonical `clean assembleDebug testDebugUnitTest` =
+  **39 suites / 337 tests / 0 failures / 0 errors / 0 skipped** (+1 guard suite).
+- Final debug APK 19,913,063 bytes, SHA-256
+  `6c3dc42adaaa1b866319f73768b714846768373ea659bef388af154dac63ff52`, package
+  `io.github.lord1egypt.prootx`, versionName 1.0.0, SDK 36/30/21, four ABIs, 16/16 required
+  payloads; permissions are exactly ACCESS_NETWORK_STATE, INTERNET, BILLING, CHANGE_WIFI_STATE,
+  FOREGROUND_SERVICE, FOREGROUND_SERVICE_SPECIAL_USE, WAKE_LOCK, VIBRATE. androidTest APK
+  1,825,680 bytes, SHA-256
+  `5720dd54a6b07a1f8569b5e65e481c80e69a5d8cd1f1f6ac125c0195f474ebcd`, package
+  `io.github.lord1egypt.prootx.test` (byte-identical to P1E6).
+- Remote CI run `35032934977` at implementation
+  `0e70b7e1e3f398eb6fdb92730542cae0da6f1975`: **SUCCESS**; JDK 17, Gradle 8.11.1, API 36/API 29,
+  Build Tools 35.0.0, NDK 21.4.7075529, canonical build, **39 suites / 337 tests / 0 failures /
+  0 errors / 0 skipped**, androidTest build, and both artifact uploads passed.
+- No intentional runtime or UI change: notification IDs, actions, PendingIntents, session
+  lifecycle, SSH behavior, dependency versions, Room schema/migrations, and app-scoped storage
+  paths are unchanged. `POST_NOTIFICATIONS` sequencing correction recorded in `DECISIONS.md` D031.
+- **P1E7 CLOSED / PASS. P1E IN PROGRESS. P1E8 TARGETSDK 33/34 RUNTIME COMPATIBILITY READY TO
+  START.**

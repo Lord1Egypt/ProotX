@@ -595,3 +595,43 @@
 - **Affected components:** `app/src/main/AndroidManifest.xml`,
   `termux-app/terminal-term/src/main/AndroidManifest.xml`, `NotificationConstructor.kt`,
   `TermuxService.java`, P1E5/P1E8.
+
+---
+
+## D031 — Foreground-service specialUse type; `POST_NOTIFICATIONS` deferred until targetSdk 33
+
+- **Date:** 2026-09-16
+- **Status:** Accepted (P1E7, CLOSED / PASS)
+- **Decision:** ProotX's two real foreground services are typed **`specialUse`**. Both
+  `io.github.lord1egypt.prootx.ServerService` and `com.termux.app.TermuxService` declare
+  `android:foregroundServiceType="specialUse"` with an
+  `android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE` property describing the real user-facing
+  reason, and the app declares `android.permission.FOREGROUND_SERVICE_SPECIAL_USE` alongside
+  the retained `android.permission.FOREGROUND_SERVICE`. `TermuxService` is overlaid from the
+  API-36 app manifest because `:terminal-term` still compiles against API 29, whose AAPT does
+  not recognize the newer enum; the overlay merges into the single existing library component.
+  Each service now creates its own `"ProotX"` notification channel (`IMPORTANCE_LOW`) and
+  promotes with `ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST` on API 29+ (two-argument
+  `startForeground` below), so the manifest is the single source of truth. **`POST_NOTIFICATIONS` is intentionally _not_ declared or
+  requested in P1E7**; it is deferred to P1E8, which raises targetSdk to 33/34 and owns the
+  declaration, the runtime request, and the permission UX as one unit.
+- **Reason:** `dataSync`/`mediaPlayback`/`location`/`connectedDevice`/`mediaProjection`/
+  `camera`/`microphone`/`health`/`remoteMessaging` do not describe a user-initiated local Linux
+  / interactive terminal runtime, and `shortService`/`systemExempted` are invalid here, so
+  `specialUse` is the correct type. On Android 13+ an app targeting API ≤ 32 does not control
+  the notification-permission dialog timing in the same way a target-33+ app does; declaring
+  `POST_NOTIFICATIONS` while targetSdk is still 30 could surface premature, system-controlled
+  first-run permission UX. The FGS itself runs without `POST_NOTIFICATIONS`; only notification
+  visibility is affected. Keeping the declaration and the request together in P1E8 (with the
+  targetSdk raise) lets ProotX own the request timing.
+- **Alternatives considered:** `dataSync`/`systemExempted`/`shortService` (rejected — wrong or
+  invalid semantics); declaring/requesting `POST_NOTIFICATIONS` in P1E7 (rejected —
+  system-timed UX at target ≤ 32; the original migration-plan wording was corrected);
+  hard-coding `FOREGROUND_SERVICE_TYPE_SPECIAL_USE` at runtime (rejected —
+  `FOREGROUND_SERVICE_TYPE_MANIFEST` keeps the manifest authoritative).
+- **Trade-offs:** The specialUse type is a declared rationale, not a stronger platform
+  guarantee, and notification visibility on Android 13+ remains dependent on the P1E8 request.
+  The `TermuxService` type lives in the app manifest overlay rather than the terminal module.
+- **Affected components:** `app/src/main/AndroidManifest.xml`, `ServerService.kt`,
+  `MainActivity.kt`, `TermuxActivity.java`, `TermuxService.java`,
+  `ForegroundServiceCompatibilityGuardTest`, P1E7/P1E8.

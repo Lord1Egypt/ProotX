@@ -164,8 +164,21 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         paths unchanged; disposable targetSdk 33 probe passed then reverted; new
         `StoragePermissionGuardTest`; local gates + JaCoCo PASS; remote run `35028617203`;
         38 suites / 329 tests)
-  - [ ] P1E7 — FGS type/permission + notification permission — NOT STARTED / READY TO START
-  - [ ] P1E8 — targetSdk 33/34 behavior migration — NOT STARTED
+  - [x] **P1E7 — foreground service / notification compatibility** — CLOSED / PASS
+        (`FOREGROUND_SERVICE_SPECIAL_USE` declared; `ServerService` + `TermuxService` typed
+        `specialUse` with `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` (terminal service overlaid from the
+        API-36 app manifest; `:terminal-term` stays compileSdk 29; one merged component,
+        `exported=false`); each service owns its `"ProotX"` channel (`IMPORTANCE_LOW`);
+        `MainActivity`'s redundant channel init removed; initial session/terminal launch uses
+        `startForegroundService` on API 26+; `ServerService` promotes synchronously before async
+        work; `FOREGROUND_SERVICE_TYPE_MANIFEST` on API 29+; `POST_NOTIFICATIONS` deferred to P1E8
+        per `D031`; disposable targetSdk 34 probe passed then reverted; new
+        `ForegroundServiceCompatibilityGuardTest`; local gates + JaCoCo PASS; remote run
+        `35032934977`; 39 suites / 337 tests)
+  - [ ] P1E8 — targetSdk 33/34 behavior migration — NOT STARTED / READY TO START
+        (owns `POST_NOTIFICATIONS` declaration + runtime request + permission UX, targetSdk
+        31+ FGS background-start restrictions, `TermuxActivity` custom receiver
+        `RECEIVER_NOT_EXPORTED`, targetSdk 33/34 behavior)
   - [ ] P1E9 — targetSdk 35/36 behavior + final SDK 36 regression — NOT STARTED
 - [ ] **P1F — Modern native/NDK and 16 KB page readiness**
   - [ ] Update NDK / native toolchain; verify 16 KB page-size compatibility

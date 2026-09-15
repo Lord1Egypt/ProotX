@@ -47,7 +47,12 @@
 >     - **P1E6 — STORAGE / PERMISSION RUNTIME COMPATIBILITY:** CLOSED / PASS
 >       (legacy READ/WRITE_EXTERNAL_STORAGE + PermissionHandler removed; launch/SAF no longer
 >       permission-gated; targetSdk stays 30; implementation `2202d6b`; remote CI `35028617203`)
->     - **P1E7 — FOREGROUND SERVICE / NOTIFICATION COMPATIBILITY:** READY TO START
+>     - **P1E7 — FOREGROUND SERVICE / NOTIFICATION COMPATIBILITY:** CLOSED / PASS
+>       (`specialUse` FGS type + `FOREGROUND_SERVICE_SPECIAL_USE` + subtype properties for both
+>       services; service-owned channels; `startForegroundService` + immediate promotion +
+>       `FOREGROUND_SERVICE_TYPE_MANIFEST`; `POST_NOTIFICATIONS` deferred to P1E8; targetSdk
+>       stays 30; implementation `0e70b7e`; remote CI `35032934977`; 39 suites / 337 tests)
+>     - **P1E8 — TARGETSDK 33/34 RUNTIME COMPATIBILITY:** READY TO START
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -286,6 +291,19 @@ deferred to the appropriate later phase.
     for a dedicated cleanup milestone. The `jacocoCoverageReportForCi` instrumented-class caveat
     remains pre-existing/deferred. P1E6's removal of the permission gate is an intentional
     compatibility behavior change; data locations and the runtime architecture are unchanged.
+
+25. **P1E7 notification-permission sequencing — CORRECTED and DEFERRED, non-blocking.** The
+    earlier plan placed `POST_NOTIFICATIONS` in P1E7. That is corrected: while app targetSdk is 30,
+    an app targeting API ≤ 32 does not control the Android 13+ notification-permission dialog
+    timing the way a target-33+ app does, so declaring it early could surface premature,
+    system-timed first-run UX. P1E7 therefore owns only FGS structural compatibility and
+    service-owned channels; `POST_NOTIFICATIONS` is declared and requested in **P1E8** together
+    with the targetSdk 33/34 raise (`DECISIONS.md` D031). Also deferred to P1E8: the targetSdk
+    31+ FGS background-start restrictions for `MainActivity.autoStart()`/`onNewIntent()` (the
+    `onNewIntent` external-intent-while-backgrounded path is a potential
+    `ForegroundServiceStartNotAllowedException` risk; the normal foreground/user-initiated path is
+    structurally correct now), and the `TermuxActivity` custom `com.termux.app.reload_style`
+    receiver `RECEIVER_NOT_EXPORTED` flag.
 
 ## Non-goals for P0
 
