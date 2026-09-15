@@ -1,11 +1,13 @@
 # ProotX — P1E Android 16 (SDK 36) Migration Plan
 
-> **Status:** P1E4 implementation CLOSED / PASS; P1E remains IN PROGRESS. This document is the
+> **Status:** P1E5 implementation CLOSED / PASS; P1E remains IN PROGRESS. This document is the
 > approved migration design and implementation record. Current state lives in
 > `PROJECT_STATE.md`. Do not execute a later step without explicit authorization.
 
-Current accepted implementation: `6d30b333b0a1d0b8ab0be966af4c3052dcf29500`, remote CI
-`35013165950` green, 327 tests / 37 suites. Frozen application baseline remains unchanged.
+Current accepted implementation: `6e8a0559bc691266d403a216c56ec4377ce0c98b`, remote CI
+`35020171430` green, 37 suites / 327 tests / 0 failures / 0 errors / 0 skipped. Frozen
+application baseline remains unchanged. Next milestone: **P1E6 — STORAGE / PERMISSION RUNTIME
+COMPATIBILITY — NOT STARTED / READY TO START**.
 
 ---
 
@@ -285,7 +287,7 @@ later targetSdk milestones).
   and is **not grantable**, so this gate will deny session launch permanently.
 - Equivalent legacy request exists in `TermuxActivity` (`WRITE_EXTERNAL_STORAGE,
   REQUESTCODE_PERMISSION_STORAGE`).
-- **Finding:** the storage permissions are **not required by the current runtime**. P1E5 must
+- **Finding:** the storage permissions are **not required by the current runtime**. P1E6 must
   remove/replace the gate (and the manifest `READ/WRITE_EXTERNAL_STORAGE` declarations) so
   targetSdk 33+ does not block session launch. This is a behavior change and requires its own
   milestone + regression validation.
@@ -366,8 +368,8 @@ should be validated on a device; no UI redesign is authorized in P1E.
 |---|---|---|---|
 | `android:sharedUserId="com.termux"` | `terminal-term` manifest | **Not present in app merged manifest/APK** — inert | Remove during manifest cleanup (P1E2) |
 | `android:sharedUserLabel` | `terminal-term` manifest | tied to sharedUserId | Remove with it |
-| `WRITE_EXTERNAL_STORAGE` | app + terminal-term | not needed by runtime | remove in P1E5 |
-| `READ_EXTERNAL_STORAGE` | app | not grantable at target 33+ | remove + fix handler in P1E5 |
+| `WRITE_EXTERNAL_STORAGE` | app + terminal-term | not needed by runtime | remove in P1E6 |
+| `READ_EXTERNAL_STORAGE` | app | not grantable at target 33+ | remove + fix handler in P1E6 |
 | `allowBackup` | app `false` (tools:replace) | effective value false | keep |
 | `fullBackupContent` | terminal-term `@xml/backupscheme` | overridden by `allowBackup=false` | keep/cleanup |
 | `extractNativeLibs="true"` | app + terminal-term | **required** (PRoot execs `.so` from nativeLibraryDir) | keep |
