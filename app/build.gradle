@@ -15,11 +15,13 @@ apply plugin: 'jacoco'
 apply plugin: 'de.undercouch.download'
 
 android {
+    namespace 'io.github.lord1egypt.prootx'
     compileSdkVersion 30
     ndkVersion "21.4.7075529"
 
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 
     defaultConfig {
@@ -169,8 +171,8 @@ task testAll(dependsOn: ['test', 'connectedAndroidTest']) {
 task jacocoCoverageReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport']) {
 
     reports {
-        xml.enabled = true
-        html.enabled = true
+        xml.required = true
+        html.required = true
     }
 
     def fileFilter = [ '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*' ]
@@ -190,8 +192,8 @@ task jacocoCoverageReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', '
 task jacocoCoverageReportForCi(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
 
     reports {
-        xml.enabled = true
-        html.enabled = true
+        xml.required = true
+        html.required = true
     }
 
     def fileFilter = [ '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*' ]
@@ -256,7 +258,7 @@ dependencies {
     def slf4j_version = '1.7.26'
 
     def kotlinx_coroutines_version = '1.0.0'
-    def kotlin_jdk_version = '1.9.25'
+    def kotlin_jdk_version = '2.2.20'
 
     // Androidx versions
     def room_version = '2.1.0'

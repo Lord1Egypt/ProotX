@@ -14,7 +14,7 @@ import java.io.File
  */
 class MoshiKspGuardTest {
 
-    private val expectedKspVersion = "1.9.25-1.0.20"
+    private val expectedKspVersion = "2.2.20-2.0.4"
     private val expectedMoshiVersion = "1.15.2"
 
     @Test

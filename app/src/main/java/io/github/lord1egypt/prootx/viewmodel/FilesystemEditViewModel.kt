@@ -56,7 +56,7 @@ class FilesystemEditViewModel(private val ulaDatabase: ProotXDatabase) : ViewMod
                 return@withContext
             }
 
-            if (filesystem.name.toLowerCase(Locale.ENGLISH) == "apps") filesystem.isAppsFilesystem = true
+            if (filesystem.name.lowercase(Locale.ENGLISH) == "apps") filesystem.isAppsFilesystem = true
             filesystem.isCreatedFromBackup = true
             val id = ulaDatabase.filesystemDao().insertFilesystem(filesystem)
 

@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
 
 android {
+    namespace 'com.termux.view'
     compileSdkVersion 29
 
     dependencies {

@@ -105,7 +105,7 @@ class FilesystemEditFragment : Fragment() {
         }
         if (editExisting) {
             for (i in 0 until binding.spinnerFilesystemType.adapter.count) {
-                val item = binding.spinnerFilesystemType.adapter.getItem(i).toString().toLowerCase(Locale.ENGLISH)
+                val item = binding.spinnerFilesystemType.adapter.getItem(i).toString().lowercase(Locale.ENGLISH)
                 if (item == filesystem.distributionType) binding.spinnerFilesystemType.setSelection(i)
             }
         }
@@ -128,7 +128,7 @@ class FilesystemEditFragment : Fragment() {
             override fun onNothingSelected(parent: AdapterView<*>?) {}
 
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                filesystem.distributionType = parent?.getItemAtPosition(position).toString().toLowerCase(Locale.ENGLISH)
+                filesystem.distributionType = parent?.getItemAtPosition(position).toString().lowercase(Locale.ENGLISH)
             }
         }
     }
@@ -148,7 +148,6 @@ class FilesystemEditFragment : Fragment() {
         if (filesystem.isAppsFilesystem) {
             binding.inputFilesystemName.isEnabled = false
         }
-
         binding.inputFilesystemName.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(p0: Editable?) {
                 filesystem.name = p0.toString()

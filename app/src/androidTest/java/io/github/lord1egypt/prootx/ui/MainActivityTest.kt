@@ -80,7 +80,7 @@ class MainActivityTest {
         R.string.progress_starting.longWaitForDisplay()
 
         // Enter session and create a file to verify correct access
-        R.id.terminal_view.longWaitForDisplay()
+        com.termux.R.id.terminal_view.longWaitForDisplay()
         sshPassword.enterAsNativeViewText()
         "touch test.txt".enterAsNativeViewText()
         val expectedFile = File(homeDirectory, "test.txt")
@@ -116,7 +116,7 @@ class MainActivityTest {
         // Assert session can be restarted
         clickListItem(R.id.list_apps, 0)
         assertNotDisplayed(R.id.layout_progress)
-        R.id.terminal_view.shortWaitForDisplay()
+        com.termux.R.id.terminal_view.shortWaitForDisplay()
     }
 
     /*
