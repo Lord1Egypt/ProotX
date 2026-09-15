@@ -14,6 +14,7 @@ apply plugin: 'de.undercouch.download'
 
 android {
     compileSdkVersion 30
+    ndkVersion "21.4.7075529"
 
     buildFeatures {
         viewBinding true
@@ -128,6 +129,7 @@ configurations {
 
 tasks.withType(Test) {
     jacoco.includeNoLocationClasses = true
+    jacoco.excludes = ['jdk.internal.*']
 }
 
 task reportVersionCode {
@@ -246,13 +248,13 @@ task checkIfAssetsMissing {
 preBuild.dependsOn checkIfAssetsMissing
 
 dependencies {
-    def moshi_version = '1.9.3'
+    def moshi_version = '1.15.2'
     def okhttp_version = '3.14.7'
     def sentry_version = '1.7.22'
     def slf4j_version = '1.7.26'
 
     def kotlinx_coroutines_version = '1.0.0'
-    def kotlin_jdk_version = '1.4.32'
+    def kotlin_jdk_version = '1.9.25'
 
     // Androidx versions
     def room_version = '2.1.0'
@@ -293,7 +295,7 @@ dependencies {
 
     implementation "com.android.billingclient:billing-ktx:$billing_version"
 
-    def mockito_version = '2.23.0'
+    def mockito_version = '4.11.0'
     def mockito_kotlin_version = '2.1.0'
     def core_testing_version = '2.1.0'
     def androidx_test_version = '1.2.0'
