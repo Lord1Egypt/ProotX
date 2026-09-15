@@ -38,7 +38,11 @@
 >     - **P1E3 — AGP 8.10 / Kotlin 2.2 Implementation:** CLOSED / PASS
 >       (accepted implementation `1828cdd`; remote CI `34974083190`; 37 suites / 327 tests;
 >       local JaCoCo AGP-8 execution-data-path report PASS);
->     - **P1E4 — COMPILESDK 36 MIGRATION:** NOT STARTED / READY TO START
+>     - **P1E4 — COMPILESDK 36 MIGRATION:** CLOSED / PASS
+>       (app compileSdk 36; targetSdk 30; terminal 29/29/21; implementation `6d30b33`;
+>       remote CI `35013165950`; local JaCoCo regression PASS);
+>     - **P1E5 — API 31+ MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY:** NOT STARTED /
+>       READY TO START
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -143,8 +147,9 @@ deferred to the appropriate later phase.
    the "Set up Android SDK" step because `actions/setup-java@v4` pinned JDK 8 while
    `sdkmanager` requires a modern JVM. CI now provisions the Android SDK/NDK under JDK 17
    and runs the legacy build under JDK 8 (green run `34674686561`).
-2. **Legacy build toolchain — RESOLVED through P1E3.** The persistent build now uses Gradle
-   8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 / JDK 17. compileSdk remains 30 by design until P1E4.
+2. **Legacy build toolchain and compile SDK — RESOLVED through P1E4.** The persistent build
+   uses Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 / JDK 17, and the app compiles against API
+   36 while targetSdk remains 30. Terminal modules remain 29/29/21.
 3. **Kotlin Android Extensions — FULLY RESOLVED in P1C (P1C1 + P1C2-P/R).** Synthetic view
    access migrated to View Binding; the legacy plugin/DSL and `kotlinx.android.parcel` were
    removed and replaced with `kotlin-parcelize` / `kotlinx.parcelize.Parcelize`. Two guard
@@ -250,6 +255,12 @@ deferred to the appropriate later phase.
     `String.capitalize()`; configuration-time custom task behavior; Node/action maintenance
     warnings; `ndk.dir`; OkHttp 3.14.7 + Okio 3.7.0 runtime validation; future Room KAPT
     migration; and the core/core-ktx family note. P1E3 intentionally did not fix these.
+22. **P1E4 API-36 compile warnings — DEFERRED, non-blocking.** The newer SDK surfaces
+    deprecations in generated Safe Args `Bundle.get` calls and existing network, parcelable
+    extra, foreground-service, and display-metrics APIs. These are recorded for their owning
+    compatibility/dependency milestones; P1E4 made no opportunistic behavior change. Existing
+    native-strip, manifest, Gradle 9, Kotlin annotation/`capitalize`, `ndk.dir`, and action/Node
+    maintenance warnings also remain deferred.
 
 ## Non-goals for P0
 

@@ -1,7 +1,7 @@
 # ProotX Build Environment
 
-> Current state: **P1E3 toolchain** (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20, JDK 17).
-> This documents the current build only. compileSdk 36 is the next, separate P1E4 milestone.
+> Current state: **P1E4 toolchain** (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20, JDK 17,
+> app compileSdk 36 / targetSdk 30).
 
 ## Summary
 
@@ -21,7 +21,7 @@ The ProotX application currently builds with:
 | Mockito (test-only) | **4.11.0** |
 | gradle-download-task | **5.0.0** |
 | JDK for the Gradle build | **17** |
-| `compileSdk` / `targetSdk` (app) | 30 / 30 |
+| `compileSdk` / `targetSdk` (app) | 36 / 30 |
 | `minSdk` | 21 |
 | terminal `compileSdk` / `targetSdk` / `minSdk` | 29 / 29 / 21 |
 | Android NDK | 21.4.7075529 (explicit `ndkVersion`) |
@@ -32,7 +32,8 @@ P1C1 migrated synthetic views to View Binding. P1C2-P migrated Kotlin 1.3.61 →
 Moshi 1.8.0 → 1.9.3. **P1E1** migrated the bridge to Gradle **7.6.4** / AGP **7.4.2** / Kotlin
 **1.9.25** / Moshi **1.15.2** on **JDK 17**. P1E2 moved Moshi codegen to KSP. **P1E3**
 migrated to Gradle **8.11.1** / AGP **8.10.1** / Kotlin **2.2.20** / KSP
-**2.2.20-2.0.4** while preserving SDK levels and NDK.
+**2.2.20-2.0.4** while preserving SDK levels and NDK. **P1E4** then raised only the app
+compileSdk **30 → 36**, keeping targetSdk 30, minSdk 21, and terminal SDKs 29/29/21.
 
 ## JDK requirement
 
@@ -53,7 +54,7 @@ Install exactly these (nothing more):
 | Package | Why |
 |---|---|
 | `platform-tools` | adb/platform tools; owned explicitly (setup-android's default install is skipped) |
-| `platforms;android-30` | `app` module `compileSdk` is 30 |
+| `platforms;android-36` | `app` module `compileSdk` is 36 |
 | `platforms;android-29` | terminal modules (`terminal-view`, `terminal-emulator`, `terminal-term`) use `compileSdk` 29 |
 | `build-tools;35.0.0` | AGP 8.10 build tools — pinned so CI is deterministic |
 | `ndk;21.4.7075529` | native toolchain for the terminal emulator JNI (`ndkBuild`) |
@@ -110,7 +111,7 @@ unit-test summary.
 `packages: ''` so it does **not** install its default `tools platform-tools` set — the legacy
 `tools` package is no longer published and caused `Failed to find package 'tools'`. The SDK
 packages/`platform-tools` are instead owned explicitly by the pinned `sdkmanager` step
-(`platform-tools`, `platforms;android-30`, `platforms;android-29`, `build-tools;35.0.0`,
+(`platform-tools`, `platforms;android-36`, `platforms;android-29`, `build-tools;35.0.0`,
 `ndk;21.4.7075529`). The action major version and all pins are otherwise unchanged.
 
 **Download task (P1E1):** `de.undercouch:gradle-download-task` is **5.0.0** — the 3.4.3 task
@@ -121,6 +122,12 @@ checkout (no pre-existing `jniLibs`).
 'com.google.devtools.ksp'` on `:app`; `ksp "com.squareup.moshi:moshi-kotlin-codegen"`). **Room
 remains on KAPT** (`kotlin-kapt` applied) — a deliberate mixed-processing build until Room also
 moves to KSP.
+
+**compileSdk (P1E4):** only `:app` compiles against API 36; targetSdk/minSdk remain 30/21 and
+terminal modules remain 29/29/21. API 36 marks `PackageInfo.versionName` nullable, so the
+existing `AppsListFragment.getProotXVersion(): String` invariant is explicit as
+`info.versionName!!`. No targetSdk behavior, dependency, manifest, runtime, or UI change was
+included.
 
 **JaCoCo (P1E3-R1):** JaCoCo remains **0.8.8**. Gradle 8 uses `xml.required` and
 `html.required`. AGP 8 writes JVM coverage data to
@@ -133,6 +140,8 @@ The standard GitHub workflow does not run this report task.
 ## Baseline result (reference)
 
 The frozen baseline at tag `v1.0.0-baseline` measured **313 tests / 24 suites / 0 failures**.
-The current P1E3 toolchain measures **327 tests / 37 suites / 0 failures / 0 errors / 0
-skipped**. Remote CI run `34974083190` passed at `1828cdd` and uploaded the debug and
-androidTest APK artifacts. See `PROJECT_STATE.md`.
+The current P1E4 toolchain measures **327 tests / 37 suites / 0 failures / 0 errors / 0
+skipped**. Remote CI run `35013165950` passed at `6d30b33` and uploaded the debug and
+androidTest APK artifacts. P1E4 local validation also proved the API-36 SDK platform,
+code-generation gates, four ABIs, and the separate JaCoCo report regression gate. See
+`PROJECT_STATE.md`.

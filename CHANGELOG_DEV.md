@@ -521,3 +521,38 @@
   `ndk.dir`, OkHttp/Okio runtime validation, future Room KSP migration, and core/core-ktx note.
 - **P1E3-P CLOSED / BRIDGE_FOUND. P1E3 CLOSED / PASS. P1E IN PROGRESS. P1E4 COMPILESDK 36
   MIGRATION NOT STARTED / READY TO START.**
+
+## P1E4 — compileSdk 36 Migration (2026-09-15) — PASS
+
+- Raised only `:app` `compileSdkVersion` **30 → 36**. Preserved app targetSdk/minSdk
+  **30/21**, terminal modules **29/29/21**, and the established Gradle 8.11.1 / AGP 8.10.1 /
+  Kotlin 2.2.20 / KSP2 2.2.20-2.0.4 / JDK 17 / Build Tools 35.0.0 / NDK 21.4 toolchain.
+- Changed CI's application platform package from `platforms;android-30` to
+  `platforms;android-36`; retained `platforms;android-29`, Build Tools 35.0.0, and NDK
+  21.4.7075529.
+- API 36 exposes `PackageInfo.versionName` as nullable. The one authorized source-contract
+  edit, `return info.versionName!!`, preserves `getProotXVersion(): String` and ProotX's
+  existing invariant; it is not a targetSdk behavior change or intentional runtime feature.
+- All local compile/codegen gates passed: Moshi KSP2 adapters, Room KAPT implementations,
+  Safe Args, Parcelize, ViewBinding, BuildConfig, Kotlin/Java/unit/androidTest compilation,
+  androidTest APK, ktlint, `downloadAssets`, and the four-ABI native build.
+- JaCoCo regression gate executed (not skipped), loaded the AGP 8 unit-test execution data,
+  processed 331 classes, and emitted non-empty parseable XML plus HTML. JaCoCo remains 0.8.8.
+- Canonical `clean assembleDebug testDebugUnitTest` passed with **37 suites / 327 tests /
+  0 failures / 0 errors / 0 skipped**. Dependency versions, Room 2.1.0 schema 1–7/migrations,
+  source manifests, and merged-manifest behavior are unchanged.
+- Local debug APK: 19,915,149 bytes, SHA-256
+  `8f4974cd18f6ca3e17265e229008f7c8ab08deccebd11a24351932a9bb7a91f0`, package
+  `io.github.lord1egypt.prootx`, versionName 1.0.0, SDK 36/30/21, four ABIs and 16/16 required
+  native/support payloads. androidTest APK: 1,825,890 bytes, SHA-256
+  `f2518d7aa35a1419ba1ab270e71b7b65fddaff0c65b5e19d5aec314d24403769`, package
+  `io.github.lord1egypt.prootx.test`.
+- Remote CI run `35013165950` at implementation `6d30b333b0a1d0b8ab0be966af4c3052dcf29500`:
+  **SUCCESS**; explicit API 36/API 29/Build Tools 35.0.0/NDK 21.4 setup, canonical build,
+  exact tests, androidTest build, and both artifacts passed.
+- New compileSdk-36 warnings are deferred API deprecations (Safe Args `Bundle.get`, network,
+  parcelable-extra/foreground-service, and display metrics). Existing manifest, Gradle 9,
+  Kotlin annotation/`capitalize`, `ndk.dir`, native-strip, and action/Node warnings remain
+  deferred. No intentional runtime or UI change.
+- **P1E4 CLOSED / PASS. P1E IN PROGRESS. P1E5 API 31+ MANIFEST / PENDINGINTENT / RECEIVER
+  COMPATIBILITY NOT STARTED / READY TO START.**

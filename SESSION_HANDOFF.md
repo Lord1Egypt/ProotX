@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-15 (P1E3 AGP 8.10 / Kotlin 2.2 implementation: CLOSED / PASS — P1E IN PROGRESS)
+Last updated: 2026-09-15 (P1E4 compileSdk 36 migration: CLOSED / PASS — P1E IN PROGRESS)
 
 ## Current Objective
 
@@ -13,16 +13,19 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1E3 — AGP 8.10 / Kotlin 2.2 Implementation**: **CLOSED / PASS** at accepted implementation
-SHA `1828cdd4441a291433d07bd8a3e4efa96bcbfc76`. Remote CI run `34974083190` passed the
-canonical clean build, **37 suites / 327 tests / 0 failures / 0 errors / 0 skipped**,
-androidTest build, and both artifact uploads. A separate local gate at the same SHA proved
-`jacocoCoverageReportForCi` executes against the AGP 8 `.exec` path and emits XML/HTML.
+**P1E4 — compileSdk 36 Migration**: **CLOSED / PASS** at implementation SHA
+`6d30b333b0a1d0b8ab0be966af4c3052dcf29500`. The app alone now compiles against API 36;
+targetSdk/minSdk remain 30/21 and terminal modules remain 29/29/21. API 36 makes
+`PackageInfo.versionName` nullable, so `AppsListFragment` preserves its existing non-null
+String invariant with `info.versionName!!`. Remote CI run `35013165950` passed the canonical
+clean build, **37 suites / 327 tests / 0 failures / 0 errors / 0 skipped**, androidTest build,
+and both artifact uploads. The separate local JaCoCo regression gate also executed and emitted
+XML/HTML for 331 classes.
 
 ## Current Milestone
 
-**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS. P1E3 is closed; **P1E4 — COMPILESDK
-36 MIGRATION** is **NOT STARTED / READY TO START**.
+**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS. P1E4 is closed; **P1E5 — API 31+
+MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY** is **NOT STARTED / READY TO START**.
 
 ## What Was Completed
 
@@ -34,11 +37,14 @@ androidTest build, and both artifact uploads. A separate local gate at the same 
   androidTest `com.termux.R.id.terminal_view` ownership qualification.
 - P1E3-R1 corrected both JaCoCo report tasks from the legacy unit-test `.exec` path to AGP 8's
   `outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec` path.
+- P1E4 raised only `:app` compileSdk 30 → 36 and CI platform 30 → 36; all dependency and
+  toolchain pins remain unchanged. The only source compatibility edit is
+  `return info.versionName!!`.
 
 ## What Was Intentionally NOT Changed
 
-- compileSdk/targetSdk/minSdk (30/30/21; terminal 29/29/21), NDK 21.4, source manifests,
-  resources, Runtime/UI behavior.
+- targetSdk/minSdk (30/21), terminal SDKs (29/29/21), NDK 21.4, source manifests,
+  resources, dependency versions, Runtime/UI behavior.
 - No `android:exported`, PendingIntent, FGS, storage or notification work (those are later P1E
   milestones). Room stays on KAPT; Moshi stays on KSP2.
 
@@ -47,6 +53,7 @@ androidTest build, and both artifact uploads. A separate local gate at the same 
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
+| Accepted P1E4 implementation | `6d30b333b0a1d0b8ab0be966af4c3052dcf29500` |
 | Accepted P1E3 implementation | `1828cdd4441a291433d07bd8a3e4efa96bcbfc76` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -66,7 +73,7 @@ Navigation **2.3.5** · Preference **1.1.0** · Material **1.1.0** ·
 SwipeRefreshLayout **1.0.0** / LocalBroadcastManager **1.0.0** (direct) · Arch Core testing
 **2.1.0** (test-only) · Core KTX **1.1.0** (transitive `core` 1.3.0) · Lifecycle **2.2.0** ·
 JaCoCo **0.8.8** · Mockito **4.11.0** (test-only) · gradle-download-task **5.0.0** · plugin
-**`kotlin-parcelize`** · JDK **17** (build) · compileSdk **30** · targetSdk **30** ·
+**`kotlin-parcelize`** · JDK **17** (build) · compileSdk **36** · targetSdk **30** ·
 minSdk **21** · terminal SDK **29/29/21** · NDK **21.4.7075529** · build-tools **35.0.0**.
 Repositories: `google()`,
 `mavenCentral()`.
@@ -119,9 +126,9 @@ verified on a device at the Golden Candidate gate; no physical acceptance is cla
 
 ## Next Safe Action
 
-**P1E4 — COMPILESDK 36 MIGRATION — NOT STARTED / READY TO START.** Raise compileSdk
-independently while targetSdk remains 30 unless P1E4 explicitly proves otherwise. Sentry and
-Billing remain active and out of scope. Do not begin without explicit authorization.
+**P1E5 — API 31+ MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY — NOT STARTED / READY TO
+START.** Sentry and Billing remain active and out of scope. Do not begin without explicit
+authorization.
 
 ## Resume Procedure
 

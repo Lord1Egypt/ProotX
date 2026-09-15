@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-15 (P1E3 AGP 8.10 / Kotlin 2.2 implementation — CLOSED / PASS; P1E IN PROGRESS)
+Last updated: 2026-09-15 (P1E4 compileSdk 36 migration — CLOSED / PASS; P1E IN PROGRESS)
 
 ## Project Identity
 
@@ -49,28 +49,30 @@ Last updated: 2026-09-15 (P1E3 AGP 8.10 / Kotlin 2.2 implementation — CLOSED /
 | P1E2 — Moshi Codegen KAPT → KSP Migration | **CLOSED / PASS** |
 | P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe | **CLOSED / BRIDGE_FOUND** |
 | P1E3 — AGP 8.10 / Kotlin 2.2 Implementation | **CLOSED / PASS** |
-| P1E4 — compileSdk 36 Migration | **NOT STARTED / READY TO START** |
+| P1E4 — compileSdk 36 Migration | **CLOSED / PASS** |
+| P1E5 — API 31+ Manifest / PendingIntent / Receiver Compatibility | **NOT STARTED / READY TO START** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1E3 — AGP 8.10 / Kotlin 2.2 Implementation: CLOSED / PASS.** The P1E3-P bridge is now
-persistent at implementation commit `1828cdd4441a291433d07bd8a3e4efa96bcbfc76`: **Gradle
-8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 / KSP 2.2.20-2.0.4 / JDK 17 / Build Tools 35.0.0 /
-NDK 21.4.7075529**, with compileSdk/targetSdk/minSdk **30/30/21** (terminal 29/29/21), Moshi
-1.15.2 on KSP2, Room 2.1.0 on KAPT, and Navigation 2.3.5. Remote CI run `34974083190` passed
-at that SHA with **37 suites / 327 tests / 0 failures / 0 errors / 0 skipped** and both APK
-artifacts. The separate local JaCoCo acceptance ran `:app:jacocoCoverageReportForCi` successfully
-against the AGP 8 execution-data path and generated XML/HTML for 331 classes. Next milestone:
-**P1E4 — COMPILESDK 36 MIGRATION — NOT STARTED / READY TO START**. Do not start it from this
-document.
+**P1E4 — compileSdk 36 Migration: CLOSED / PASS.** Implementation commit `6d30b333b0a1d0b8ab0be966af4c3052dcf29500`
+raises only the application compileSdk to 36, changes CI's application platform package to
+`platforms;android-36`, and makes the existing non-null version-name invariant explicit with
+`info.versionName!!` for the API-36 nullable SDK contract. App targetSdk/minSdk remain **30/21**;
+terminal modules remain **29/29/21**. Toolchain and dependency versions are unchanged from
+P1E3. Local validation passed all compile/codegen/androidTest/ktlint/download/JaCoCo gates and
+the canonical **37-suite / 327-test / 0-failure / 0-error / 0-skipped** build. Remote CI run
+`35013165950` passed the explicit API 36/API 29/Build Tools 35.0.0/NDK 21.4 setup, canonical
+build/tests, androidTest APK, and both artifact uploads. Next: **P1E5 — API 31+ MANIFEST /
+PENDINGINTENT / RECEIVER COMPATIBILITY — NOT STARTED / READY TO START**.
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
+| Accepted P1E4 implementation | `6d30b333b0a1d0b8ab0be966af4c3052dcf29500` | app compileSdk 36; targetSdk remains 30 |
 | Accepted P1E3 implementation | `1828cdd4441a291433d07bd8a3e4efa96bcbfc76` | AGP 8 / Kotlin 2 implementation + JaCoCo AGP-8 path remediation |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
@@ -117,7 +119,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Mockito (test-only) | **4.11.0** (core + inline) |
 | gradle-download-task | **5.0.0** |
 | JDK for the Gradle build | **17** |
-| `compileSdk` / `targetSdk` (app) | 30 / 30 |
+| `compileSdk` / `targetSdk` (app) | 36 / 30 |
 | `minSdk` | 21 |
 | terminal `compileSdk` / `targetSdk` / `minSdk` | 29 / 29 / 21 |
 | Android NDK | 21.4.7075529 (explicit `ndkVersion`) |
@@ -135,22 +137,22 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 ## CI State
 
 **CI is passing.** Single-stage **JDK 17** bootstrap and Gradle 8.11.1 build. `google()` +
-`mavenCentral()` only. Pinned packages: `platform-tools`, `platforms;android-30`,
+`mavenCentral()` only. Pinned packages: `platform-tools`, `platforms;android-36`,
 `platforms;android-29`, `build-tools;35.0.0`, `ndk;21.4.7075529`.
 
 **CI-R1 note:** `android-actions/setup-android@v3` runs with `packages: ''` (its default
 `tools platform-tools` install broke when the legacy `tools` package was retired);
 `platform-tools` is owned explicitly by the pinned `sdkmanager` step. Triggers unchanged.
 
-Verified remote evidence (P1E3):
+Verified remote evidence (P1E4):
 
 | Field | Value |
 |---|---|
-| Run | `34974083190` (push, commit `1828cdd`) — **SUCCESS** |
-| Log proof | JDK 17; Gradle 8.11.1; Build Tools 35.0.0 and NDK 21.4 installed; canonical clean build and `assembleDebugAndroidTest` passed |
+| Run | `35013165950` (push, commit `6d30b33`) — **SUCCESS** |
+| Log proof | JDK 17; Gradle 8.11.1; API 36 + API 29, Build Tools 35.0.0 and NDK 21.4 installed; canonical clean build and `assembleDebugAndroidTest` passed |
 | Remote test summary | `suites=37 tests=327 failures=0 errors=0 skipped=0` |
 | Artifacts | `prootx-debug-apk` and `prootx-debug-androidTest-apk` uploaded |
-| JaCoCo | Standard CI does not run the report task. Separate local proof at the same SHA: `jacocoCoverageReportForCi` executed, consumed the AGP 8 `.exec`, and produced XML/HTML for 331 classes |
+| JaCoCo | Standard CI does not run the report task. Separate local P1E4 regression proof: `jacocoCoverageReportForCi` executed, consumed the AGP 8 `.exec`, and produced XML/HTML for 331 classes |
 
 The workflow also runs `:app:assembleDebugAndroidTest` and uploads both APKs, so androidTest
 dependency resolution is a standing gate.
@@ -172,8 +174,8 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-**None.** P1E3 is closed; remote CI is green (run `34974083190`) and the separate local
-JaCoCo report gate passed.
+**None.** P1E4 is closed; remote CI is green (run `35013165950`) and the separate local
+JaCoCo regression gate passed.
 
 ## Deferred Findings
 
@@ -239,6 +241,9 @@ The canonical list lives in
   execution-data path. AGP 8 writes the file under
   `build/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec`; both report
   tasks now consume it. JaCoCo remains 0.8.8.
+- **Resolved in P1E4:** the app now compiles against API 36 while targetSdk remains 30. API 36
+  declares `PackageInfo.versionName` nullable; `AppsListFragment` preserves ProotX's existing
+  non-null return invariant with `info.versionName!!`. No intentional runtime or UI change.
 - **Deferred after P1E3:** manifest `package` warnings; `JavaExec.main` → `mainClass` before
   Gradle 9; legacy Android DSL/`lintOptions` cleanup; `String.capitalize()`; configuration-time
   custom tasks; action/Node maintenance warnings; `ndk.dir`; OkHttp 3.14.7 + Okio 3.7.0
@@ -252,6 +257,6 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1E4 — COMPILESDK 36 MIGRATION — NOT STARTED / READY TO START.** It owns the independent
-compileSdk increase to 36 while targetSdk remains 30 unless that milestone proves otherwise.
-Do **not** start it from this document.
+**P1E5 — API 31+ MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY — NOT STARTED / READY TO
+START.** It owns the next narrowly scoped platform-compatibility changes. Do **not** start it
+without explicit authorization.

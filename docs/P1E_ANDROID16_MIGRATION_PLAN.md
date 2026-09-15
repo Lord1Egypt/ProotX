@@ -1,11 +1,11 @@
 # ProotX — P1E Android 16 (SDK 36) Migration Plan
 
-> **Status:** P1E0 audit COMPLETE / PASS. This document is the approved migration design.
-> It is an audit record; **no implementation has started.** Current state lives in
-> `PROJECT_STATE.md`. Do not execute any step below without explicit authorization.
+> **Status:** P1E4 implementation CLOSED / PASS; P1E remains IN PROGRESS. This document is the
+> approved migration design and implementation record. Current state lives in
+> `PROJECT_STATE.md`. Do not execute a later step without explicit authorization.
 
-Current accepted implementation: `1828cdd4441a291433d07bd8a3e4efa96bcbfc76`, remote CI
-`34974083190` green, 327 tests / 37 suites. Frozen application baseline remains unchanged.
+Current accepted implementation: `6d30b333b0a1d0b8ab0be966af4c3052dcf29500`, remote CI
+`35013165950` green, 327 tests / 37 suites. Frozen application baseline remains unchanged.
 
 ---
 
@@ -15,26 +15,26 @@ Current accepted implementation: `1828cdd4441a291433d07bd8a3e4efa96bcbfc76`, rem
 
 | Module | compileSdk | targetSdk | minSdk |
 |---|---|---|---|
-| `:app` | 30 | 30 | 21 |
+| `:app` | 36 | 30 | 21 |
 | `:terminal-term` | 29 | 29 | 21 |
 | `:terminal-view` | 29 | 29 | 21 |
 | `:terminal-emulator` | 29 | 29 | 21 |
 
 ### 1.2 Build toolchain
 
-Gradle `6.7.1` · AGP `4.2.2` · Kotlin (KGP) `1.4.32` · build-tools `30.0.2` ·
-NDK `21.4.7075529` · app build on **JDK 8** · sdkmanager on JDK 17. Repositories
-`google()` + `mavenCentral()`.
+Gradle `8.11.1` · AGP `8.10.1` · Kotlin (KGP/stdlib) `2.2.20` · KSP2
+`2.2.20-2.0.4` · build-tools `35.0.0` · NDK `21.4.7075529` · app build and sdkmanager on
+**JDK 17**. Repositories: `google()` + `mavenCentral()`.
 
 ### 1.3 Plugins / classpath (root `build.gradle`)
 
 | Plugin | Version | P1E disposition |
 |---|---|---|
-| `com.android.tools.build:gradle` | 4.2.2 | **Must upgrade** → 8.10.x |
-| `org.jetbrains.kotlin:kotlin-gradle-plugin` | 1.4.32 | **Must upgrade** → 2.2.x (bridge 1.9.x) |
-| `androidx.navigation:navigation-safe-args-gradle-plugin` | 2.1.0 | **Must upgrade** (2019 plugin; incompatible with Gradle 7+/8) |
-| `org.jacoco:org.jacoco.core` (+ `jacoco { toolVersion 0.8.4 }`) | 0.8.4 | **Upgrade** for JDK 17 class files (≥ 0.8.11) |
-| `de.undercouch:gradle-download-task` | 3.4.3 | **Upgrade** to 5.x or replace (Gradle 8 incompatible) |
+| `com.android.tools.build:gradle` | 8.10.1 | Persisted in P1E3 |
+| `org.jetbrains.kotlin:kotlin-gradle-plugin` | 2.2.20 | Persisted in P1E3 |
+| `androidx.navigation:navigation-safe-args-gradle-plugin` | 2.3.5 | Retained; generation passes |
+| `org.jacoco:org.jacoco.core` (+ `jacoco { toolVersion 0.8.8 }`) | 0.8.8 | Retained; report gate passes |
+| `de.undercouch:gradle-download-task` | 5.0.0 | Retained; execution gate passes |
 | ktlint (`com.pinterest:ktlint:0.32.0` via `JavaExec`) | 0.32.0 | Works as external CLI, but `main =` → `mainClass`; optional bump |
 
 ---
@@ -404,7 +404,7 @@ should be validated on a device; no UI redesign is authorized in P1E.
 | **P1E1** | **Proven AGP 7 / Kotlin 1.9 bridge implementation**: Gradle **7.6.4**, AGP **7.4.2**, Kotlin/KGP **1.9.25**, Moshi **1.15.2** (+KAPT), Navigation **2.3.5**, JaCoCo **0.8.8** (+`jdk.internal.*` exclusion), test-only Mockito **4.11.0**, JDK **17**, explicit `ndkVersion 21.4.7075529`; compileSdk/targetSdk still **30**; plus the behavior-neutral source fixes below | Kotlin/kapt/codegen/JDK bridge | Build + `326/36` tests green locally + remotely; runtime/UI unchanged |
 | **P1E2** | **Kotlin 2.x codegen readiness**: migrate Moshi codegen **KAPT → KSP** (Room may stay KAPT); verify no KAPT-only codegen remains before Kotlin 2.2 | Codegen toolchain | Build + tests green on Kotlin 1.9 with KSP |
 | **P1E3** | Gradle **8.11.1**, AGP **8.10.1**, Kotlin **2.2.20**, KSP **2.2.20-2.0.4**, JDK **17**, build-tools **35.0.0**; four namespaces, app-only `buildConfig true`, JaCoCo Gradle-8 DSL/path fixes, non-transitive R ownership, Kotlin 2 source API substitutions; compileSdk/targetSdk still **30** | Build-system API change | **CLOSED / PASS**; build + 327 tests green; NDK 21.4 validated |
-| **P1E4** | `compileSdk 36` (all modules), targetSdk stays **30**; CI installs `platforms;android-36` | Platform compile | Build + tests green; no behavior change |
+| **P1E4** | app-only `compileSdk 36`, targetSdk stays **30**, terminal modules stay **29/29/21**; CI installs `platforms;android-36`; one API-36 nullability source-contract edit | Platform compile | **CLOSED / PASS**; build + 327 tests green; no intentional behavior change |
 | **P1E5** | API 31 manifest/intent: `android:exported` (MainActivity `true`; TermuxActivity decided), PendingIntent `FLAG_IMMUTABLE` (6×), dynamic receiver export flags | Manifest/intent | Build + tests; androidTest build |
 | **P1E6** | Storage/permission runtime: remove/repair `PermissionHandler` gate + storage permissions + terminal request | Runtime permission | Session launch works without storage perms; tests green |
 | **P1E7** | FGS compatibility: `foregroundServiceType="specialUse"` + `FOREGROUND_SERVICE_SPECIAL_USE` + subtype property; `startForegroundService`; `POST_NOTIFICATIONS` | FGS/notification | Build + tests; FGS declaration validated |
@@ -670,5 +670,28 @@ and `lintOptions`; `String.capitalize()`; configuration-time custom tasks; Node/
 maintenance warnings; `ndk.dir`; OkHttp 3.14.7 + Okio 3.7.0 runtime validation; eventual Room
 KAPT migration; and the core/core-ktx family note remain deferred.
 
-**Next:** P1E4 — COMPILESDK 36 MIGRATION — **NOT STARTED / READY TO START**. P1E4 owns the
-compileSdk increase while targetSdk stays 30 unless that milestone proves otherwise.
+## 22. P1E4 compileSdk 36 implementation result — CLOSED / PASS
+
+Accepted implementation: `6d30b333b0a1d0b8ab0be966af4c3052dcf29500`; remote CI run
+`35013165950` — SUCCESS.
+
+- Raised only `:app` `compileSdkVersion 30 → 36`; app targetSdk/minSdk remain 30/21 and all
+  terminal modules remain 29/29/21. CI installs `platforms;android-36` plus the retained API 29,
+  Build Tools 35.0.0, and NDK 21.4.7075529 packages.
+- API 36 marks `PackageInfo.versionName` nullable. `AppsListFragment.getProotXVersion(): String`
+  preserves ProotX's existing invariant with the sole production edit `info.versionName!!`.
+  This is compileSdk source compatibility, not a targetSdk behavior change.
+- Gradle/AGP/Kotlin/KSP and all dependency versions are unchanged. Source manifests, Room
+  schema 1–7/migrations/`Data.db` name, merged-manifest behavior, runtime behavior, and UI are
+  unchanged.
+- Local compile/codegen/unit/androidTest/ktlint/download/native gates passed. The canonical
+  build retained **37 suites / 327 tests / 0 failures / 0 errors / 0 skipped**, both APK
+  identities, four ABIs, and 16/16 native/support payloads.
+- The separate JaCoCo regression task executed, loaded the AGP 8 `.exec`, processed 331 classes,
+  and produced non-empty parseable XML plus HTML. The standard CI workflow still does not run
+  this report task.
+- Remote CI proved JDK 17, Gradle 8.11.1, API 36/API 29/Build Tools 35.0.0/NDK 21.4 setup,
+  canonical tests, androidTest build, and both artifact uploads.
+
+**Next:** P1E5 — API 31+ MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY — **NOT STARTED /
+READY TO START**. Do not start without explicit authorization.
