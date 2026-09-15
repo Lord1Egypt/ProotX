@@ -417,7 +417,8 @@ should be validated on a device; no UI redesign is authorized in P1E.
 Version changes only:
 - `gradle/wrapper/gradle-wrapper.properties`: `6.7.1 → 7.6.4`.
 - root `build.gradle`: `android_plugin 4.2.2 → 7.4.2`, `kotlin_version 1.4.32 → 1.9.25`,
-  `jacoco_version 0.8.4 → 0.8.8`, `navigation_version 2.1.0 → 2.3.5`.
+  `jacoco_version 0.8.4 → 0.8.8`, `navigation_version 2.1.0 → 2.3.5`, and
+  `de.undercouch:gradle-download-task 3.4.3 → 5.0.0` (see the CI correction in §18).
 - `app/build.gradle`: `moshi_version 1.9.3 → 1.15.2`, `kotlin_jdk_version 1.4.32 → 1.9.25`,
   `mockito_version 2.23.0 → 4.11.0` (test-only), add `ndkVersion "21.4.7075529"`, and set
   `jacoco.excludes = ['jdk.internal.*']` in `tasks.withType(Test)`.
@@ -483,7 +484,7 @@ Moshi codegen, Room kapt, Parcelize and ViewBinding all generate/compile.
 | Kotlin source compat | 7 behavior-neutral errors under Kotlin 1.9.25: 2× non-exhaustive `when` (`else -> {}`), 5× `ViewModelProvider.NewInstanceFactory.create` override nullability (`<T : ViewModel?>` → `<T : ViewModel>`). |
 | JaCoCo | 0.8.4 fails on JDK 17 (`Unsupported class file major version 58`); **0.8.8** passes the bytecode version, but `jacoco.includeNoLocationClasses = true` then needs `jacoco.excludes = ['jdk.internal.*']` (JDK 16+ module access) or tests crash with `NoClassDefFoundError: jdk/internal/reflect/GeneratedSerializationConstructorAccessor1`. |
 | Mockito (test-only) | 2.23.0 fails on JDK 17 (Byte Buddy 1.9 cannot read Java-17 classes). **4.11.0** required to run the 326 tests. |
-| `gradle-download-task` 3.4.3 | **Unchanged** — plugin loads/configured under Gradle 7.6.4; required bridge tasks pass. |
+| `gradle-download-task` 3.4.3 | Local probe: plugin loads. **CI correction (§18): fails** Gradle 7.6 task-property validation when `:app:downloadAssets` enters the graph (clean checkout) → upgraded to **5.0.0**. |
 | ktlint `JavaExec.main =` | **Unchanged** — `:app:ktlint` executes successfully on Gradle 7.6.4 (deprecated but functional); defer `mainClass` to the AGP 8 milestone. |
 | `reportVersionCode` / `reportVersionName` | Execute (configuration-time write); works on Gradle 7.6.4. |
 | `jacocoCoverageReport` / `testAll` / `downloadAssets` task | Not exercised by the normal gate; `reports { xml.enabled }` deprecations deferred to the AGP 8 milestone. |
@@ -503,3 +504,26 @@ Moshi 1.15.2 KAPT emitted: *"Kapt support in Moshi Kotlin Code Gen is deprecated
 removed in 2.0. Please migrate to KSP."* Moshi 1.15.x KAPT is a **Kotlin 1.9-only** bridge;
 Kotlin 2.2 codegen requires **KSP**. This is why P1E2 was inserted as a dedicated codegen
 milestone before the Kotlin 2.2 jump (P1E3).
+
+---
+
+## 18. P1E1 implementation result (CLOSED / PASS)
+
+The P1E1-P bridge above was persisted on `feature/android-modernization`. Local canonical gate
+and remote CI both green: **36 suites / 326 tests / 0 failures / 0 errors / 0 skipped**.
+
+**CI-only correction to the P1E1-P finding.** P1E1-P reported `gradle-download-task:3.4.3` as
+"unchanged/works" because the `downloadAssets` task never entered the local execution graph
+(the gitignored `app/src/main/jniLibs` bundle was already present). On a clean CI checkout the
+assets are absent, so `checkIfAssetsMissing → fetchAssets → downloadAssets` is scheduled and
+Gradle 7.6 fails the `Download` task-property validation (`authScheme`, `cachedETagsFile`,
+`credentials`, `dest`, `downloadTaskDir` unannotated). Reproduced locally by executing
+`:app:fetchAssets`. Fixed per the P1E1-P PART M fallback: **upgrade to the smallest 5.x —
+`de.undercouch:gradle-download-task:5.0.0`** (verified by running the real `:app:fetchAssets`
+download path, then the canonical clean build).
+
+**Persistent bridge (implemented):** Gradle **7.6.4** · AGP **7.4.2** · Kotlin/KGP **1.9.25** ·
+Moshi **1.15.2** (KAPT) · Navigation **2.3.5** · JaCoCo **0.8.8** (+`jdk.internal.*` exclusion)
+· Mockito **4.11.0** (test-only) · JDK **17** · Build Tools **30.0.3** · NDK **21.4.7075529**
+(explicit `ndkVersion`) · gradle-download-task **5.0.0**. compileSdk/targetSdk/minSdk unchanged
+(30/30/21; terminal 29/29/21). CI is a single JDK 17 stage (JDK 8 stage removed).

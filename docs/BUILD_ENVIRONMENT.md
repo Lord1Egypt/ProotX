@@ -1,7 +1,7 @@
 # ProotX Build Environment
 
-> Current state: **P1C2-P bridge toolchain** (Gradle 6.7.1 / AGP 4.2.2 / Kotlin 1.4.32).
-> This documents the current build only. Further Android modernization is a later milestone.
+> Current state: **P1E1 bridge toolchain** (Gradle 7.6.4 / AGP 7.4.2 / Kotlin 1.9.25, JDK 17).
+> This documents the current build only. The AGP 8 / SDK 36 migration is a later milestone.
 
 ## Summary
 
@@ -9,41 +9,37 @@ The ProotX application currently builds with:
 
 | Component | Version |
 |---|---|
-| Gradle (wrapper) | 6.7.1 |
-| Android Gradle Plugin | 4.2.2 |
-| Kotlin | **1.4.32** |
-| Moshi (runtime + codegen) | **1.9.3** |
-| JDK for the Gradle build | **8** |
+| Gradle (wrapper) | 7.6.4 |
+| Android Gradle Plugin | 7.4.2 |
+| Kotlin / KGP | **1.9.25** |
+| Moshi (runtime + codegen) | **1.15.2** (codegen via KAPT) |
+| AndroidX Navigation | **2.3.5** |
+| JaCoCo | **0.8.8** |
+| Mockito (test-only) | **4.11.0** |
+| gradle-download-task | **5.0.0** |
+| JDK for the Gradle build | **17** |
 | `compileSdk` / `targetSdk` (app) | 30 / 30 |
 | `minSdk` | 21 |
 | `compileSdk` (terminal modules) | 29 |
-| Android NDK | 21.4.7075529 |
-| Android build-tools | 30.0.2 |
+| Android NDK | 21.4.7075529 (explicit `ndkVersion`) |
+| Android build-tools | 30.0.3 |
 
-History: P0/P1A used Gradle 5.1.1 / AGP 3.4.3. P1B migrated them to Gradle 6.7.1 /
-AGP 4.2.2 as an intentional intermediate ("bridge") step. P1C1 migrated synthetic views to
-View Binding. P1C2-P migrated Kotlin 1.3.61 → **1.4.32** together with Moshi 1.8.0 →
-**1.9.3** (the verified cross-boundary bridge). SDK levels and NDK remain unchanged.
+History: P0/P1A used Gradle 5.1.1 / AGP 3.4.3. P1B migrated to Gradle 6.7.1 / AGP 4.2.2.
+P1C1 migrated synthetic views to View Binding. P1C2-P migrated Kotlin 1.3.61 → 1.4.32 with
+Moshi 1.8.0 → 1.9.3. **P1E1** migrated the bridge to Gradle **7.6.4** / AGP **7.4.2** / Kotlin
+**1.9.25** / Moshi **1.15.2** on **JDK 17**. SDK levels and NDK remain unchanged.
 
-## The two-JDK requirement
+## JDK requirement
 
-There is a version conflict between the tooling and the application build:
-
-- The **Android command-line tools** (`sdkmanager`) shipped with current Android SDK
-  packages require a **modern JVM** (Java 11+; JDK 17 is used).
-- The **Gradle 6.7.1 / AGP 4.2.2** build still runs on **JDK 8**.
-
-Therefore any build automation must run in two stages:
+The Gradle build and the Android SDK tooling now share a single modern JVM:
 
 ```
 JDK 17   →  Android SDK tooling / sdkmanager / SDK+NDK install
-   ↓
-JDK 8    →  ./gradlew clean assembleDebug testDebugUnitTest
+         →  ./gradlew clean assembleDebug testDebugUnitTest
 ```
 
-Running `sdkmanager` under JDK 8 fails (the original CI failure); the bridge Gradle build
-is not yet supported on JDK 11/17. Both stages must be explicit. Do **not** silently switch
-the application build to a newer JDK.
+The previous two-stage model (JDK 17 tooling + JDK 8 Gradle build) ended in **P1E1**; AGP 7.4
+and Kotlin 1.9 require a modern JDK. Do **not** reintroduce a JDK 8 build stage.
 
 ## Required Android SDK / NDK packages
 
@@ -51,13 +47,14 @@ Install exactly these (nothing more):
 
 | Package | Why |
 |---|---|
+| `platform-tools` | adb/platform tools; owned explicitly (setup-android's default install is skipped) |
 | `platforms;android-30` | `app` module `compileSdk` is 30 |
 | `platforms;android-29` | terminal modules (`terminal-view`, `terminal-emulator`, `terminal-term`) use `compileSdk` 29 |
-| `build-tools;30.0.2` | default build-tools for AGP 4.2.2 — pinned so CI is deterministic |
+| `build-tools;30.0.3` | default build-tools for AGP 7.4.2 — pinned so CI is deterministic |
 | `ndk;21.4.7075529` | native toolchain for the terminal emulator JNI (`ndkBuild`) |
 
-`build-tools` is pinned to AGP 4.2.2's default (`30.0.2`); under P1A it was `28.0.3`
-(AGP 3.4.3's default). Pinning keeps CI independent of runner defaults.
+`build-tools` is pinned to AGP 7.4.2's default (`30.0.3`); under P1B it was `30.0.2`
+(AGP 4.2.2's default). Pinning keeps CI independent of runner defaults.
 
 ## Dependency repositories
 
@@ -77,7 +74,7 @@ findings in `docs/PROOTX_2_ROADMAP.md`. It is not used by the debug build or uni
 ```bash
 export ANDROID_SDK_ROOT=/path/to/android-sdk      # SDK with the packages above
 export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/21.4.7075529"
-export JAVA_HOME=/path/to/jdk8                    # JDK 8 for Gradle
+export JAVA_HOME=/path/to/jdk17                   # JDK 17 for Gradle
 
 ./gradlew clean assembleDebug testDebugUnitTest --no-daemon
 ```
@@ -99,8 +96,8 @@ Notes:
 
 ## Continuous integration
 
-GitHub Actions (`.github/workflows/build.yml`) implements the two-stage bootstrap:
-JDK 17 provisions the SDK/NDK, then JDK 8 runs the bridge Gradle build and unit tests.
+GitHub Actions (`.github/workflows/build.yml`) uses a single **JDK 17** stage for both the
+Android SDK/NDK bootstrap and the Gradle build (the JDK 8 stage was removed in P1E1).
 The workflow runs on `main`, `develop`, and `feature/**` pushes, and on pull requests
 targeting `main`/`develop`. It installs the pinned packages above and prints the exact
 unit-test summary.
@@ -108,12 +105,16 @@ unit-test summary.
 **SDK bootstrap (CI-R1):** `android-actions/setup-android@v3` is configured with
 `packages: ''` so it does **not** install its default `tools platform-tools` set — the legacy
 `tools` package is no longer published and caused `Failed to find package 'tools'`. The SDK
-processes/`platform-tools` are instead owned explicitly by the pinned `sdkmanager` step
-(`platform-tools`, `platforms;android-30`, `platforms;android-29`, `build-tools;30.0.2`,
-`ndk;21.4.7075529`). The action major version, the two-stage JDK model, and all pins are
-unchanged.
+packages/`platform-tools` are instead owned explicitly by the pinned `sdkmanager` step
+(`platform-tools`, `platforms;android-30`, `platforms;android-29`, `build-tools;30.0.3`,
+`ndk;21.4.7075529`). The action major version and all pins are otherwise unchanged.
+
+**Download task (P1E1):** `de.undercouch:gradle-download-task` is **5.0.0** — the 3.4.3 task
+type fails Gradle 7.6 task-property validation when `:app:downloadAssets` runs on a clean
+checkout (no pre-existing `jniLibs`).
 
 ## Baseline result (reference)
 
 The frozen baseline at tag `v1.0.0-baseline` measured **313 tests / 24 suites / 0 failures**.
-The P1B bridge toolchain preserves that result. See `PROJECT_STATE.md`.
+The current P1E1 bridge toolchain measures **326 tests / 36 suites / 0 failures / 0 errors /
+0 skipped** (local and remote). See `PROJECT_STATE.md`.

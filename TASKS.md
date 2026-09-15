@@ -127,9 +127,11 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
   - [x] **P1E1-P — Kotlin / AGP build-tooling bridge compatibility probe** — BRIDGE_FOUND
         (proven: Gradle 7.6.4 / AGP 7.4.2 / Kotlin 1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 /
         JDK 17 / NDK 21.4 / JaCoCo 0.8.8 + Mockito 4.11.0; 326 tests green; reverted)
-  - [ ] **P1E1 — Kotlin/AndroidX codegen + build-tooling bridge** (Gradle 7.6.4 / AGP 7.4.2 /
-        Kotlin 1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 / JDK 17) — NOT STARTED
-  - [ ] P1E2 — Kotlin 2.x codegen readiness (Moshi KAPT → KSP) — NOT STARTED
+  - [x] **P1E1 — Kotlin/AndroidX codegen + build-tooling bridge** — CLOSED / PASS
+        (persisted Gradle 7.6.4 / AGP 7.4.2 / Kotlin 1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 /
+        JaCoCo 0.8.8 / Mockito 4.11.0 / JDK 17 / NDK 21.4 / gradle-download-task 5.0.0;
+        7 Kotlin-1.9 source fixes; CI on JDK 17; local + remote 326 tests green)
+  - [ ] **P1E2 — Moshi codegen KAPT → KSP readiness** — NOT STARTED
   - [ ] P1E3 — AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2.x / JDK 17 + AGP8 DSL — NOT STARTED
   - [ ] P1E4 — compileSdk 36 (targetSdk still 30) — NOT STARTED
   - [ ] P1E5 — API 31 exported + PendingIntent flags + receiver export flags — NOT STARTED

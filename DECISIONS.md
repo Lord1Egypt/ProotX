@@ -497,3 +497,24 @@
 - **Trade-offs:** OkHttp 3.14.7 running against Okio 3.7.0 is a runtime-compatibility item to
   validate later (JVM tests pass); the Core family is temporarily misaligned again.
 - **Affected components:** `app/build.gradle`, dependency graph, P1E1/parent.
+
+---
+
+## D027 — `gradle-download-task` upgraded to 5.0.0 for the Gradle 7.6 bridge
+
+- **Date:** 2026-09-15
+- **Status:** Accepted (P1E1)
+- **Decision:** Upgrade `de.undercouch:gradle-download-task` from `3.4.3` to **`5.0.0`**. This
+  supersedes the P1E1-P finding that 3.4.3 could remain unchanged.
+- **Reason:** The P1E1-P probe never scheduled `:app:downloadAssets` locally because the
+  gitignored `app/src/main/jniLibs` bundle was already present. On a clean CI checkout the
+  assets are absent, so `checkIfAssetsMissing → fetchAssets → downloadAssets` runs and Gradle
+  7.6 rejects the 3.4.3 `Download` task type (unannotated `authScheme`, `cachedETagsFile`,
+  `credentials`, `dest`, `downloadTaskDir`). Reproduced locally with `:app:fetchAssets`.
+  5.0.0 is the smallest 5.x (per the P1E1-P PART M fallback) and was verified by executing the
+  real download path plus the canonical clean build.
+- **Alternatives considered:** Keeping 3.4.3 (rejected — CI build fails); suppressing task
+  validation (not supported cleanly); modernizing to a newer 5.x (unnecessary).
+- **Trade-offs:** A third-party build plugin moves earlier than the AGP 8 milestone; no
+  application API or behavior change.
+- **Affected components:** `build.gradle`, `:app:downloadAssets`/`fetchAssets`, CI, P1E1.

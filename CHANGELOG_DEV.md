@@ -413,3 +413,35 @@
   1.15.x KAPT is a **Kotlin 1.9** bridge only — **KSP migration required before Kotlin 2.2**.
 - Revised sequence: **P1E1** bridge → **P1E2** Moshi KAPT→KSP → **P1E3** AGP 8.10/Kotlin 2.2 →
   compileSdk/platform milestones. **P1E1 NOT STARTED.**
+
+## P1E1 — Kotlin / AGP Build-Tooling Bridge (2026-09-15) — PASS
+
+- Persisted the P1E1-P proven intermediate bridge:
+  - `gradle/wrapper`: Gradle `6.7.1 → 7.6.4`.
+  - root `build.gradle`: AGP `4.2.2 → 7.4.2`, Kotlin/KGP `1.4.32 → 1.9.25`, JaCoCo `0.8.4 →
+    0.8.8`, Navigation `2.1.0 → 2.3.5`, `gradle-download-task 3.4.3 → 5.0.0` (see below).
+  - `app/build.gradle`: Moshi `1.9.3 → 1.15.2` (KAPT), `kotlin_jdk_version 1.9.25`, Mockito
+    `2.23.0 → 4.11.0` (test-only), explicit `ndkVersion "21.4.7075529"`, and
+    `jacoco.excludes = ['jdk.internal.*']` for JDK 17.
+  - `termux-app/terminal-emulator/build.gradle`: explicit `ndkVersion "21.4.7075529"`.
+- Seven behavior-neutral Kotlin 1.9 compiler-contract edits: `else -> {}` on two non-exhaustive
+  `when` statements; `<T : ViewModel?>` → `<T : ViewModel>` on five
+  `ViewModelProvider.NewInstanceFactory.create` overrides. `NavigationStabilityGuardTest`
+  expected version `2.1.0 → 2.3.5` (intent unchanged).
+- CI: single **JDK 17** stage (JDK 8 build stage removed); pinned Build Tools `30.0.2 → 30.0.3`;
+  CI-R1 `setup-android packages: ''` + explicit `sdkmanager` ownership retained.
+- **CI-only correction:** P1E1-P's "download-task 3.4.3 works unchanged" held only locally,
+  where the gitignored `jniLibs` bundle meant `:app:downloadAssets` never entered the graph. On
+  a clean checkout it does, and Gradle 7.6 fails the `Download` task-property validation. Fixed
+  per the P1E1-P PART M fallback with **`gradle-download-task:5.0.0`** (verified by executing
+  the real `:app:fetchAssets` download path locally).
+- Local canonical gate green: `clean assembleDebug testDebugUnitTest` = **36 suites / 326 tests /
+  0 failures / 0 errors / 0 skipped**; Safe Args, Moshi codegen, Room KAPT, Parcelize and
+  ViewBinding all PASS; NDK 21.4.7075529 used. Accepted warning: Moshi KAPT deprecation →
+  **P1E2 KSP**.
+- Remote run `34938888803` (commit `bd3f6e4`): all steps **success** (4m57s), single JDK 17
+  stage, `:app:downloadAssets`/`fetchAssets` executed, `suites=36 tests=326 failures=0 errors=0
+  skipped=0`, both artifacts uploaded.
+- compileSdk/targetSdk/minSdk unchanged (30/30/21; terminal 29/29/21); source manifests
+  byte-identical; runtime/UI unchanged.
+- **P1E1 CLOSED / PASS. P1E IN PROGRESS. P1E2 NOT STARTED.**

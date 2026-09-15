@@ -27,9 +27,10 @@
 >   - **P1E — SDK 36 / Manifest Compatibility:** IN PROGRESS
 >     - **P1E0 — Android 16 Toolchain + Platform Readiness Audit:** CLOSED / PASS
 >     - **P1E1-P — Kotlin / AGP Build-Tooling Bridge Compatibility Probe:** CLOSED / BRIDGE_FOUND
->       (proven: Gradle 7.6.4 / AGP 7.4.2 / Kotlin 1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 /
->       JDK 17 / NDK 21.4; plan: [`P1E_ANDROID16_MIGRATION_PLAN.md`](P1E_ANDROID16_MIGRATION_PLAN.md));
->       next authorized candidate **P1E1** (not started)
+>     - **P1E1 — Kotlin/AndroidX Codegen + Build-Tooling Bridge:** CLOSED / PASS
+>       (Gradle 7.6.4 / AGP 7.4.2 / Kotlin 1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 / JDK 17 /
+>       NDK 21.4; plan: [`P1E_ANDROID16_MIGRATION_PLAN.md`](P1E_ANDROID16_MIGRATION_PLAN.md));
+>       next authorized candidate **P1E2** (not started)
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.

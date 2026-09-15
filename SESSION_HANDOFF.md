@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-15 (P1E1-P bridge probe: BRIDGE_FOUND — P1E IN PROGRESS)
+Last updated: 2026-09-15 (P1E1 build-tooling bridge: CLOSED / PASS — P1E IN PROGRESS)
 
 ## Current Objective
 
@@ -13,56 +13,39 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1E1-P — Build-Tooling Bridge Compatibility Probe**: **BRIDGE_FOUND** (disposable;
-fully reverted). A coherent intermediate bridge is proven locally: **Gradle 7.6.4 / AGP 7.4.2 /
-Kotlin 1.9.25 / Moshi 1.15.2 (KAPT) / Navigation 2.3.5 / JDK 17 / NDK 21.4.7075529**,
-with JaCoCo **0.8.8** (+`jdk.internal.*` exclusion) and test-only Mockito **4.11.0** →
-canonical gate **326 tests / 36 suites / 0 failures/errors/skips**. See
-`docs/P1E_ANDROID16_MIGRATION_PLAN.md` §17.
+**P1E1 — Kotlin/AndroidX Codegen + Build-Tooling Bridge**: **CLOSED / PASS**. The P1E1-P
+bridge is now persisted: **Gradle 7.6.4 / AGP 7.4.2 / Kotlin 1.9.25 / Moshi 1.15.2 (KAPT) /
+Navigation 2.3.5 / JaCoCo 0.8.8 / Mockito 4.11.0 (test-only) / JDK 17 / Build Tools 30.0.3 /
+NDK 21.4.7075529**, plus a CI-forced `gradle-download-task` 3.4.3 → **5.0.0** correction.
+Local canonical gate and remote CI (run `34938888803`) green: **326 tests / 36 suites /
+0 failures/errors/skips**. See `docs/P1E_ANDROID16_MIGRATION_PLAN.md` §18.
 
 ## Current Milestone
 
-**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS (P1E1-P done; P1E1 not started).
+**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS (P1E1 done; P1E2 not started).
 
 ## What Was Completed
 
-- Probe Cells 1–3 + final candidate (all disposable, reverted): attributed AGP 7.4.2's KGP
-  floor, Safe Args 2.1.0 task-validation break, Navigation 2.5.3 minCompileSdk wall, and the
-  smallest working Navigation (2.3.5).
-- Identified required JDK-17 fixes: JaCoCo 0.8.8 + exclusion, test-only Mockito 4.11.0, and 7
-  behavior-neutral Kotlin-1.9 source fixes.
-- Confirmed `gradle-download-task` 3.4.3 and the ktlint JavaExec task need **no** change.
-- Recorded P1E0 factual corrections and the revised sequence in the migration plan.
-- **No persistent implementation change** (only documentation).
+- Persisted the proven bridge version set and the seven behavior-neutral Kotlin-1.9 source
+  fixes (2× `else -> {}`, 5× `<T : ViewModel>`) and updated the Navigation guard to 2.3.5.
+- CI moved to a single **JDK 17** stage (JDK 8 removed); Build Tools pin `30.0.2 → 30.0.3`.
+- Resolved a CI-only gap the P1E1-P local probe missed: on a clean checkout the
+  `downloadAssets` task enters the graph and `gradle-download-task` 3.4.3 fails Gradle 7.6
+  task-property validation → minimally upgraded to **5.0.0** (P1E1-P PART M fallback).
 
 ## What Was Intentionally NOT Changed
 
-- compileSdk/targetSdk/minSdk (30/30/21; terminal 29/29/21), NDK 21.4, manifests, production
-  source, Gradle files, wrapper, workflow, resources.
+- compileSdk/targetSdk/minSdk (30/30/21; terminal 29/29/21), NDK 21.4, source manifests,
+  resources, Runtime/UI behavior.
 - No `android:exported`, PendingIntent, FGS, storage or notification work (those are later P1E
-  milestones).
-
-## What Was Intentionally NOT Changed
-
-- **No dependency version was changed** (no upgrade, addition, removal, force, or exclusion);
-  the closure audit only inspected and classified.
-- Deferred (non-blocking) debt recorded: Coroutines (declared `1.0.0`, resolved `1.3.9`/
-  `1.1.1`), Sentry `1.7.22`, Billing `3.0.3`, OkHttp `3.14.7`, Moshi `1.9.3`, Gson `2.8.6`,
-  JArchiveLib `0.8.0`, ConstraintLayout `1.1.3`, LocalBroadcastManager `1.0.0`, and the
-  JUnit4/Mockito/AndroidX-Test stack.
-- Kotlin 1.4.32 (jvmTarget 1.8), Moshi 1.9.3, Gradle 6.7.1, AGP 4.2.2, Lifecycle 2.2.0,
-  Navigation 2.1.0, Room 2.1.0, Core KTX 1.1.0, and all other dependency versions;
-  SDK/NDK/build-tools.
-- Preference keys/defaults/dependencies/persistence, SharedPreferences names, AutoApp
-  clearing, Proot debug settings.
-- Runtime, UI, navigation, database, PRoot, network, billing, Sentry, assets.
+  milestones). Room stays 2.1.0; Moshi still uses KAPT (KSP is P1E2).
 
 ## Current Repository State
 
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (P1E1-P baseline) | `577b6de98a1c4eceab0dd0e129711ad118ad935f` |
+| Feature HEAD (P1E1) | `bd3f6e4f335c4a1e9371c554e2850b69b1e2f30d` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -75,12 +58,13 @@ tests **326 / 36 suites** (guard/contract tests).
 
 ## Current Toolchain
 
-Gradle **6.7.1** · AGP **4.2.2** · Kotlin **1.4.32** (jvmTarget 1.8) · Moshi **1.9.3** ·
-Navigation **2.1.0** · Room **2.1.0** · Preference **1.1.0** · Material **1.1.0** ·
+Gradle **7.6.4** · AGP **7.4.2** · Kotlin **1.9.25** (jvmTarget 1.8) · Moshi **1.15.2** (KAPT) ·
+Navigation **2.3.5** · Room **2.1.0** · Preference **1.1.0** · Material **1.1.0** ·
 SwipeRefreshLayout **1.0.0** / LocalBroadcastManager **1.0.0** (direct) · Arch Core testing
-**2.1.0** (test-only) · Core KTX **1.1.0** (aligned with `core` 1.1.0) · Lifecycle **2.2.0** ·
-plugin **`kotlin-parcelize`** · JDK **8** (build) · compileSdk **30** · targetSdk **30** ·
-minSdk **21** · NDK **21.4.7075529** · build-tools **30.0.2**. Repositories: `google()`,
+**2.1.0** (test-only) · Core KTX **1.1.0** (transitive `core` 1.3.0) · Lifecycle **2.2.0** ·
+JaCoCo **0.8.8** · Mockito **4.11.0** (test-only) · gradle-download-task **5.0.0** · plugin
+**`kotlin-parcelize`** · JDK **17** (build) · compileSdk **30** · targetSdk **30** ·
+minSdk **21** · NDK **21.4.7075529** · build-tools **30.0.3**. Repositories: `google()`,
 `mavenCentral()`.
 
 ## Known Deferred Findings
@@ -125,11 +109,10 @@ verified on a device at the Golden Candidate gate; no physical acceptance is cla
 
 ## Next Safe Action
 
-**P1E1 — Kotlin/AndroidX codegen + build-tooling bridge (Gradle 7.6.4 / AGP 7.4.2 / Kotlin
-1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 / JDK 17) — NOT STARTED.** See
-`docs/P1E_ANDROID16_MIGRATION_PLAN.md` §15.1 for the exact version set and required
-behavior-neutral source fixes. Sentry and Billing remain active and require a dedicated
-decision before any change. Do not begin without explicit authorization.
+**P1E2 — Moshi Codegen KAPT → KSP Readiness — NOT STARTED.** Migrate Moshi codegen from KAPT
+to KSP on the current Kotlin 1.9.25 bridge so the Kotlin 2.2 jump (P1E3) does not carry a
+deprecated KAPT codegen path. Sentry and Billing remain active and require a dedicated decision
+before any change. Do not begin without explicit authorization.
 
 ## Resume Procedure
 

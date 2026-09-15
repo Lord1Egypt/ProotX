@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-15 (P1E1-P bridge probe — BRIDGE_FOUND; P1E IN PROGRESS)
+Last updated: 2026-09-15 (P1E1 build-tooling bridge — CLOSED / PASS; P1E IN PROGRESS)
 
 ## Project Identity
 
@@ -45,29 +45,31 @@ Last updated: 2026-09-15 (P1E1-P bridge probe — BRIDGE_FOUND; P1E IN PROGRESS)
 | P1E — SDK 36 / Manifest Compatibility | **IN PROGRESS** |
 | P1E0 — Android 16 Toolchain + Platform Readiness Audit | **CLOSED / PASS** |
 | P1E1-P — Kotlin / AGP Build-Tooling Bridge Compatibility Probe | **CLOSED / BRIDGE_FOUND** |
-| P1E1 — Kotlin/AndroidX Codegen + Build-Tooling Bridge | **NOT STARTED** |
+| P1E1 — Kotlin/AndroidX Codegen + Build-Tooling Bridge | **CLOSED / PASS** |
+| P1E2 — Moshi Codegen KAPT → KSP Readiness | **NOT STARTED** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1E1-P — Build-Tooling Bridge Compatibility Probe: CLOSED / BRIDGE_FOUND.** A coherent
-intermediate bridge was proven locally (disposable, fully reverted): **Gradle 7.6.4 / AGP
-7.4.2 / Kotlin 1.9.25 / Moshi 1.15.2 (KAPT) / Navigation 2.3.5 / JDK 17 / NDK 21.4.7075529**,
-with **JaCoCo 0.8.8 + `jdk.internal.*` exclusion** and test-only **Mockito 4.11.0**; canonical
-`clean assembleDebug testDebugUnitTest` = **36 suites / 326 tests / 0 failures / 0 errors /
-0 skipped**. P1E0 factual corrections and the revised sequence (P1E1 bridge → P1E2 Moshi
-KAPT→KSP → P1E3 AGP 8.10/Kotlin 2.2 → platform milestones) are recorded in
-[`docs/P1E_ANDROID16_MIGRATION_PLAN.md`](docs/P1E_ANDROID16_MIGRATION_PLAN.md). Next milestone:
-**P1E1 — Kotlin/AndroidX codegen + build-tooling bridge — NOT STARTED**. Do not start it from
-this document.
+**P1E1 — Kotlin/AndroidX Codegen + Build-Tooling Bridge: CLOSED / PASS.** The proven P1E1-P
+bridge is now persisted: **Gradle 7.6.4 / AGP 7.4.2 / Kotlin 1.9.25 / Moshi 1.15.2 (KAPT) /
+Navigation 2.3.5 / JaCoCo 0.8.8 / Mockito 4.11.0 (test-only) / JDK 17 / Build Tools 30.0.3 /
+NDK 21.4.7075529**. Seven behavior-neutral Kotlin-1.9 source fixes and a Navigation guard
+update landed. CI is now a single JDK 17 stage. Final dependencies include a CI-forced minimal
+`gradle-download-task` 3.4.3 → **5.0.0** correction. Local canonical gate and remote CI
+(run `34938888803`) are green: **36 suites / 326 tests / 0 failures / 0 errors / 0 skipped**.
+compileSdk/targetSdk/minSdk unchanged. Details:
+[`docs/P1E_ANDROID16_MIGRATION_PLAN.md`](docs/P1E_ANDROID16_MIGRATION_PLAN.md) §18.
+Next milestone: **P1E2 — Moshi Codegen KAPT → KSP Readiness — NOT STARTED**. Do not start it
+from this document.
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `577b6de98a1c4eceab0dd0e129711ad118ad935f` | P1E0 docs tip / P1E1-P probe baseline; control-plane commit follows |
+| Feature HEAD | `bd3f6e4f335c4a1e9371c554e2850b69b1e2f30d` | P1E1 implementation (download-task fix); control-plane commit follows |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -92,25 +94,28 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 
 | Component | Version |
 |---|---|
-| Gradle (wrapper) | 6.7.1 |
-| Android Gradle Plugin | 4.2.2 |
-| Kotlin | 1.4.32 |
-| Moshi (runtime + codegen) | 1.9.3 |
-| AndroidX Navigation | 2.1.0 (stable) |
+| Gradle (wrapper) | **7.6.4** |
+| Android Gradle Plugin | **7.4.2** |
+| Kotlin / KGP | **1.9.25** |
+| Moshi (runtime + codegen) | **1.15.2** (codegen via KAPT) |
+| AndroidX Navigation | **2.3.5** (stable) |
 | AndroidX Room | 2.1.0 (stable; runtime/compiler/testing) |
 | AndroidX Preference | 1.1.0 (stable) |
 | Material Components | 1.1.0 (stable) |
 | SwipeRefreshLayout (direct) | 1.0.0 |
 | LocalBroadcastManager (direct) | 1.0.0 |
 | Arch Core testing (test-only) | 2.1.0 |
-| Core KTX (direct) | 1.1.0 (aligned with `androidx.core:core` 1.1.0) |
+| Core KTX (direct) | 1.1.0 (transitive `core` resolves 1.3.0 via Navigation 2.3.5) |
 | AndroidX Lifecycle (direct) | 2.2.0 (`lifecycle-viewmodel`, `lifecycle-livedata`) |
 | Parcelize plugin | `kotlin-parcelize` (legacy `kotlin-android-extensions` removed) |
-| JDK for the Gradle build | 8 |
+| JaCoCo | **0.8.8** (+ `jdk.internal.*` exclusion for JDK 17) |
+| Mockito (test-only) | **4.11.0** (core + inline) |
+| gradle-download-task | **5.0.0** |
+| JDK for the Gradle build | **17** |
 | `compileSdk` / `targetSdk` (app) | 30 / 30 |
 | `minSdk` | 21 |
-| Android NDK | 21.4.7075529 |
-| Android build-tools | 30.0.2 |
+| Android NDK | 21.4.7075529 (explicit `ndkVersion`) |
+| Android build-tools | 30.0.3 |
 
 ## UI View Access & Parcelize (P1C)
 
@@ -123,25 +128,23 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 
 ## CI State
 
-**CI is passing.** Two-stage bootstrap: JDK 17 provisions the Android SDK/NDK, JDK 8 runs
-the Gradle build. `google()` + `mavenCentral()` only. Pinned packages:
-`platform-tools`, `platforms;android-30`, `platforms;android-29`, `build-tools;30.0.2`,
-`ndk;21.4.7075529`.
+**CI is passing.** Single-stage **JDK 17** bootstrap and Gradle build (the JDK 8 build stage was
+removed in P1E1). `google()` + `mavenCentral()` only. Pinned packages: `platform-tools`,
+`platforms;android-30`, `platforms;android-29`, `build-tools;30.0.3`, `ndk;21.4.7075529`.
 
 **CI-R1 note:** `android-actions/setup-android@v3` runs with `packages: ''` (its default
 `tools platform-tools` install broke when the legacy `tools` package was retired);
-`platform-tools` is now owned explicitly by the pinned `sdkmanager` step. Everything else
-(action major version, two-stage JDK model, pins, triggers) is unchanged.
+`platform-tools` is owned explicitly by the pinned `sdkmanager` step. Triggers unchanged.
 
-Verified remote evidence (CI-R1):
+Verified remote evidence (P1E1):
 
 | Field | Value |
 |---|---|
-| Run | `34919847167` (push, commit `4f3c812`) — **success** (3m45s) |
-| Log proof | `sdkmanager 16.0`; installed `platform-tools`, `android-29`, `android-30`, `30.0.2`, `21.4.7075529`; `Gradle 6.7.1`; JDK 17 bootstrap + JDK 8 build; two `BUILD SUCCESSFUL` (app + androidTest) |
+| Run | `34938888803` (push, commit `bd3f6e4`) — **success** (4m57s) |
+| Log proof | `sdkmanager 16.0`; installed `platform-tools`, `android-29`, `android-30`, `build-tools;30.0.3`, `ndk;21.4.7075529`; `Gradle 7.6.4` on `JVM 17.0.20.1`; `:app:downloadAssets`/`:app:fetchAssets` executed; two `BUILD SUCCESSFUL` (app + androidTest) |
 | Remote test summary | `suites=36 tests=326 failures=0 errors=0 skipped=0` |
-| Artifacts | `prootx-debug-apk` (APK 18,269,893 bytes; ZIP 17,452,876 bytes; SHA-256 `07121935…099a2e8e`) and `prootx-debug-androidTest-apk` (APK 1,819,884 bytes; ZIP 1,367,404 bytes; SHA-256 `d65a59d3…3b852f66`) |
-| Artifact identity | app: `io.github.lord1egypt.prootx` / 1.0.0 / ABIs arm64-v8a, armeabi-v7a, x86, x86_64; androidTest: `io.github.lord1egypt.prootx.test` |
+| Artifacts | `prootx-debug-apk` (ZIP 19,118,467 bytes; extracted APK 19,938,185 bytes, SHA-256 `d2090b90…803b90150`) and `prootx-debug-androidTest-apk` (ZIP 1,370,435 bytes; extracted APK 1,824,590 bytes, SHA-256 `54584e3f…d3856c21`) |
+| Artifact identity | app: `io.github.lord1egypt.prootx` / 1.0.0 / targetSdk 30 / ABIs arm64-v8a, armeabi-v7a, x86, x86_64; androidTest: `io.github.lord1egypt.prootx.test` |
 
 The workflow also runs `:app:assembleDebugAndroidTest` and uploads both APKs, so androidTest
 dependency resolution is a standing gate.
@@ -163,8 +166,7 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-**None.** P1D is closed. The CI-R1 SDK-bootstrap breakage (`setup-android@v3` requesting the
-retired `tools` package) is **resolved**; remote CI is green (run `34919847167`).
+**None.** P1D is closed; P1E1 is closed and remote CI is green (run `34938888803`).
 
 ## Deferred Findings
 
@@ -221,6 +223,11 @@ The canonical list lives in
 - **Resolved in CI-R1:** GitHub Actions Android SDK bootstrap failure
   (`android-actions/setup-android@v3` requesting the retired `tools` package). Fixed with
   `packages: ''` plus explicit `platform-tools` in the pinned `sdkmanager` step.
+- **Resolved in P1E1:** the AGP 7 / Kotlin 1.9 build-tooling bridge (Gradle 7.6.4, AGP 7.4.2,
+  Kotlin 1.9.25, Moshi 1.15.2 KAPT, Navigation 2.3.5, JaCoCo 0.8.8, Mockito 4.11.0 test-only,
+  JDK 17, NDK 21.4 pinned). CI moved to a single JDK 17 stage. A CI-only gap in the P1E1-P
+  finding forced a minimal `gradle-download-task` 3.4.3 → 5.0.0 upgrade (local probe never
+  scheduled the download task). **Deferred to P1E2:** Moshi codegen KAPT → KSP.
 - **Correction:** Sentry and Billing are **ACTIVE** production dependencies (SentryLogger /
   Sentry; BillingManager / BillingClient / Purchase) — they are **not** unused and were left
   untouched.
@@ -230,8 +237,7 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1E1 — Kotlin/AndroidX codegen + build-tooling bridge (Gradle 7.6.4 / AGP 7.4.2 / Kotlin
-1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 / JDK 17) — NOT STARTED.** Exact version set and
-required behavior-neutral source fixes are in
-[`docs/P1E_ANDROID16_MIGRATION_PLAN.md`](docs/P1E_ANDROID16_MIGRATION_PLAN.md) §15.1. Do **not**
-start it from this document.
+**P1E2 — Moshi Codegen KAPT → KSP Readiness — NOT STARTED.** Migrate Moshi codegen from KAPT
+to KSP on the current Kotlin 1.9.25 bridge (Room may keep KAPT temporarily) so the Kotlin 2.2
+jump (P1E3) does not carry a deprecated KAPT codegen path. Do **not** start it from this
+document.
