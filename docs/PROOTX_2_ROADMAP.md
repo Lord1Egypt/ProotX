@@ -23,6 +23,7 @@
 >     - **P1D8 — Arch Core Testing 2.1.0 Stabilization:** CLOSED / PASS
 >     - **P1D9 — AndroidX Core KTX 1.1.0 Alignment:** CLOSED / PASS
 >     - **P1D Final Dependency Closure Audit:** CLOSED / PASS (no blocker)
+>   - **CI-R1 — Android SDK Bootstrap Remediation:** CLOSED / PASS
 >   - **P1E — SDK 36 / Manifest Compatibility:** NOT STARTED
 >
 > This roadmap records the agreed architectural direction at a high level only.
@@ -222,17 +223,14 @@ deferred to the appropriate later phase.
       are consumed directly but supplied transitively; explicit ownership hardening deferred.
     - `androidx.legacy` remains only via `:terminal-term` (runtime) and
       `room-testing`/`espresso-contrib` (androidTest) — legitimate parents, not excluded.
-20. **CI bootstrap infra breakage (new, observed 2026-09-15; not a dependency blocker).**
-    The closure-documentation push failed remote CI in the third-party
-    `android-actions/setup-android@v3` step, *before any ProotX build step*: the action
-    reported "Wrong version in preinstalled sdkmanager" and then
-    `Warning: Failed to find package 'tools'` → `sdkmanager` exit 1. Every prior run on this
-    workflow succeeded (last green run `34741782765`, 2026-09-13), so this is an upstream
-    runner-image / SDK-repository change, independent of repository content. One rerun
-    reproduced it. Repair requires a narrowly scoped CI workflow/bootstrap change (e.g.
-    migrate off `setup-android@v3` to a pinned cmdline-tools bootstrap), which this audit is
-    **not authorized** to make (PART S). Record as CI remediation debt for P1E/CI-follow-up;
-    it does **not** block P1D, whose acceptance rests on the canonical local build and tests.
+20. **CI bootstrap infra breakage — RESOLVED in CI-R1.** The closure-documentation push
+    failed remote CI in the third-party `android-actions/setup-android@v3` step, *before any
+    ProotX build step*: the action reported "Wrong version in preinstalled sdkmanager" and
+    then `Warning: Failed to find package 'tools'` → `sdkmanager` exit 1. Every prior run on
+    this workflow succeeded, so this was an upstream runner-image / SDK-repository change,
+    independent of repository content. Fixed by running `setup-android@v3` with
+    `packages: ''` and installing `platform-tools` explicitly in the pinned `sdkmanager`
+    step. Remote run `34919847167` (commit `4f3c812`) is green end-to-end.
 
 ## Non-goals for P0
 

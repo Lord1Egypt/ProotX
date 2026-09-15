@@ -342,3 +342,25 @@
   run on this workflow was green (`34741782765`). One rerun reproduced it. This is an
   upstream runner/SDK-repository change, not a repository regression, and is recorded as CI
   remediation debt (an authorized workflow/bootstrap fix is out of scope for this audit).
+
+## CI-R1 — Android SDK Bootstrap Remediation (2026-09-15) — PASS
+
+- Root cause confirmed: `android-actions/setup-android@v3` defaults to installing
+  `tools platform-tools`; the legacy `tools` SDK package is no longer published, so the
+  action ran `sdkmanager tools` → `Warning: Failed to find package 'tools'` and failed
+  **before any ProotX step**. The runner image also reported a preinstalled
+  `cmdline-tools;12.0` as "Wrong version", then downloaded cmdline-tools `16.0`.
+- Minimal fix in `.github/workflows/build.yml`:
+  - `setup-android@v3` now runs with `packages: ''` (skip its default extra-package install).
+  - `platform-tools` added to the existing pinned `sdkmanager` invocation, alongside
+    `platforms;android-30`, `platforms;android-29`, `build-tools;30.0.2`, `ndk;21.4.7075529`.
+  - Corrected a stale stage-2 comment (Gradle 6.7.1 / AGP 4.2.2 / Kotlin 1.4.32).
+  - No action major-version, pinned-package, trigger, or two-stage-JDK change.
+- Remote run `34919847167` (push, commit `4f3c812`) — **success** (3m45s): SDK bootstrap PASS
+  (`sdkmanager 16.0`; platform-tools + all pinned packages installed and verified); JDK 8
+  Gradle 6.7.1 build PASS; **326 tests / 36 suites / 0 failures / 0 errors / 0 skipped**;
+  `:app:assembleDebugAndroidTest` PASS; both artifacts uploaded
+  (`prootx-debug-apk` ZIP 17,452,876 B; `prootx-debug-androidTest-apk` ZIP 1,367,404 B).
+- No application source, dependency, Gradle/AGP/Kotlin, SDK/NDK, manifest, resource, runtime,
+  UI, or database change.
+- **CI-R1 CLOSED / PASS. P1D remains CLOSED / PASS. P1E NOT STARTED.**

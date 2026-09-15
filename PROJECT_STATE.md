@@ -41,25 +41,26 @@ Last updated: 2026-09-15 (P1D Final Dependency Closure Audit — P1D CLOSED / PA
 | P1D8 — Arch Core Testing 2.1.0 Stabilization | **CLOSED / PASS** |
 | P1D9 — AndroidX Core KTX 1.1.0 Alignment | **CLOSED / PASS** |
 | P1D Final Dependency Closure Audit | **CLOSED / PASS** |
+| CI-R1 — Android SDK Bootstrap Remediation | **CLOSED / PASS** |
 | P1E — SDK 36 / Manifest Compatibility | **NOT STARTED** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1D — Dependency / AndroidX Modernization: CLOSED / PASS.** The final closure audit found
-**no dependency blocker**. All direct AndroidX/application dependencies are stable (zero
-active direct pre-releases; zero pre-release transitives), `core-ktx`/`core` are coherent at
-`1.1.0`, and the canonical build + `326/36` JVM tests are green. Remaining dependency debt is
-classified and deferred (see Deferred Findings). Next milestone: **P1E — SDK 36 / Manifest
-Compatibility (NOT STARTED)**. Do not start it from this document.
+**CI-R1 — Android SDK Bootstrap Remediation: CLOSED / PASS.** GitHub Actions SDK bootstrap
+restored after the legacy `tools` package retired. `setup-android@v3` now runs with
+`packages: ''`, and `platform-tools` is installed explicitly by the pinned `sdkmanager` step.
+Remote run `34919847167` (commit `4f3c812`) is **green** end-to-end. **P1D remains
+CLOSED / PASS.** Next milestone: **P1E — SDK 36 / Manifest Compatibility (NOT STARTED)**. Do
+not start it from this document.
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `6b442aa5ea6de95dc17e4ecbdfd849b3ad1d9088` | P1D9 docs tip / P1D closure-audit baseline; advanced by the closure control-plane commit |
+| Feature HEAD | `4f3c812a54b941c0293ab01d54689d391530e14c` | CI-R1 workflow fix (`ci: repair Android SDK bootstrap`); control-plane commit follows |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -117,20 +118,26 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 
 **CI is passing.** Two-stage bootstrap: JDK 17 provisions the Android SDK/NDK, JDK 8 runs
 the Gradle build. `google()` + `mavenCentral()` only. Pinned packages:
-`platforms;android-30`, `platforms;android-29`, `build-tools;30.0.2`, `ndk;21.4.7075529`.
+`platform-tools`, `platforms;android-30`, `platforms;android-29`, `build-tools;30.0.2`,
+`ndk;21.4.7075529`.
 
-Verified remote evidence (P1D9):
+**CI-R1 note:** `android-actions/setup-android@v3` runs with `packages: ''` (its default
+`tools platform-tools` install broke when the legacy `tools` package was retired);
+`platform-tools` is now owned explicitly by the pinned `sdkmanager` step. Everything else
+(action major version, two-stage JDK model, pins, triggers) is unchanged.
+
+Verified remote evidence (CI-R1):
 
 | Field | Value |
 |---|---|
-| Run | `34741460145` (push, commit `99f27c0`) — **success** |
-| Log proof | `Gradle 6.7.1`; JDK 17 bootstrap + JDK 8 build; two `BUILD SUCCESSFUL` (app + androidTest) |
+| Run | `34919847167` (push, commit `4f3c812`) — **success** (3m45s) |
+| Log proof | `sdkmanager 16.0`; installed `platform-tools`, `android-29`, `android-30`, `30.0.2`, `21.4.7075529`; `Gradle 6.7.1`; JDK 17 bootstrap + JDK 8 build; two `BUILD SUCCESSFUL` (app + androidTest) |
 | Remote test summary | `suites=36 tests=326 failures=0 errors=0 skipped=0` |
-| Artifacts | `prootx-debug-apk` (APK 18,269,905 bytes; ZIP 17,452,869 bytes) and `prootx-debug-androidTest-apk` (APK 1,819,889 bytes; ZIP 1,367,406 bytes) |
+| Artifacts | `prootx-debug-apk` (APK 18,269,893 bytes; ZIP 17,452,876 bytes; SHA-256 `07121935…099a2e8e`) and `prootx-debug-androidTest-apk` (APK 1,819,884 bytes; ZIP 1,367,404 bytes; SHA-256 `d65a59d3…3b852f66`) |
 | Artifact identity | app: `io.github.lord1egypt.prootx` / 1.0.0 / ABIs arm64-v8a, armeabi-v7a, x86, x86_64; androidTest: `io.github.lord1egypt.prootx.test` |
 
-The CI workflow now also runs `:app:assembleDebugAndroidTest` and uploads both APKs, so
-androidTest dependency resolution is a standing gate.
+The workflow also runs `:app:assembleDebugAndroidTest` and uploads both APKs, so androidTest
+dependency resolution is a standing gate.
 
 ## Runtime State
 
@@ -149,11 +156,8 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-**No dependency blocker.** P1D is closed. One **CI infrastructure** issue is open and
-recorded: the third-party `android-actions/setup-android@v3` bootstrap now fails
-(`Failed to find package 'tools'`) before any ProotX build step (run `34918425938`); every
-prior run was green. This requires a narrowly scoped CI workflow/bootstrap repair and does
-**not** block P1D closure (canonical local build + `326/36` tests are green).
+**None.** P1D is closed. The CI-R1 SDK-bootstrap breakage (`setup-android@v3` requesting the
+retired `tools` package) is **resolved**; remote CI is green (run `34919847167`).
 
 ## Deferred Findings
 
@@ -207,9 +211,9 @@ The canonical list lives in
     AndroidX Test `1.2.0` / Ext-JUnit `1.1.0` / Espresso `3.2.0` / UiAutomator `2.2.0` /
     Orchestrator `1.2.0`.
 - **P1D closure blockers found:** none.
-- **New (non-dependency) finding:** remote CI bootstrap breakage in
-  `android-actions/setup-android@v3` (`Failed to find package 'tools'`) — upstream runner/SDK
-  change; CI remediation debt (see roadmap finding 20).
+- **Resolved in CI-R1:** GitHub Actions Android SDK bootstrap failure
+  (`android-actions/setup-android@v3` requesting the retired `tools` package). Fixed with
+  `packages: ''` plus explicit `platform-tools` in the pinned `sdkmanager` step.
 - **Correction:** Sentry and Billing are **ACTIVE** production dependencies (SentryLogger /
   Sentry; BillingManager / BillingClient / Purchase) — they are **not** unused and were left
   untouched.

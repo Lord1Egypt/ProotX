@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-15 (P1D Final Dependency Closure Audit: PASS — P1D CLOSED)
+Last updated: 2026-09-15 (CI-R1 Android SDK bootstrap remediation: PASS)
 
 ## Current Objective
 
@@ -13,11 +13,11 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1D Final Dependency Closure Audit**: **PASS**. The audit found **no dependency blocker**;
-P1D is now **CLOSED / PASS**. All direct dependencies are stable (zero active direct
-pre-releases; zero pre-release transitives), `core-ktx`/`core` are coherent at `1.1.0`, and
-the canonical build plus `326/36` JVM tests are green. No dependency, source, manifest, or
-resource change was made; remaining dependency debt is classified and deferred.
+**CI-R1 — Android SDK Bootstrap Remediation**: **PASS**. GitHub Actions SDK bootstrap
+restored: `android-actions/setup-android@v3` now runs with `packages: ''` (its default
+`tools platform-tools` install broke when the legacy `tools` package retired) and
+`platform-tools` is installed explicitly by the pinned `sdkmanager` step. Remote run
+`34919847167` (commit `4f3c812`) is **green** end-to-end. **P1D remains CLOSED / PASS.**
 
 ## Current Milestone
 
@@ -25,13 +25,13 @@ resource change was made; remaining dependency debt is classified and deferred.
 
 ## What Was Completed
 
-- Full direct dependency/plugin inventory across all modules and resolved-graph inspection
-  (`debug`/`release`/androidTest/unit-test classpaths).
-- Pre-release scan (none), dead-dependency audit (none proven dead), Sentry/Billing/Coroutines
-  /OkHttp/Moshi/Gson/JArchiveLib/UI/test-stack classification.
-- Canonical verification build: compile, kapt, app unit-test compile, androidTest compile,
-  androidTest APK, and `clean assembleDebug testDebugUnitTest` — all green; **326 / 36**.
-- Control-plane closure record; no production or test source change.
+- Diagnosed the CI failure (`setup-android@v3` → `sdkmanager tools` → "Failed to find
+  package 'tools'") as an upstream SDK package retirement, occurring before any ProotX step.
+- Applied the minimal authorized workflow fix (`.github/workflows/build.yml`): `packages: ''`
+  on `setup-android`; explicit `platform-tools` in the existing pinned `sdkmanager` call;
+  corrected a stale stage-2 comment. No action major-version, pin, trigger, or JDK-stage change.
+- Verified remote green: SDK bootstrap PASS, JDK 8 build PASS, `326/36` tests, androidTest
+  APK PASS, both artifacts uploaded.
 
 ## What Was Intentionally NOT Changed
 
@@ -53,7 +53,7 @@ resource change was made; remaining dependency debt is classified and deferred.
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (P1D closure audit baseline) | `6b442aa5ea6de95dc17e4ecbdfd849b3ad1d9088` |
+| Feature HEAD (CI-R1) | `4f3c812a54b941c0293ab01d54689d391530e14c` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -90,12 +90,10 @@ prebuilt rootfs profile remnant; network-dependent unit tests; Play-readiness ga
 dynamic time-based `versionCode`; `LocalBroadcastManager` modernization (deprecated tech,
 deferred).
 
-**CI infrastructure finding:** the closure-documentation push failed remote CI in the
-third-party `android-actions/setup-android@v3` step (`Warning: Failed to find package
-'tools'`) **before any ProotX build step**; the previous run on the same workflow was green.
-This is an upstream runner/SDK change and requires a narrowly scoped CI bootstrap repair
-(migrate off `setup-android@v3`). It does not block P1D closure and is not caused by any
-repository change.
+**CI infrastructure finding — RESOLVED in CI-R1:** the closure-documentation push had failed
+remote CI in `android-actions/setup-android@v3` (`Warning: Failed to find package 'tools'`)
+before any ProotX build step (upstream SDK package retirement). Fixed with `packages: ''` plus
+explicit `platform-tools`; remote run `34919847167` is green.
 
 **Deferred physical checks:** the `EditTextPreference` numeric input and all Material widget
 appearance/interaction (BottomNavigationView, TextInputLayout/EditText, FAB, dialogs) must be

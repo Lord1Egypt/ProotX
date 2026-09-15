@@ -105,6 +105,14 @@ The workflow runs on `main`, `develop`, and `feature/**` pushes, and on pull req
 targeting `main`/`develop`. It installs the pinned packages above and prints the exact
 unit-test summary.
 
+**SDK bootstrap (CI-R1):** `android-actions/setup-android@v3` is configured with
+`packages: ''` so it does **not** install its default `tools platform-tools` set — the legacy
+`tools` package is no longer published and caused `Failed to find package 'tools'`. The SDK
+processes/`platform-tools` are instead owned explicitly by the pinned `sdkmanager` step
+(`platform-tools`, `platforms;android-30`, `platforms;android-29`, `build-tools;30.0.2`,
+`ndk;21.4.7075529`). The action major version, the two-stage JDK model, and all pins are
+unchanged.
+
 ## Baseline result (reference)
 
 The frozen baseline at tag `v1.0.0-baseline` measured **313 tests / 24 suites / 0 failures**.

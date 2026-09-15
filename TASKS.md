@@ -114,6 +114,11 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         ConstraintLayout, AppCompat/Fragment/RecyclerView ownership, test stack.
   - [ ] Sentry/Billing: **ACTIVE** production code — requires a dedicated decision before any change
         (not "unused")
+- [x] **CI-R1 — Android SDK bootstrap remediation** — CLOSED / PASS
+  - [x] Root cause: `android-actions/setup-android@v3` default `tools` package retired
+  - [x] `packages: ''` on `setup-android`; explicit `platform-tools` in pinned `sdkmanager` step
+  - [x] Remote run `34919847167` (commit `4f3c812`) green: bootstrap, build, `326/36` tests,
+        androidTest APK, both artifacts
 - [ ] **P1E — SDK 36 / manifest compatibility** — NOT STARTED
   - [ ] Raise `compileSdk`/`targetSdk`; add `android:exported` and related manifest work
 - [ ] **P1F — Modern native/NDK and 16 KB page readiness**
