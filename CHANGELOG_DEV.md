@@ -491,3 +491,33 @@
 - Local canonical gate: `clean assembleDebug testDebugUnitTest` = **37 suites / 327 tests /
   0 failures / 0 errors / 0 skipped**; APK identity/ABIs/payload intact.
 - **P1E3-P CLOSED / BRIDGE_FOUND. P1E IN PROGRESS. P1E3 NOT STARTED.**
+
+## P1E3 — AGP 8.10 / Kotlin 2.2 Implementation (2026-09-15) — PASS
+
+- Persisted the P1E3-P bridge: Gradle **7.6.4 → 8.11.1**, AGP **7.4.2 → 8.10.1**,
+  Kotlin/KGP and stdlib **1.9.25 → 2.2.20**, KSP **1.9.25-1.0.20 → 2.2.20-2.0.4**, and
+  CI Build Tools **30.0.3 → 35.0.0**. JDK 17 and NDK 21.4.7075529 remain pinned.
+- Added the four required namespaces and enabled BuildConfig only in `:app`. Preserved AGP 8
+  default non-transitive R/non-final IDs and qualified only the two terminal-owned resource
+  references in `MainActivityTest`.
+- Migrated JaCoCo XML/HTML report properties from `enabled` to `required`; retained JaCoCo
+  **0.8.8**, filters, sources, dependencies, connected coverage inputs, and report formats.
+- Applied exactly five behavior-neutral `toLowerCase(Locale.ENGLISH)` →
+  `lowercase(Locale.ENGLISH)` substitutions across four production files.
+- Moshi **1.15.2** remains on KSP2; Room **2.1.0** remains on KAPT; Navigation/Safe Args
+  **2.3.5**, gradle-download-task **5.0.0**, and test-only Mockito **4.11.0** remain unchanged.
+- SDK levels remain app **30/30/21** and terminal **29/29/21**. Source manifests, resources,
+  runtime behavior, and UI behavior are unchanged.
+- P1E3-R1 corrected both JaCoCo tasks from legacy `build/jacoco/testDebugUnitTest.exec` to AGP
+  8's `build/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec`. Before the
+  fix the CI-oriented report was skipped for missing data. Local proof at `1828cdd`: task
+  executed (not skipped), processed 331 classes, and generated parseable XML plus HTML.
+- Remote CI run `34974083190` at `1828cdd4441a291433d07bd8a3e4efa96bcbfc76`: **SUCCESS**;
+  Gradle 8.11.1/JDK 17, explicit Build Tools 35.0.0 + NDK 21.4 installation, canonical clean
+  build, **37 suites / 327 tests / 0 failures / 0 errors / 0 skipped**, androidTest build, and
+  both APK uploads passed. The workflow does not run the separate JaCoCo report task.
+- Deferred without cleanup: manifest package warnings, Gradle-9 `JavaExec.main`, legacy Android
+  DSL/`lintOptions`, `String.capitalize()`, configuration-time tasks, Node/action maintenance,
+  `ndk.dir`, OkHttp/Okio runtime validation, future Room KSP migration, and core/core-ktx note.
+- **P1E3-P CLOSED / BRIDGE_FOUND. P1E3 CLOSED / PASS. P1E IN PROGRESS. P1E4 COMPILESDK 36
+  MIGRATION NOT STARTED / READY TO START.**

@@ -138,8 +138,14 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         (proven: Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 / KSP 2.2.20-2.0.4 / JDK 17 /
         Build Tools 35.0.0 / NDK 21.4; Moshi KSP2 + Room KAPT + Safe Args 2.3.5; 327 tests;
         all edits reverted)
-  - [ ] P1E3 — implement AGP 8.10.1 / Gradle 8.11.1 / Kotlin 2.2.20 + AGP8 DSL — NOT STARTED
-  - [ ] P1E4 — compileSdk 36 (targetSdk still 30) — NOT STARTED
+  - [x] **P1E3 — AGP 8.10 / Kotlin 2.2 implementation** — CLOSED / PASS
+        (Gradle 8.11.1 / AGP 8.10.1 / Kotlin + stdlib 2.2.20 / KSP 2.2.20-2.0.4 KSP2 /
+        JDK 17 / Build Tools 35.0.0 / NDK 21.4; four namespaces; app-only BuildConfig;
+        Moshi KSP2 + Room KAPT + Safe Args 2.3.5; five lowercase substitutions; non-transitive
+        terminal R ownership; JaCoCo `required` DSL and AGP-8 execution-data path; remote run
+        `34974083190` + local JaCoCo report proof; 37 suites / 327 tests)
+  - [ ] **P1E4 — COMPILESDK 36 MIGRATION** — NOT STARTED / READY TO START
+        (compileSdk only; targetSdk remains 30 unless independently proven otherwise)
   - [ ] P1E5 — API 31 exported + PendingIntent flags + receiver export flags — NOT STARTED
   - [ ] P1E6 — storage/permission runtime compatibility — NOT STARTED
   - [ ] P1E7 — FGS type/permission + notification permission — NOT STARTED

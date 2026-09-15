@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-15 (P1E3-P AGP 8.10 / Kotlin 2.2 probe: BRIDGE_FOUND — P1E IN PROGRESS)
+Last updated: 2026-09-15 (P1E3 AGP 8.10 / Kotlin 2.2 implementation: CLOSED / PASS — P1E IN PROGRESS)
 
 ## Current Objective
 
@@ -13,39 +13,41 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe**: **BRIDGE_FOUND** (disposable; fully
-reverted). ProotX can reach **Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 / KSP 2.2.20-2.0.4 /
-JDK 17 / Build Tools 35.0.0 / NDK 21.4** with **Moshi-KSP2 + Room-KAPT + Navigation 2.3.5**
-while compileSdk/targetSdk stay **30**. Local canonical gate **37 suites / 327 tests / 0
-failures**. Required changes and findings: `docs/P1E_ANDROID16_MIGRATION_PLAN.md` §20.
+**P1E3 — AGP 8.10 / Kotlin 2.2 Implementation**: **CLOSED / PASS** at accepted implementation
+SHA `1828cdd4441a291433d07bd8a3e4efa96bcbfc76`. Remote CI run `34974083190` passed the
+canonical clean build, **37 suites / 327 tests / 0 failures / 0 errors / 0 skipped**,
+androidTest build, and both artifact uploads. A separate local gate at the same SHA proved
+`jacocoCoverageReportForCi` executes against the AGP 8 `.exec` path and emits XML/HTML.
 
 ## Current Milestone
 
-**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS (P1E3-P done; P1E3 not started).
+**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS. P1E3 is closed; **P1E4 — COMPILESDK
+36 MIGRATION** is **NOT STARTED / READY TO START**.
 
 ## What Was Completed
 
-- Attributed the raw AGP 8 blockers (JaCoCo `enabled`→`required`, BuildConfig off, `namespace`
-  required), then proved namespaces, `buildConfig true`, KSP2 Moshi, Room 2.1.0 KAPT, Safe Args
-  2.3.5, NDK 21.4, Build Tools 35.0.0, and Gradle-8 task execution.
-- Found two behavior-neutral source contract fixes required: 5× `toLowerCase(Locale)` →
-  `lowercase(Locale)` (Kotlin 2.2) and androidTest `R.id.terminal_view` →
-  `com.termux.R.id.terminal_view` (AGP 8 non-transitive R ownership).
-- **No persistent implementation change** (only documentation).
+- Persisted Gradle 8.11.1, AGP 8.10.1, Kotlin/stdlib 2.2.20, KSP 2.2.20-2.0.4, four module
+  namespaces, app-only BuildConfig, and CI Build Tools 35.0.0 ownership.
+- Kept Moshi 1.15.2 on KSP2, Room 2.1.0 on KAPT, Navigation/Safe Args 2.3.5, JaCoCo 0.8.8,
+  gradle-download-task 5.0.0, JDK 17, and NDK 21.4.7075529.
+- Applied exactly five behavior-neutral `lowercase(Locale.ENGLISH)` substitutions and the
+  androidTest `com.termux.R.id.terminal_view` ownership qualification.
+- P1E3-R1 corrected both JaCoCo report tasks from the legacy unit-test `.exec` path to AGP 8's
+  `outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec` path.
 
 ## What Was Intentionally NOT Changed
 
 - compileSdk/targetSdk/minSdk (30/30/21; terminal 29/29/21), NDK 21.4, source manifests,
   resources, Runtime/UI behavior.
 - No `android:exported`, PendingIntent, FGS, storage or notification work (those are later P1E
-  milestones). Room stays 2.1.0; Moshi still uses KAPT (KSP is P1E2).
+  milestones). Room stays on KAPT; Moshi stays on KSP2.
 
 ## Current Repository State
 
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (P1E3-P baseline) | `ea6624fbcf7e26a1b5fba242553479c4de6f5538` |
+| Accepted P1E3 implementation | `1828cdd4441a291433d07bd8a3e4efa96bcbfc76` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -54,18 +56,19 @@ failures**. Required changes and findings: `docs/P1E_ANDROID16_MIGRATION_PLAN.md
 
 Commit `94abf5fa520255bb10d087a6be3ba2bc70b0e127`, package
 `io.github.lord1egypt.prootx`, version `1.0.0`. Baseline tests **313 / 24 suites**; current
-tests **326 / 36 suites** (guard/contract tests).
+tests **327 / 37 suites** (guard/contract tests).
 
 ## Current Toolchain
 
-Gradle **7.6.4** · AGP **7.4.2** · Kotlin **1.9.25** (jvmTarget 1.8) · Moshi **1.15.2** (codegen
-via **KSP 1.9.25-1.0.20**; Room via KAPT) ·
-Navigation **2.3.5** · Room **2.1.0** · Preference **1.1.0** · Material **1.1.0** ·
+Gradle **8.11.1** · AGP **8.10.1** · Kotlin/KGP and stdlib **2.2.20** (jvmTarget 1.8) ·
+Moshi **1.15.2** via **KSP2 2.2.20-2.0.4** · Room **2.1.0** via KAPT ·
+Navigation **2.3.5** · Preference **1.1.0** · Material **1.1.0** ·
 SwipeRefreshLayout **1.0.0** / LocalBroadcastManager **1.0.0** (direct) · Arch Core testing
 **2.1.0** (test-only) · Core KTX **1.1.0** (transitive `core` 1.3.0) · Lifecycle **2.2.0** ·
 JaCoCo **0.8.8** · Mockito **4.11.0** (test-only) · gradle-download-task **5.0.0** · plugin
 **`kotlin-parcelize`** · JDK **17** (build) · compileSdk **30** · targetSdk **30** ·
-minSdk **21** · NDK **21.4.7075529** · build-tools **30.0.3**. Repositories: `google()`,
+minSdk **21** · terminal SDK **29/29/21** · NDK **21.4.7075529** · build-tools **35.0.0**.
+Repositories: `google()`,
 `mavenCentral()`.
 
 ## Known Deferred Findings
@@ -77,12 +80,18 @@ pre-release (P1D5), Preference pre-release (P1D6), Material pre-release (P1D7), 
 testing pre-release (P1D8), Core KTX misalignment (P1D9). **Sentry and Billing are ACTIVE
 production dependencies, not unused; both were left untouched.** Newly classified in the P1D
 closure audit (deferred, **non-blocking**): Coroutines (`1.0.0` declaration superseded at
-resolution), Sentry `1.7.22`, Billing `3.0.3`, OkHttp `3.14.7`, Moshi `1.9.3`, Gson `2.8.6`,
+resolution), Sentry `1.7.22`, Billing `3.0.3`, OkHttp `3.14.7` + Okio `3.7.0` runtime
+validation, Gson `2.8.6`,
 JArchiveLib `0.8.0`, ConstraintLayout `1.1.3`, transitive AppCompat/Fragment/RecyclerView
 ownership, LocalBroadcastManager, and the JUnit4/Mockito/AndroidX-Test stack. Still open:
 prebuilt rootfs profile remnant; network-dependent unit tests; Play-readiness gaps (→ P1E);
 dynamic time-based `versionCode`; `LocalBroadcastManager` modernization (deprecated tech,
 deferred).
+
+**P1E3 deferred build-tooling cleanup:** manifest `package` warnings; `JavaExec.main` →
+`mainClass` before Gradle 9; legacy Android DSL and `lintOptions`; `String.capitalize()`;
+configuration-time custom tasks; Node/action maintenance warnings; `ndk.dir`; eventual Room
+KAPT migration; and the core/core-ktx family note.
 
 **CI infrastructure finding — RESOLVED in CI-R1:** the closure-documentation push had failed
 remote CI in `android-actions/setup-android@v3` (`Warning: Failed to find package 'tools'`)
@@ -110,10 +119,9 @@ verified on a device at the Golden Candidate gate; no physical acceptance is cla
 
 ## Next Safe Action
 
-**P1E3 — AGP 8.10 / Kotlin 2.2 Implementation — NOT STARTED.** Implement the proven P1E3-P
-recipe (`docs/P1E_ANDROID16_MIGRATION_PLAN.md` §20) keeping compileSdk/targetSdk at 30. Sentry
-and Billing remain active and require a dedicated decision before any change. Do not begin
-without explicit authorization.
+**P1E4 — COMPILESDK 36 MIGRATION — NOT STARTED / READY TO START.** Raise compileSdk
+independently while targetSdk remains 30 unless P1E4 explicitly proves otherwise. Sentry and
+Billing remain active and out of scope. Do not begin without explicit authorization.
 
 ## Resume Procedure
 

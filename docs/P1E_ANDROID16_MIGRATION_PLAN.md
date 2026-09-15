@@ -4,7 +4,8 @@
 > It is an audit record; **no implementation has started.** Current state lives in
 > `PROJECT_STATE.md`. Do not execute any step below without explicit authorization.
 
-Baseline audited: feature HEAD `4c6028e`, remote CI green (`34919847167`), 326 tests / 36 suites.
+Current accepted implementation: `1828cdd4441a291433d07bd8a3e4efa96bcbfc76`, remote CI
+`34974083190` green, 327 tests / 37 suites. Frozen application baseline remains unchanged.
 
 ---
 
@@ -204,7 +205,7 @@ Merged components with intent filters:
 **TermuxActivity:** The app's own code never launches it (see §11); the only current trigger
 is an external `ssh://` BROWSABLE intent. Recommendation: **`exported="true"` only if the
 external SSH-intent entry point is an intended product feature; otherwise `false` (or remove
-the filter / the module).** This is a product decision to make in P1E4; P1E0 does not change it.
+the filter / the module).** This is a product decision for P1E5; P1E0 does not change it.
 
 ---
 
@@ -221,7 +222,8 @@ the filter / the module).** This is a product decision to make in P1E4; P1E0 doe
 
 **Finding:** on API 31+ (enforced at target ≥31) a mutable PendingIntent requires an explicit
 mutability flag; no consumer mutates the underlying Intent, so **`FLAG_IMMUTABLE` is correct
-for all six**. All must be updated before targetSdk reaches 31 (P1E4).
+for all six**. All must be updated before targetSdk reaches 31 (planned in P1E5 before the
+later targetSdk milestones).
 
 ---
 
@@ -386,7 +388,7 @@ should be validated on a device; no UI redesign is authorized in P1E.
 - Plan: at **P1E1**, switch the Gradle stage to JDK 17 (or JDK 11 if AGP 7.4 needs it) and
   collapse the bootstrap to a single JDK 17 stage, while **keeping the explicit pinned
   `sdkmanager` package install** (`platform-tools`, platforms, build-tools, NDK).
-- Package additions: `build-tools;35.0.0` at **P1E2**; `platforms;android-36` at **P1E3**.
+- Package changes: `build-tools;35.0.0` at **P1E3**; `platforms;android-36` at **P1E4**.
 - No CI edit is authorized in P1E0.
 
 ---
@@ -401,7 +403,7 @@ should be validated on a device; no UI redesign is authorized in P1E.
 |---|---|---|---|
 | **P1E1** | **Proven AGP 7 / Kotlin 1.9 bridge implementation**: Gradle **7.6.4**, AGP **7.4.2**, Kotlin/KGP **1.9.25**, Moshi **1.15.2** (+KAPT), Navigation **2.3.5**, JaCoCo **0.8.8** (+`jdk.internal.*` exclusion), test-only Mockito **4.11.0**, JDK **17**, explicit `ndkVersion 21.4.7075529`; compileSdk/targetSdk still **30**; plus the behavior-neutral source fixes below | Kotlin/kapt/codegen/JDK bridge | Build + `326/36` tests green locally + remotely; runtime/UI unchanged |
 | **P1E2** | **Kotlin 2.x codegen readiness**: migrate Moshi codegen **KAPT → KSP** (Room may stay KAPT); verify no KAPT-only codegen remains before Kotlin 2.2 | Codegen toolchain | Build + tests green on Kotlin 1.9 with KSP |
-| **P1E3** | Gradle **8.11.1**, AGP **8.10.x**, Kotlin **2.2.x**, JDK **17**, build-tools **35.0.0**; AGP8 DSL: namespaces, remove manifest `package`, `buildConfig true`, `lint`, non-transitive R/non-final IDs, custom-task API fixes; compileSdk/targetSdk still **30** | Build-system API change | Build + tests green; **NDK 21.4 validated** (else report cross-phase blocker) |
+| **P1E3** | Gradle **8.11.1**, AGP **8.10.1**, Kotlin **2.2.20**, KSP **2.2.20-2.0.4**, JDK **17**, build-tools **35.0.0**; four namespaces, app-only `buildConfig true`, JaCoCo Gradle-8 DSL/path fixes, non-transitive R ownership, Kotlin 2 source API substitutions; compileSdk/targetSdk still **30** | Build-system API change | **CLOSED / PASS**; build + 327 tests green; NDK 21.4 validated |
 | **P1E4** | `compileSdk 36` (all modules), targetSdk stays **30**; CI installs `platforms;android-36` | Platform compile | Build + tests green; no behavior change |
 | **P1E5** | API 31 manifest/intent: `android:exported` (MainActivity `true`; TermuxActivity decided), PendingIntent `FLAG_IMMUTABLE` (6×), dynamic receiver export flags | Manifest/intent | Build + tests; androidTest build |
 | **P1E6** | Storage/permission runtime: remove/repair `PermissionHandler` gate + storage permissions + terminal request | Runtime permission | Session launch works without storage perms; tests green |
@@ -545,9 +547,8 @@ by §19 for the Moshi codegen processor.)*
   **37 suites / 327 tests / 0 failures / 0 errors / 0 skipped** (remote run `34941411912`).
 - No production source, manifest, resource, SDK, NDK, wrapper, or CI change.
 
-**P1E3-P boundary:** AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2 + AGP-8 DSL is the next stage and
-should be probed (P1E3-P) before implementation — it is a large jump (Kotlin 2.2, namespaces,
-`buildConfig`, non-transitive R).
+**Historical P1E3-P boundary:** this probe established the recipe subsequently implemented and
+accepted in P1E3.
 
 ---
 
@@ -595,7 +596,7 @@ Local canonical gate: `clean assembleDebug testDebugUnitTest` = **37 suites / 32
    module's R class (proper ownership fix; do **not** disable `nonTransitiveRClass`).
 7. `MoshiKspGuardTest`: expected KSP version → `2.2.20-2.0.4`.
 
-Recommended (non-blocking) cleanups for P1E3: remove the four manifest `package` attributes
+Deferred (non-blocking) cleanup after P1E3: remove the four manifest `package` attributes
 (AGP 8.10 ignores them with a warning), migrate the ktlint `JavaExec.main` → `mainClass`
 (deprecated, removed in Gradle 9), and `String.capitalize()` → `replaceFirstChar` (warnings).
 
@@ -610,8 +611,8 @@ Recommended (non-blocking) cleanups for P1E3: remove the four manifest `package`
   `externalNativeBuild`, `testCoverageEnabled`, `javaCompileOptions`, `buildFeatures` work.
 - **Gradle 8 tasks:** `downloadAssets`/`fetchAssets` execute with gradle-download-task 5.0.0;
   `reportVersionCode`/`reportVersionName` (configuration-time writes) work; `checkIfAssetsMissing`
-  works; `ktlint` `main =` works (deprecated). **No hard task-API blocker remains** after the
-  JaCoCo DSL fix.
+  works; `ktlint` `main =` works (deprecated). Persistent validation later found AGP 8's moved
+  unit-test JaCoCo `.exec` path; P1E3-R1 corrected both report tasks.
 - **NDK:** AGP 8.10.1 accepts `ndkVersion "21.4.7075529"`; native build (all four ABIs) succeeds.
 - **No dependency forced and no exclusions; no pre-release artifacts.** Graph: kotlin-stdlib
   2.2.20, moshi 1.15.2, okio 3.7.0, okhttp 3.14.7, room 2.1.0, navigation 2.3.5, fragment 1.2.4,
@@ -621,5 +622,53 @@ Recommended (non-blocking) cleanups for P1E3: remove the four manifest `package`
   payload intact. androidTest package `io.github.lord1egypt.prootx.test`.
 
 **Conclusion:** ProotX can reach the modern AGP 8.10 / Kotlin 2.2 build stack **before**
-compileSdk 36. P1E3 is an implementation milestone over this proven recipe; no sequence change
-is forced.
+compileSdk 36. P1E3 persisted this recipe and is now **CLOSED / PASS**; no sequence change was
+forced.
+
+---
+
+## 21. P1E3 implementation result — CLOSED / PASS
+
+Accepted implementation: `1828cdd4441a291433d07bd8a3e4efa96bcbfc76`.
+
+- Persisted Gradle `7.6.4 → 8.11.1`, AGP `7.4.2 → 8.10.1`, Kotlin/stdlib `1.9.25 → 2.2.20`,
+  KSP `1.9.25-1.0.20 → 2.2.20-2.0.4`, and Build Tools `30.0.3 → 35.0.0`.
+- Added explicit namespaces for `:app`, `:terminal-term`, `:terminal-view`, and
+  `:terminal-emulator`; enabled BuildConfig only in `:app`; preserved default non-transitive R
+  and non-final resource IDs.
+- Migrated JaCoCo report properties from `enabled` to `required`; JaCoCo remains 0.8.8.
+- Replaced exactly five `toLowerCase(Locale.ENGLISH)` calls with
+  `lowercase(Locale.ENGLISH)` across four production files. Qualified only the two terminal
+  resource references in `MainActivityTest` as `com.termux.R.id.terminal_view`.
+- Moshi remains 1.15.2 on KSP2; Room remains 2.1.0 on KAPT; Navigation/Safe Args remains 2.3.5.
+- compileSdk/targetSdk/minSdk remain 30/30/21; terminal modules remain 29/29/21; NDK remains
+  21.4.7075529. Source manifests remain unchanged. No intentional runtime or UI change.
+- Remote CI run `34974083190` at the accepted SHA passed JDK 17, explicit Build Tools 35.0.0 /
+  NDK 21.4 setup, canonical clean build, **37 suites / 327 tests / 0 failures / 0 errors / 0
+  skipped**, androidTest build, and both APK uploads.
+
+### 21.1 P1E3-R1 — AGP 8 JaCoCo execution-data path
+
+AGP 8 moved JVM unit-test coverage data from `build/jacoco/testDebugUnitTest.exec` to
+`build/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec`. Before remediation,
+`jacocoCoverageReportForCi` was **SKIPPED** because none of its configured execution-data files
+existed. Commit `1828cdd` updates only that unit-test path in both report tasks and preserves
+their connected-test inputs and all other report configuration.
+
+The separate local acceptance command
+`./gradlew :app:jacocoCoverageReportForCi --no-daemon --info` then **EXECUTED** successfully
+(87/87 actionable tasks), loaded the AGP 8 `.exec` (205,269 bytes; SHA-256
+`84bb5242345707ab3e225f1bdcf387a20384fcac2157668aa11a3bd7bfb48e6f`), processed 331
+classes, and emitted a parseable 788,365-byte XML report plus a 10,254-byte HTML index. The
+standard GitHub workflow does not execute this JaCoCo report task; remote build/test acceptance
+and local report acceptance are distinct proofs.
+
+### 21.2 Deferred after P1E3
+
+Manifest `package` warnings; `JavaExec.main` → `mainClass` before Gradle 9; legacy Android DSL
+and `lintOptions`; `String.capitalize()`; configuration-time custom tasks; Node/action
+maintenance warnings; `ndk.dir`; OkHttp 3.14.7 + Okio 3.7.0 runtime validation; eventual Room
+KAPT migration; and the core/core-ktx family note remain deferred.
+
+**Next:** P1E4 — COMPILESDK 36 MIGRATION — **NOT STARTED / READY TO START**. P1E4 owns the
+compileSdk increase while targetSdk stays 30 unless that milestone proves otherwise.

@@ -35,7 +35,10 @@
 >     - **P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe:** CLOSED / BRIDGE_FOUND
 >       (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 / KSP 2.2.20-2.0.4 / JDK 17 / Build Tools
 >       35.0.0 / NDK 21.4; compileSdk stays 30);
->       next authorized candidate **P1E3** (not started)
+>     - **P1E3 — AGP 8.10 / Kotlin 2.2 Implementation:** CLOSED / PASS
+>       (accepted implementation `1828cdd`; remote CI `34974083190`; 37 suites / 327 tests;
+>       local JaCoCo AGP-8 execution-data-path report PASS);
+>     - **P1E4 — COMPILESDK 36 MIGRATION:** NOT STARTED / READY TO START
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -140,8 +143,8 @@ deferred to the appropriate later phase.
    the "Set up Android SDK" step because `actions/setup-java@v4` pinned JDK 8 while
    `sdkmanager` requires a modern JVM. CI now provisions the Android SDK/NDK under JDK 17
    and runs the legacy build under JDK 8 (green run `34674686561`).
-2. **Legacy toolchain.** Gradle 5.1.1 / AGP 3.4.3 / Kotlin 1.3.61 / compileSdk 30 emit a
-   deprecation warning ("incompatible with Gradle 6.0"). Modernization phase.
+2. **Legacy build toolchain — RESOLVED through P1E3.** The persistent build now uses Gradle
+   8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 / JDK 17. compileSdk remains 30 by design until P1E4.
 3. **Kotlin Android Extensions — FULLY RESOLVED in P1C (P1C1 + P1C2-P/R).** Synthetic view
    access migrated to View Binding; the legacy plugin/DSL and `kotlinx.android.parcel` were
    removed and replaced with `kotlin-parcelize` / `kotlinx.parcelize.Parcelize`. Two guard
@@ -179,8 +182,8 @@ deferred to the appropriate later phase.
     incompatible with Moshi 1.8.0 (metadata `KotlinNullPointerException`), while Moshi
     ≥1.10.0 could not run on Kotlin 1.3.61 (`NoSuchMethodError`). The previously untested
     cell **Kotlin 1.4.32 + Moshi 1.9.3** passes kapt and a full build, so **Moshi 1.9.3 is
-    the bridge** across the Kotlin 1.3 → 1.4 boundary. Kotlin is now 1.4.32 and Moshi 1.9.3
-    (see `DECISIONS.md` D013/D014).
+    the bridge** across the Kotlin 1.3 → 1.4 boundary. At that milestone Kotlin became 1.4.32
+    and Moshi 1.9.3 (see `DECISIONS.md` D013/D014); later P1E milestones superseded both pins.
 11. **Dead Play Services dependency — RESOLVED in P1D2.** The unused direct
     `com.google.android.gms:play-services-base:17.2.1` dependency and the stale
     `ENABLE_PLAY_SERVICES` BuildConfig flag were removed; `play-services-base` is now
@@ -225,10 +228,10 @@ deferred to the appropriate later phase.
       `AndroidSentryClientFactory`, `EventBuilder`) coupled to production logging.
     - **Billing** `3.0.3` — ACTIVE; upgrade is API/source migration and a Play/release-policy
       concern, not a P1E prerequisite.
-    - **Networking/serialization** — OkHttp `3.14.7`, Moshi `1.9.3` (verified Kotlin 1.4
-      bridge), Gson `2.8.6` (rationalization/removal).
+    - **Networking/serialization** — OkHttp `3.14.7` + Okio `3.7.0` runtime validation and
+      Gson `2.8.6` rationalization/removal. Moshi is now 1.15.2 on KSP2.
     - **Other** — JArchiveLib `0.8.0`, SLF4J-nop `1.7.26`, ConstraintLayout `1.1.3`,
-      LocalBroadcastManager `1.0.0` (deprecated tech), and the JUnit4 / Mockito `2.23.0` /
+      LocalBroadcastManager `1.0.0` (deprecated tech), and the JUnit4 / Mockito `4.11.0` /
       mockito-kotlin `2.1.0` / AndroidX-Test stack.
     - **Ownership** — `androidx.appcompat`, `androidx.fragment`, and `androidx.recyclerview`
       are consumed directly but supplied transitively; explicit ownership hardening deferred.
@@ -242,6 +245,11 @@ deferred to the appropriate later phase.
     independent of repository content. Fixed by running `setup-android@v3` with
     `packages: ''` and installing `platform-tools` explicitly in the pinned `sdkmanager`
     step. Remote run `34919847167` (commit `4f3c812`) is green end-to-end.
+21. **P1E3 build-tooling follow-ups — DEFERRED, non-blocking.** Manifest `package` warnings;
+    `JavaExec.main` → `mainClass` before Gradle 9; legacy Android DSL and `lintOptions` cleanup;
+    `String.capitalize()`; configuration-time custom task behavior; Node/action maintenance
+    warnings; `ndk.dir`; OkHttp 3.14.7 + Okio 3.7.0 runtime validation; future Room KAPT
+    migration; and the core/core-ktx family note. P1E3 intentionally did not fix these.
 
 ## Non-goals for P0
 
