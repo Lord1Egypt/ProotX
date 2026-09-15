@@ -13,7 +13,7 @@ import java.io.File
  */
 class NavigationStabilityGuardTest {
 
-    private val expectedVersion = "2.1.0"
+    private val expectedVersion = "2.3.5"
     private val preReleaseMarkers = listOf("-alpha", "-beta", "-rc")
 
     @Test
