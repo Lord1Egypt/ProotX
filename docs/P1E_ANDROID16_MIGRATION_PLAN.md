@@ -1,13 +1,13 @@
 # ProotX — P1E Android 16 (SDK 36) Migration Plan
 
-> **Status:** P1E5 implementation CLOSED / PASS; P1E remains IN PROGRESS. This document is the
+> **Status:** P1E6 implementation CLOSED / PASS; P1E remains IN PROGRESS. This document is the
 > approved migration design and implementation record. Current state lives in
 > `PROJECT_STATE.md`. Do not execute a later step without explicit authorization.
 
-Current accepted implementation: `6e8a0559bc691266d403a216c56ec4377ce0c98b`, remote CI
-`35020171430` green, 37 suites / 327 tests / 0 failures / 0 errors / 0 skipped. Frozen
-application baseline remains unchanged. Next milestone: **P1E6 — STORAGE / PERMISSION RUNTIME
-COMPATIBILITY — NOT STARTED / READY TO START**.
+Current accepted implementation: `2202d6bda33512d3312827bf2bd6dc17f47dbae9`, remote CI
+`35028617203` green, 38 suites / 329 tests / 0 failures / 0 errors / 0 skipped. Frozen
+application baseline remains unchanged. Next milestone: **P1E7 — FOREGROUND SERVICE /
+NOTIFICATION COMPATIBILITY — NOT STARTED / READY TO START**.
 
 ---
 
@@ -408,7 +408,7 @@ should be validated on a device; no UI redesign is authorized in P1E.
 | **P1E3** | Gradle **8.11.1**, AGP **8.10.1**, Kotlin **2.2.20**, KSP **2.2.20-2.0.4**, JDK **17**, build-tools **35.0.0**; four namespaces, app-only `buildConfig true`, JaCoCo Gradle-8 DSL/path fixes, non-transitive R ownership, Kotlin 2 source API substitutions; compileSdk/targetSdk still **30** | Build-system API change | **CLOSED / PASS**; build + 327 tests green; NDK 21.4 validated |
 | **P1E4** | app-only `compileSdk 36`, targetSdk stays **30**, terminal modules stay **29/29/21**; CI installs `platforms;android-36`; one API-36 nullability source-contract edit | Platform compile | **CLOSED / PASS**; build + 327 tests green; no intentional behavior change |
 | **P1E5** | API 31 manifest/intent: `android:exported` (`MainActivity` `true`; `TermuxActivity` `true`, `ssh://` preserved), PendingIntent `FLAG_IMMUTABLE` (6×), dynamic receiver export flags classified/deferred | Manifest/intent | **CLOSED / PASS**; build + 327 tests green; androidTest build; disposable targetSdk 31 probe passed then reverted |
-| **P1E6** | Storage/permission runtime: remove/repair `PermissionHandler` gate + storage permissions + terminal request | Runtime permission | Session launch works without storage perms; tests green |
+| **P1E6** | Storage/permission runtime: remove/repair `PermissionHandler` gate + storage permissions + terminal request | Runtime permission | **CLOSED / PASS**; app/session/SAF flows work without storage perms; 329 tests green; disposable targetSdk 33 probe passed then reverted |
 | **P1E7** | FGS compatibility: `foregroundServiceType="specialUse"` + `FOREGROUND_SERVICE_SPECIAL_USE` + subtype property; `startForegroundService`; `POST_NOTIFICATIONS` | FGS/notification | Build + tests; FGS declaration validated |
 | **P1E8** | targetSdk **33/34**: `POST_NOTIFICATIONS` runtime request; receiver flags; FGS start restrictions | Target behavior | Build + tests; notification UX validated |
 | **P1E9** | targetSdk **35/36** behavior: edge-to-edge, predictive back (`OnBackPressedCallback`), large-screen orientation/resizability; final SDK 36 regression build; Golden Candidate prep | Regression/behavior | Full local+remote green; P1G physical acceptance queued |
@@ -736,5 +736,44 @@ Accepted implementation: `6e8a0559bc691266d403a216c56ec4377ce0c98b`; remote CI r
   androidTest build, and both artifact uploads.
 - No intentional runtime or UI change.
 
-**Next:** P1E6 — STORAGE / PERMISSION RUNTIME COMPATIBILITY — **NOT STARTED / READY TO START**.
-Do not start without explicit authorization.
+## 24. P1E6 storage / permission runtime compatibility result — CLOSED / PASS
+
+Accepted implementation: `2202d6bda33512d3312827bf2bd6dc17f47dbae9`; remote CI run
+`35028617203` — SUCCESS.
+
+- Removed the app manifest's `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` and the
+  terminal-term manifest's `WRITE_EXTERNAL_STORAGE`. No replacement broad permission
+  (`MANAGE_EXTERNAL_STORAGE`, `READ_MEDIA_*`) was added. Final APK permissions are exactly
+  ACCESS_NETWORK_STATE, INTERNET, BILLING, CHANGE_WIFI_STATE, FOREGROUND_SERVICE, WAKE_LOCK,
+  VIBRATE.
+- Deleted `PermissionHandler.kt` (zero production callers). The app/session launch permission
+  gates in `MainActivity`, the storage-only `onRequestPermissionsResult` override, and the
+  `PermissionHandler` gates in the filesystem import (`ACTION_OPEN_DOCUMENT`) and export
+  (`ACTION_CREATE_DOCUMENT`) SAF flows were removed. SAF remains user-mediated and unchanged.
+- `TermuxActivity` removed the storage helper `ensureStoragePermissionGranted()`, the
+  `REQUESTCODE_PERMISSION_STORAGE` constant, the `"storage"` reload branch that called it, and
+  the now-unused `android.Manifest`, `android.annotation.TargetApi`,
+  `android.content.pm.PackageManager`, and `android.os.Build` imports. Terminal session
+  creation, SSH parsing, notifications, receiver registration, and UI are untouched.
+- App-scoped storage paths are unchanged: `filesDir`, `getExternalFilesDir(null)`,
+  `getExternalFilesDirs(null)`, `emulatedScopedDir`/`emulatedUserDir`,
+  `sdCardScopedDir`/`sdCardUserDir`, the `/storage/internal` and optional `/storage/sdcard`
+  PRoot bindings, and the `AssetDownloader` `emulatedScopedDir/downloads` destination.
+- Disposable targetSdk 33 probe: `:app:processDebugMainManifest` and `:app:assembleDebug`
+  passed with no `READ_EXTERNAL_STORAGE`/`WRITE_EXTERNAL_STORAGE`/`MANAGE_EXTERNAL_STORAGE` in
+  the merged manifest or APK; reverted to targetSdk **30** with no Gradle diff.
+- Added `StoragePermissionGuardTest` (2 tests) as static proof that production source and source
+  manifests contain no `PermissionHandler` or legacy broad-storage reference.
+- Local gates passed: all compile/codegen tasks, `assembleDebugAndroidTest`, ktlint,
+  `downloadAssets`, and `jacocoCoverageReportForCi` via the clean/report-only ordering
+  (non-empty 782,963-byte XML / 389 classes + HTML). Canonical `clean assembleDebug
+  testDebugUnitTest` = **38 suites / 329 tests / 0 failures / 0 errors / 0 skipped**.
+- **Intentional runtime behavior change:** app/session launch, filesystem import/export, and
+  embedded-terminal use no longer require legacy broad-storage permission. No UI redesign, no
+  data-location migration, no filesystem architecture change. The unreachable legacy
+  permission-continuation ViewModel code (`waitForPermissions`, `permissionsHaveBeenGranted`,
+  the two permission `IllegalState`s, their tests, and the unused
+  `alert_permissions_necessary_*` strings) is deferred as dead legacy follow-up.
+
+**Next:** P1E7 — FOREGROUND SERVICE / NOTIFICATION COMPATIBILITY — **NOT STARTED / READY TO
+START**. Do not start without explicit authorization.

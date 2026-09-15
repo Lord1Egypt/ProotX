@@ -44,7 +44,10 @@
 >     - **P1E5 — API 31+ MANIFEST / PENDINGINTENT / RECEIVER COMPATIBILITY:** CLOSED / PASS
 >       (MainActivity + TermuxActivity `exported="true"`; `ssh://` preserved; six immutable
 >       PendingIntents; targetSdk stays 30; implementation `6e8a055`; remote CI `35020171430`)
->     - **P1E6 — STORAGE / PERMISSION RUNTIME COMPATIBILITY:** READY TO START
+>     - **P1E6 — STORAGE / PERMISSION RUNTIME COMPATIBILITY:** CLOSED / PASS
+>       (legacy READ/WRITE_EXTERNAL_STORAGE + PermissionHandler removed; launch/SAF no longer
+>       permission-gated; targetSdk stays 30; implementation `2202d6b`; remote CI `35028617203`)
+>     - **P1E7 — FOREGROUND SERVICE / NOTIFICATION COMPATIBILITY:** READY TO START
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -274,6 +277,15 @@ deferred to the appropriate later phase.
     `clean` report-only state. This is a pre-existing build-tooling limitation (P1E3-era) and was
     **not** remediated in P1E5. Lint debt (14 pre-existing errors, 131 warnings, 3 hints)
     remains deferred, including the intentional `ExpiredTargetSdkVersion` while targetSdk is 30.
+24. **P1E6 dead legacy permission-continuation code — DEFERRED, non-blocking.** Removing the live
+    storage-permission dependency left `MainActivityViewModel.waitForPermissions` /
+    `permissionsHaveBeenGranted`, the `TooManySelectionsMadeWhenPermissionsGranted` /
+    `NoSelectionsMadeWhenPermissionsGranted` `IllegalState`s, their unit tests, and the unused
+    `alert_permissions_necessary_*` strings unreachable. Deleting them would expand P1E6 into
+    ViewModel state classes, localization resources, and unrelated tests, so they are recorded
+    for a dedicated cleanup milestone. The `jacocoCoverageReportForCi` instrumented-class caveat
+    remains pre-existing/deferred. P1E6's removal of the permission gate is an intentional
+    compatibility behavior change; data locations and the runtime architecture are unchanged.
 
 ## Non-goals for P0
 

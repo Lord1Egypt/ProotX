@@ -156,8 +156,15 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         deferred to targetSdk-34 work; disposable targetSdk 31 probe passed then reverted;
         targetSdk remains 30; local gates + JaCoCo PASS; `assembleDebugAndroidTest` PASS; remote
         run `35020171430`; 37 suites / 327 tests; runtime/UI unchanged)
-  - [ ] P1E6 — storage/permission runtime compatibility — NOT STARTED / READY TO START
-  - [ ] P1E7 — FGS type/permission + notification permission — NOT STARTED
+  - [x] **P1E6 — storage / permission runtime compatibility** — CLOSED / PASS
+        (removed `READ_EXTERNAL_STORAGE`/`WRITE_EXTERNAL_STORAGE` from the app manifest and
+        `WRITE_EXTERNAL_STORAGE` from terminal-term; deleted `PermissionHandler.kt`; app/session
+        launch + SAF import/export no longer permission-gated; `TermuxActivity` obsolete storage
+        helper/constant/imports removed; no replacement broad permission; app-scoped storage
+        paths unchanged; disposable targetSdk 33 probe passed then reverted; new
+        `StoragePermissionGuardTest`; local gates + JaCoCo PASS; remote run `35028617203`;
+        38 suites / 329 tests)
+  - [ ] P1E7 — FGS type/permission + notification permission — NOT STARTED / READY TO START
   - [ ] P1E8 — targetSdk 33/34 behavior migration — NOT STARTED
   - [ ] P1E9 — targetSdk 35/36 behavior + final SDK 36 regression — NOT STARTED
 - [ ] **P1F — Modern native/NDK and 16 KB page readiness**

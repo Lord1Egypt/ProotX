@@ -1,6 +1,6 @@
 # ProotX Build Environment
 
-> Current state: **P1E5 toolchain** (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20, JDK 17,
+> Current state: **P1E6 toolchain** (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20, JDK 17,
 > app compileSdk 36 / targetSdk 30).
 
 ## Summary
@@ -144,6 +144,15 @@ report after `assembleDebug` therefore fails with `Cannot process instrumented c
 passes from a `clean` report-only state (e.g. `./gradlew clean :app:jacocoCoverageReportForCi`).
 No JaCoCo configuration was changed in P1E5; this is recorded for a future build-tooling cleanup.
 
+## Storage / permission state (P1E6)
+
+The legacy broad-storage dependency is gone: neither the app nor `:terminal-term` declares
+`READ_EXTERNAL_STORAGE`/`WRITE_EXTERNAL_STORAGE`, `PermissionHandler` is deleted, and app/session
+launch plus SAF import/export request no storage permission. No `MANAGE_EXTERNAL_STORAGE` or
+`READ_MEDIA_*` replacement is declared. App `targetSdk` remains **30** and terminal modules
+remain **29/29/21**; a disposable targetSdk 33 probe built cleanly with no storage permissions in
+the merged manifest/APK and was reverted. App-scoped storage paths are unchanged.
+
 ## Manifest / intent state (P1E5)
 
 `MainActivity` and `TermuxActivity` declare `android:exported="true"`; `TermuxActivity` retains
@@ -156,8 +165,8 @@ exported-component requirement is satisfied and was reverted.
 ## Baseline result (reference)
 
 The frozen baseline at tag `v1.0.0-baseline` measured **313 tests / 24 suites / 0 failures**.
-The P1E5 toolchain measures **327 tests / 37 suites / 0 failures / 0 errors / 0 skipped**.
-Remote CI run `35020171430` passed at `6e8a055` and uploaded the debug and androidTest APK
-artifacts. P1E5 local validation also proved the API-36 SDK platform, the androidTest APK build,
-four ABIs, 16/16 native payloads, and the separate JaCoCo report regression gate. See
-`PROJECT_STATE.md`.
+The P1E6 toolchain measures **329 tests / 38 suites / 0 failures / 0 errors / 0 skipped**.
+Remote CI run `35028617203` passed at `2202d6b` and uploaded the debug and androidTest APK
+artifacts. P1E6 local validation also proved the API-36 SDK platform, the androidTest APK build,
+four ABIs, 16/16 native payloads, the absence of legacy storage permissions in the APK, and the
+separate JaCoCo report regression gate. See `PROJECT_STATE.md`.

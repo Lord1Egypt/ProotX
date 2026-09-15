@@ -426,11 +426,11 @@
 ## D024 — App-scoped storage; external-storage permissions are not part of the runtime contract
 
 - **Date:** 2026-09-15
-- **Status:** Accepted (P1E0)
+- **Status:** Accepted (P1E0) — **IMPLEMENTED in P1E6 (CLOSED / PASS)**
 - **Decision:** ProotX's runtime uses only app-private/app-scoped storage
   (`filesDir`, `getExternalFilesDir`, `getExternalFilesDirs`). It does **not** require
   `READ_EXTERNAL_STORAGE`/`WRITE_EXTERNAL_STORAGE`. The current `PermissionHandler` gate that
-  blocks app/session launch on those permissions must be removed/replaced in **P1E5** before
+  blocks app/session launch on those permissions must be removed/replaced in **P1E6** before
   targetSdk reaches 33 (where `READ_EXTERNAL_STORAGE` becomes non-grantable and would
   permanently block session launch). The manifest declarations and the terminal module's
   `WRITE_EXTERNAL_STORAGE` request are removed in the same milestone.
@@ -440,10 +440,11 @@
 - **Alternatives considered:** Keeping the permissions and requesting them anyway (rejected —
   non-grantable at target 33+, would block launch); adding `MANAGE_EXTERNAL_STORAGE` (rejected —
   not needed and Play-restricted).
-- **Trade-offs:** A deliberate runtime-permission behavior change, isolated to P1E5 with its own
+- **Trade-offs:** A deliberate runtime-permission behavior change, isolated to P1E6 with its own
   regression validation.
-- **Affected components:** `PermissionHandler.kt`, `MainActivity.kt`, `AndroidManifest.xml`,
-  `terminal-term` manifest/`TermuxActivity`, P1E5.
+- **Affected components:** `PermissionHandler.kt` (deleted), `MainActivity.kt`,
+  `AndroidManifest.xml`, `terminal-term` manifest/`TermuxActivity`, guard test
+  `StoragePermissionGuardTest`, P1E6 (implementation `2202d6b`).
 
 ---
 

@@ -602,3 +602,62 @@
 - No intentional runtime or UI change.
 - **P1E5 CLOSED / PASS. P1E IN PROGRESS. P1E6 STORAGE / PERMISSION RUNTIME COMPATIBILITY READY
   TO START.**
+
+## P1E6 — Storage / Permission Runtime Compatibility (2026-09-16) — PASS
+
+- Removed `<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />` and
+  `<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />` from
+  `app/src/main/AndroidManifest.xml`, and `WRITE_EXTERNAL_STORAGE` from
+  `termux-app/terminal-term/src/main/AndroidManifest.xml`. No replacement permission
+  (`MANAGE_EXTERNAL_STORAGE`, `READ_MEDIA_*`) was added; other permissions are unchanged.
+- Deleted `app/src/main/java/io/github/lord1egypt/prootx/utils/PermissionHandler.kt` after
+  proving it had zero remaining production callers.
+- `MainActivity.appHasBeenSelected` and `sessionHasBeenSelected` now proceed directly to
+  `viewModel.submitAppSelection` / `viewModel.submitSessionSelection`; the storage-permission
+  branch and the storage-only `onRequestPermissionsResult` override were removed.
+- `FilesystemEditFragment` (SAF `ACTION_OPEN_DOCUMENT` import) and `FilesystemListFragment`
+  (SAF `ACTION_CREATE_DOCUMENT` export) no longer gate on `PermissionHandler`; the SAF intents,
+  suggested backup filename, `setFilesystemToBackup`, and `ContentResolver` export flow are
+  unchanged.
+- `TermuxActivity.java`: removed the unreferenced-elsewhere storage helper
+  `ensureStoragePermissionGranted()`, the `REQUESTCODE_PERMISSION_STORAGE` constant, the
+  `"storage"` reload branch that called it, and the now-unused `android.Manifest`,
+  `android.annotation.TargetApi`, `android.content.pm.PackageManager`, and `android.os.Build`
+  imports. Terminal session creation, SSH parsing, notifications, receiver registration, and UI
+  are untouched.
+- `MainActivityTest` (androidTest) dropped its `GrantPermissionRule` for the removed permissions
+  and the now-unused `Manifest`/`GrantPermissionRule` imports.
+- Added `app/src/test/java/io/github/lord1egypt/prootx/architecture/StoragePermissionGuardTest.kt`
+  (2 tests) forbidding `PermissionHandler` and legacy broad-storage permission references in
+  production source and source manifests.
+- App-scoped storage paths are unchanged: `filesDir`, `getExternalFilesDir(null)`,
+  `getExternalFilesDirs(null)`, `emulatedScopedDir`, `emulatedUserDir`, `sdCardScopedDir`,
+  `sdCardUserDir`, the `/storage/internal` and optional `/storage/sdcard` bindings, and the
+  `AssetDownloader` `emulatedScopedDir/downloads` destination.
+- Disposable targetSdk 33 probe: `:app:processDebugMainManifest` and `:app:assembleDebug`
+  passed; the merged manifest and APK contained no `READ_EXTERNAL_STORAGE`,
+  `WRITE_EXTERNAL_STORAGE`, or `MANAGE_EXTERNAL_STORAGE`; reverted to targetSdk **30** with no
+  Gradle diff.
+- Local gates passed: all compile/codegen tasks, `:app:assembleDebugAndroidTest`, `:app:ktlint`,
+  `:app:downloadAssets`, and `:app:jacocoCoverageReportForCi` (executed, non-empty 782,963-byte
+  XML / 389 classes + HTML) via the clean/report-only ordering. Canonical
+  `clean assembleDebug testDebugUnitTest` = **38 suites / 329 tests / 0 failures / 0 errors /
+  0 skipped** (2 new guard tests).
+- Final debug APK 19,912,535 bytes, SHA-256
+  `83d24aedb2582f26736b6e2f4808e6a543373b1cce469b8c96ce9befd31706fd`, package
+  `io.github.lord1egypt.prootx`, versionName 1.0.0, SDK 36/30/21, four ABIs, 16/16 required
+  payloads; permissions are exactly ACCESS_NETWORK_STATE, INTERNET, BILLING, CHANGE_WIFI_STATE,
+  FOREGROUND_SERVICE, WAKE_LOCK, VIBRATE. androidTest APK 1,825,680 bytes, SHA-256
+  `5720dd54a6b07a1f8569b5e65e481c80e69a5d8cd1f1f6ac125c0195f474ebcd`, package
+  `io.github.lord1egypt.prootx.test`.
+- Remote CI run `35028617203` at implementation
+  `2202d6bda33512d3312827bf2bd6dc17f47dbae9`: **SUCCESS**; JDK 17, Gradle 8.11.1, API 36/API 29,
+  Build Tools 35.0.0, NDK 21.4.7075529, canonical build, **38 suites / 329 tests / 0 failures /
+  0 errors / 0 skipped**, androidTest build, and both artifact uploads passed.
+- **Intentional runtime behavior change:** app/session launch, filesystem import/export, and
+  embedded-terminal use no longer require the legacy broad-storage permissions. No UI redesign,
+  no data-location migration, and no filesystem architecture change. The unreachable legacy
+  permission-continuation ViewModel code and unused dialog strings are deferred as dead legacy
+  follow-up.
+- **P1E6 CLOSED / PASS. P1E IN PROGRESS. P1E7 FOREGROUND SERVICE / NOTIFICATION COMPATIBILITY
+  READY TO START.**

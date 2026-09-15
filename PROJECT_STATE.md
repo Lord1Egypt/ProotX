@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-16 (P1E5 API 31+ manifest / PendingIntent / receiver compatibility — CLOSED / PASS; P1E IN PROGRESS)
+Last updated: 2026-09-16 (P1E6 storage / permission runtime compatibility — CLOSED / PASS; P1E IN PROGRESS)
 
 ## Project Identity
 
@@ -51,31 +51,31 @@ Last updated: 2026-09-16 (P1E5 API 31+ manifest / PendingIntent / receiver compa
 | P1E3 — AGP 8.10 / Kotlin 2.2 Implementation | **CLOSED / PASS** |
 | P1E4 — compileSdk 36 Migration | **CLOSED / PASS** |
 | P1E5 — API 31+ Manifest / PendingIntent / Receiver Compatibility | **CLOSED / PASS** |
+| P1E6 — Storage / Permission Runtime Compatibility | **CLOSED / PASS** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1E5 — API 31+ Manifest / PendingIntent / Receiver Compatibility: CLOSED / PASS.**
-Implementation commit `6e8a0559bc691266d403a216c56ec4377ce0c98b` touches exactly four functional
-files and is behavior-neutral: `MainActivity` and `TermuxActivity` gain `android:exported="true"`
-(the latter preserving its existing `VIEW`/`DEFAULT`/`BROWSABLE` `ssh://` deep link), and six
-notification `PendingIntent` creations receive explicit mutability — five
-`FLAG_IMMUTABLE` and the stop-sessions service intent
-`FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE`. The app still targets **targetSdk 30** (no raise);
-terminal modules remain **29/29/21**. The `assembleDebugAndroidTest` build completes
-(`BUILD SUCCESSFUL`), ktlint/`downloadAssets`/JaCoCo gates pass, and a disposable targetSdk 31
-manifest/assemble probe proved the Android 12 exported-component requirement is satisfied before
-being reverted to 30. Local canonical evidence remains **37 suites / 327 tests / 0 failures /
-0 errors / 0 skipped**; remote CI run `35020171430` passed with the same summary plus androidTest
-APK and both artifact uploads. Next: **P1E6 — STORAGE / PERMISSION RUNTIME COMPATIBILITY —
-NOT STARTED / READY TO START**.
+**P1E6 — Storage / Permission Runtime Compatibility: CLOSED / PASS.** Implementation commit
+`2202d6bda33512d3312827bf2bd6dc17f47dbae9` removes the obsolete legacy broad-storage
+dependency: `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` are deleted from the app
+manifest, `WRITE_EXTERNAL_STORAGE` from the terminal-term manifest, the
+`PermissionHandler` gate/dialog class is deleted, and app/session launch plus SAF
+import/export no longer request storage permissions. No replacement broad permission
+(`MANAGE_EXTERNAL_STORAGE`, `READ_MEDIA_*`) is added. App targetSdk stays **30** and terminal
+modules remain **29/29/21**; app-scoped storage paths are unchanged. A disposable targetSdk 33
+probe passed with no storage permissions in the merged manifest/APK. Local canonical evidence
+**38 suites / 329 tests / 0 failures / 0 errors / 0 skipped**; remote CI run `35028617203`
+passed with the same summary plus androidTest APK and both artifact uploads. Next:
+**P1E7 — FOREGROUND SERVICE / NOTIFICATION COMPATIBILITY — NOT STARTED / READY TO START**.
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
+| Accepted P1E6 implementation | `2202d6bda33512d3312827bf2bd6dc17f47dbae9` | legacy READ/WRITE_EXTERNAL_STORAGE gate + `PermissionHandler` removed; SAF/launch no longer permission-gated; targetSdk remains 30 |
 | Accepted P1E5 implementation | `6e8a0559bc691266d403a216c56ec4377ce0c98b` | `exported` on MainActivity/TermuxActivity + six immutable PendingIntents; targetSdk remains 30 |
 | Accepted P1E4 implementation | `6d30b333b0a1d0b8ab0be966af4c3052dcf29500` | app compileSdk 36; targetSdk remains 30 |
 | Accepted P1E3 implementation | `1828cdd4441a291433d07bd8a3e4efa96bcbfc76` | AGP 8 / Kotlin 2 implementation + JaCoCo AGP-8 path remediation |
@@ -96,7 +96,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Package | `io.github.lord1egypt.prootx` |
 | Source origin | Last self-contained public UserLAnd **v2.8.3** codebase (GPLv3) |
 | Unit tests (baseline) | **313 tests / 24 suites / 0 failures / 0 errors / 0 skipped** |
-| Unit tests (current) | **327 tests / 37 suites / 0 failures / 0 errors / 0 skipped** |
+| Unit tests (current) | **329 tests / 38 suites / 0 failures / 0 errors / 0 skipped** |
 | Baseline build | `./gradlew clean assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** |
 
 ## Current Toolchain
@@ -149,15 +149,15 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 `tools platform-tools` install broke when the legacy `tools` package was retired);
 `platform-tools` is owned explicitly by the pinned `sdkmanager` step. Triggers unchanged.
 
-Verified remote evidence (P1E5):
+Verified remote evidence (P1E6):
 
 | Field | Value |
 |---|---|
-| Run | `35020171430` (push, commit `6e8a055`) — **SUCCESS** |
+| Run | `35028617203` (push, commit `2202d6b`) — **SUCCESS** |
 | Log proof | JDK 17; Gradle 8.11.1; API 36 + API 29, Build Tools 35.0.0 and NDK 21.4 installed; canonical clean build and `assembleDebugAndroidTest` passed |
-| Remote test summary | `suites=37 tests=327 failures=0 errors=0 skipped=0` |
-| Artifacts | `prootx-debug-apk` (19,096,964 B) and `prootx-debug-androidTest-apk` (1,371,730 B) uploaded |
-| JaCoCo | Standard CI does not run the report task. Separate local P1E5 proof: `jacocoCoverageReportForCi` executed, consumed the AGP 8 `.exec`, and produced non-empty XML (788,365 B, 391 classes) plus HTML |
+| Remote test summary | `suites=38 tests=329 failures=0 errors=0 skipped=0` |
+| Artifacts | `prootx-debug-apk` (19,094,240 B) and `prootx-debug-androidTest-apk` (1,371,416 B) uploaded |
+| JaCoCo | Standard CI does not run the report task. Separate local P1E6 proof: `jacocoCoverageReportForCi` executed, consumed the AGP 8 `.exec`, and produced non-empty XML (782,963 B, 389 classes) plus HTML |
 
 **JaCoCo tooling caveat (pre-existing, non-blocking).** The custom `jacocoCoverageReportForCi`
 task points its `classDirectories` at `build/intermediates/classes/debug`, which under AGP 8
@@ -173,8 +173,13 @@ dependency resolution is a standing gate.
 
 ## Runtime State
 
-The legacy UserLAnd-derived runtime remains **behaviorally unchanged** from the frozen
-P0 baseline. No Runtime V2 work has started.
+The legacy UserLAnd-derived runtime architecture remains **unchanged** from the frozen P0
+baseline. No Runtime V2 work has started.
+
+P1E6 is the one intentional runtime behavior change so far: app launch, session launch, filesystem
+import, filesystem export, and embedded-terminal use no longer require the legacy
+`READ_EXTERNAL_STORAGE`/`WRITE_EXTERNAL_STORAGE` permissions. Data locations and the PRoot
+environment are unchanged — only the obsolete permission gate was removed.
 
 ## UI State
 
@@ -188,7 +193,7 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-**None.** P1E5 is closed; remote CI is green (run `35020171430`). The local JaCoCo regression
+**None.** P1E6 is closed; remote CI is green (run `35028617203`). The local JaCoCo regression
 gate passes when the AGP 8 instrumented-class directory is absent (see the JaCoCo tooling
 caveat above); this is pre-existing and non-blocking.
 
@@ -272,6 +277,22 @@ The canonical list lives in
   class-directory caveat is recorded above; lint debt (14 pre-existing errors, 131 warnings,
   3 hints — `Range`, `UseRequireInsteadOfGet`, and the intentional `ExpiredTargetSdkVersion`)
   remains deferred.
+- **Resolved in P1E6:** the obsolete legacy broad-storage dependency is fully removed —
+  `READ_EXTERNAL_STORAGE`/`WRITE_EXTERNAL_STORAGE` declarations deleted from the app manifest,
+  `WRITE_EXTERNAL_STORAGE` deleted from the terminal-term manifest, `PermissionHandler.kt`
+  deleted, and the app/session launch + SAF import/export permission gates removed. No
+  replacement broad permission (`MANAGE_EXTERNAL_STORAGE`, `READ_MEDIA_*`) was added. A new
+  `StoragePermissionGuardTest` statically forbids reintroduction. This is an intentional
+  compatibility behavior change; app-scoped storage paths and the runtime data model are
+  unchanged.
+- **Deferred after P1E6:** the now-unreachable legacy permission-continuation machinery
+  (`MainActivityViewModel.waitForPermissions`, `permissionsHaveBeenGranted`,
+  `TooManySelectionsMadeWhenPermissionsGranted`, `NoSelectionsMadeWhenPermissionsGranted`, the
+  related unit tests, and the unused `alert_permissions_necessary_*` strings) is intentionally
+  classified as dead legacy follow-up and **not** removed in P1E6, because deleting it would
+  expand the change into ViewModel state classes, localization resources, and multiple unrelated
+  tests. The androidTest `GrantPermissionRule` for the removed permissions was dropped as a
+  direct consequence of the manifest change.
 - **Deferred after P1E3:** manifest `package` warnings; `JavaExec.main` → `mainClass` before
   Gradle 9; legacy Android DSL/`lintOptions` cleanup; `String.capitalize()`; configuration-time
   custom tasks; action/Node maintenance warnings; `ndk.dir`; OkHttp 3.14.7 + Okio 3.7.0
@@ -285,6 +306,6 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1E6 — STORAGE / PERMISSION RUNTIME COMPATIBILITY — NOT STARTED / READY TO START.** It owns the
-next narrowly scoped runtime-permission changes (`PermissionHandler` storage gate and the
-`READ/WRITE_EXTERNAL_STORAGE` declarations). Do **not** start it without explicit authorization.
+**P1E7 — FOREGROUND SERVICE / NOTIFICATION COMPATIBILITY — NOT STARTED / READY TO START.** It owns
+`foregroundServiceType`/`FOREGROUND_SERVICE_SPECIAL_USE`, `startForegroundService`, and
+notification-permission compatibility. Do **not** start it without explicit authorization.
