@@ -548,3 +548,78 @@ by §19 for the Moshi codegen processor.)*
 **P1E3-P boundary:** AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2 + AGP-8 DSL is the next stage and
 should be probed (P1E3-P) before implementation — it is a large jump (Kotlin 2.2, namespaces,
 `buildConfig`, non-transitive R).
+
+---
+
+## 20. P1E3-P result — AGP 8.10 / Kotlin 2.2 compatibility probe (BRIDGE_FOUND)
+
+Disposable probe on `ea6624f`; **all experimental edits reverted** (`git status` clean). A
+coherent AGP 8 candidate builds locally **before** any compileSdk change.
+
+### 20.1 Proven P1E3 candidate
+
+| Component | Version |
+|---|---|
+| Gradle | **8.11.1** |
+| AGP | **8.10.1** |
+| Kotlin / KGP | **2.2.20** (`kotlin-stdlib-jdk8` 2.2.20) |
+| KSP (Moshi) | **2.2.20-2.0.4** (KSP2, enabled by default — no `ksp.useKSP2` property needed) |
+| JDK | **17** |
+| Build Tools | **35.0.0** |
+| NDK | **21.4.7075529** (accepted by AGP 8.10.1; P1F boundary intact) |
+| Moshi | 1.15.2 → **KSP2** |
+| Room | 2.1.0 → **KAPT** (works under Kotlin 2.2) |
+| Navigation / Safe Args | 2.3.5 **unchanged** (plugin works under AGP 8.10.1) |
+| JaCoCo | 0.8.8 (unchanged) |
+| gradle-download-task | 5.0.0 (works) |
+| Mockito | 4.11.0 (test-only) |
+| compileSdk / targetSdk / minSdk | **30 / 30 / 21** (terminal 29/29/21) — frozen |
+
+Local canonical gate: `clean assembleDebug testDebugUnitTest` = **37 suites / 327 tests /
+0 failures / 0 errors / 0 skipped**.
+
+### 20.2 Required P1E3 implementation changes (all proven)
+
+1. `gradle/wrapper`: Gradle `7.6.4 → 8.11.1`.
+2. root `build.gradle`: AGP `7.4.2 → 8.10.1`, Kotlin `1.9.25 → 2.2.20`, KSP
+   `1.9.25-1.0.20 → 2.2.20-2.0.4`.
+3. `app/build.gradle`: `kotlin_jdk_version 2.2.20`; add
+   `namespace 'io.github.lord1egypt.prootx'`; `buildFeatures { viewBinding true; buildConfig true }`;
+   JaCoCo report DSL `xml.enabled/html.enabled` → **`xml.required/html.required`** (removed in Gradle 8).
+4. terminal modules: add `namespace` (`com.termux`, `com.termux.view`, `com.termux.terminal`).
+5. Four production source files: `String.toLowerCase(Locale.ENGLISH)` →
+   `lowercase(Locale.ENGLISH)` (`GithubAppsFetcher`, `AppsRepository`, `FilesystemEditFragment`,
+   `FilesystemEditViewModel`) — behavior-neutral (Kotlin 2.x made `toLowerCase` an error).
+6. `MainActivityTest.kt` (androidTest): `R.id.terminal_view` → **`com.termux.R.id.terminal_view`**
+   — the resource is owned by `:terminal-term`, so AGP 8's non-transitive R requires the owning
+   module's R class (proper ownership fix; do **not** disable `nonTransitiveRClass`).
+7. `MoshiKspGuardTest`: expected KSP version → `2.2.20-2.0.4`.
+
+Recommended (non-blocking) cleanups for P1E3: remove the four manifest `package` attributes
+(AGP 8.10 ignores them with a warning), migrate the ktlint `JavaExec.main` → `mainClass`
+(deprecated, removed in Gradle 9), and `String.capitalize()` → `replaceFirstChar` (warnings).
+
+### 20.3 Probe findings
+
+- **Raw Cell 1 first blockers:** (1) Gradle 8 removed JaCoCo `xml.enabled`/`html.enabled`;
+  (2) AGP 8 disables BuildConfig (needs `buildConfig true`); (3) AGP 8 requires `namespace`.
+- **Non-transitive R / non-final IDs:** defaults work; the only cross-module R reference is the
+  androidTest `terminal_view` case above. No `switch(R.id)` issue.
+- **DSL:** `compileSdkVersion`/`targetSdkVersion`/`minSdkVersion` and `lintOptions` are
+  deprecated but **work** (warnings); `testOptions`, `sourceSets`, `ndkVersion`,
+  `externalNativeBuild`, `testCoverageEnabled`, `javaCompileOptions`, `buildFeatures` work.
+- **Gradle 8 tasks:** `downloadAssets`/`fetchAssets` execute with gradle-download-task 5.0.0;
+  `reportVersionCode`/`reportVersionName` (configuration-time writes) work; `checkIfAssetsMissing`
+  works; `ktlint` `main =` works (deprecated). **No hard task-API blocker remains** after the
+  JaCoCo DSL fix.
+- **NDK:** AGP 8.10.1 accepts `ndkVersion "21.4.7075529"`; native build (all four ABIs) succeeds.
+- **No dependency forced and no exclusions; no pre-release artifacts.** Graph: kotlin-stdlib
+  2.2.20, moshi 1.15.2, okio 3.7.0, okhttp 3.14.7, room 2.1.0, navigation 2.3.5, fragment 1.2.4,
+  activity 1.1.0, lifecycle 2.2.0, core 1.3.0, core-ktx 1.1.0, savedstate 1.0.0, coroutines 1.3.9.
+- **SDK frozen** — no dependency required compileSdk > 30.
+- **APK (disposable):** `io.github.lord1egypt.prootx` / 1.0.0 / targetSdk 30 / four ABIs;
+  payload intact. androidTest package `io.github.lord1egypt.prootx.test`.
+
+**Conclusion:** ProotX can reach the modern AGP 8.10 / Kotlin 2.2 build stack **before**
+compileSdk 36. P1E3 is an implementation milestone over this proven recipe; no sequence change
+is forced.

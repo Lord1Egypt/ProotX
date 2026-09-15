@@ -542,3 +542,31 @@
   names, nullability, constructor mapping).
 - **Affected components:** `build.gradle` (`ksp_version`, KSP plugin classpath),
   `app/build.gradle` (ksp plugin, Moshi `ksp` config), `MoshiKspGuardTest`, P1E2/P1E3.
+
+---
+
+## D029 — AGP 8.10 / Kotlin 2.2 bridge is reachable before compileSdk 36
+
+- **Date:** 2026-09-15
+- **Status:** Accepted (P1E3-P, BRIDGE_FOUND)
+- **Decision:** ProotX will implement P1E3 as **Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 /
+  KSP 2.2.20-2.0.4 / JDK 17 / Build Tools 35.0.0 / NDK 21.4.7075529**, with **Moshi on KSP2**,
+  **Room 2.1.0 on KAPT**, and **Navigation/Safe Args 2.3.5 unchanged**, while keeping
+  `compileSdk`/`targetSdk`/`minSdk` at **30/30/21** (terminal 29/29/21). Required changes are
+  enumerable and behavior-neutral: namespaces (all modules), `buildFeatures { buildConfig true }`,
+  JaCoCo report DSL `xml/html.enabled → required`, `toLowerCase(Locale) → lowercase(Locale)` (5×),
+  and androidTest `R.id.terminal_view → com.termux.R.id.terminal_view`.
+- **Reason:** P1E3-P proved a full local build (`37 suites / 327 tests / 0 failures`) with no
+  dependency forced, no exclusion, no pre-release, and no compileSdk increase. Room 2.1.0 KAPT
+  and Safe Args 2.3.5 both survive AGP 8.10.1/Kotlin 2.2, so no unplanned dependency migration
+  is required and the P1E sequence does not need to change.
+- **Alternatives considered:** Raising Navigation or Room (rejected — unnecessary); disabling
+  `nonTransitiveRClass` (rejected — proper ownership fix used instead); changing compileSdk
+  (rejected — not required); adopting AGP 8.11/Gradle 8.13 (rejected — newer than needed).
+- **Trade-offs:** AGP 8's non-transitive R and namespace requirements force small,
+  behavior-neutral source/build edits; manifest `package` attributes become inert (removal
+  recommended); `ktlint`'s `JavaExec.main` and `String.capitalize()` are deprecated and should
+  be cleaned up before Gradle 9 / later Kotlin.
+- **Affected components:** `gradle/wrapper`, `build.gradle`, `app/build.gradle`,
+  `termux-app/*/build.gradle`, 4 production source files + `MainActivityTest.kt` +
+  `MoshiKspGuardTest.kt`, P1E3.

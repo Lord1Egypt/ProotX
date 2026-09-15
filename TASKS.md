@@ -134,8 +134,11 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
   - [x] **P1E2 — Moshi codegen KAPT → KSP migration** — CLOSED / PASS
         (KSP 1.9.25-1.0.20 on `:app`; Moshi codegen → `ksp`; Room stays `kapt`; kotlin-kapt
         retained; Moshi KAPT warning gone; + `MoshiKspGuardTest`; local + remote 327 tests)
-  - [ ] **P1E3-P — AGP 8.10 / Kotlin 2.2 compatibility probe** — NOT STARTED
-  - [ ] P1E3 — AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2.x / JDK 17 + AGP8 DSL — NOT STARTED
+  - [x] **P1E3-P — AGP 8.10 / Kotlin 2.2 compatibility probe** — BRIDGE_FOUND
+        (proven: Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 / KSP 2.2.20-2.0.4 / JDK 17 /
+        Build Tools 35.0.0 / NDK 21.4; Moshi KSP2 + Room KAPT + Safe Args 2.3.5; 327 tests;
+        all edits reverted)
+  - [ ] P1E3 — implement AGP 8.10.1 / Gradle 8.11.1 / Kotlin 2.2.20 + AGP8 DSL — NOT STARTED
   - [ ] P1E4 — compileSdk 36 (targetSdk still 30) — NOT STARTED
   - [ ] P1E5 — API 31 exported + PendingIntent flags + receiver export flags — NOT STARTED
   - [ ] P1E6 — storage/permission runtime compatibility — NOT STARTED

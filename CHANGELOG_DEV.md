@@ -470,3 +470,24 @@
   `suites=37 tests=327 failures=0 errors=0 skipped=0`, both artifacts uploaded (normal APK
   19,938,198 B SHA `ffaed71f…`; androidTest APK 1,824,591 B SHA `d61a4539…`).
 - **P1E2 CLOSED / PASS. P1E IN PROGRESS. P1E3-P NOT STARTED.**
+
+## P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe (2026-09-15) — BRIDGE_FOUND
+
+- Disposable probe; **all experimental edits reverted** (`git status` clean). Proved ProotX can
+  reach the modern stack **before** compileSdk 36:
+  **Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 / KSP 2.2.20-2.0.4 / JDK 17 / Build Tools 35.0.0
+  / NDK 21.4.7075529**, with Moshi on **KSP2**, Room 2.1.0 on **KAPT**, Navigation/Safe Args
+  **2.3.5**, JaCoCo 0.8.8, gradle-download-task 5.0.0, Mockito 4.11.0; compileSdk/targetSdk/minSdk
+  **30/30/21** (terminal 29/29/21).
+- First raw blockers: Gradle 8 removed JaCoCo `xml.enabled`/`html.enabled` (→ `required`); AGP 8
+  disables BuildConfig (→ `buildConfig true`); AGP 8 requires `namespace` (all four modules).
+- Proven non-blockers: Safe Args 2.3.5 under AGP 8.10.1; Room 2.1.0 KAPT under Kotlin 2.2; NDK
+  21.4 accepted; `downloadAssets` executes on Gradle 8; `ktlint`/`lintOptions`/`compileSdkVersion`
+  deprecated-but-work; non-transitive R defaults fine (one androidTest ownership fix).
+- Required behavior-neutral source contract fixes: 5× `toLowerCase(Locale.ENGLISH)` →
+  `lowercase(Locale.ENGLISH)` (Kotlin 2.2); androidTest `R.id.terminal_view` →
+  `com.termux.R.id.terminal_view` (non-transitive R ownership); `MoshiKspGuardTest` KSP pin.
+- Full recipe + findings: `docs/P1E_ANDROID16_MIGRATION_PLAN.md` §20.
+- Local canonical gate: `clean assembleDebug testDebugUnitTest` = **37 suites / 327 tests /
+  0 failures / 0 errors / 0 skipped**; APK identity/ABIs/payload intact.
+- **P1E3-P CLOSED / BRIDGE_FOUND. P1E IN PROGRESS. P1E3 NOT STARTED.**

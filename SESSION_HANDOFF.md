@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-15 (P1E2 Moshi KAPT → KSP migration: CLOSED / PASS — P1E IN PROGRESS)
+Last updated: 2026-09-15 (P1E3-P AGP 8.10 / Kotlin 2.2 probe: BRIDGE_FOUND — P1E IN PROGRESS)
 
 ## Current Objective
 
@@ -13,23 +13,25 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1E2 — Moshi Codegen KAPT → KSP Migration**: **CLOSED / PASS**. Moshi codegen now runs on
-**KSP 1.9.25-1.0.20** while **Room stays on KAPT** (kotlin-kapt retained). The Moshi KAPT
-deprecation warning is gone; adapters generate only under `generated/ksp/`, Room `*_Impl` only
-under `generated/source/kapt/`. Local + remote (`34941411912`) green: **327 tests / 37 suites /
-0 failures/errors/skips** (+ `MoshiKspGuardTest`). See
-`docs/P1E_ANDROID16_MIGRATION_PLAN.md` §19.
+**P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe**: **BRIDGE_FOUND** (disposable; fully
+reverted). ProotX can reach **Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 / KSP 2.2.20-2.0.4 /
+JDK 17 / Build Tools 35.0.0 / NDK 21.4** with **Moshi-KSP2 + Room-KAPT + Navigation 2.3.5**
+while compileSdk/targetSdk stay **30**. Local canonical gate **37 suites / 327 tests / 0
+failures**. Required changes and findings: `docs/P1E_ANDROID16_MIGRATION_PLAN.md` §20.
 
 ## Current Milestone
 
-**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS (P1E2 done; P1E3-P not started).
+**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS (P1E3-P done; P1E3 not started).
 
 ## What Was Completed
 
-- Added KSP `1.9.25-1.0.20` to the root buildscript and applied `com.google.devtools.ksp` to
-  `:app` only; moved Moshi codegen `kapt → ksp`; Room compiler untouched on `kapt`.
-- Added `MoshiKspGuardTest` (+1 suite / +1 test) asserting the processor split and pins.
-- No production source, manifest, resource, SDK, wrapper, or CI change.
+- Attributed the raw AGP 8 blockers (JaCoCo `enabled`→`required`, BuildConfig off, `namespace`
+  required), then proved namespaces, `buildConfig true`, KSP2 Moshi, Room 2.1.0 KAPT, Safe Args
+  2.3.5, NDK 21.4, Build Tools 35.0.0, and Gradle-8 task execution.
+- Found two behavior-neutral source contract fixes required: 5× `toLowerCase(Locale)` →
+  `lowercase(Locale)` (Kotlin 2.2) and androidTest `R.id.terminal_view` →
+  `com.termux.R.id.terminal_view` (AGP 8 non-transitive R ownership).
+- **No persistent implementation change** (only documentation).
 
 ## What Was Intentionally NOT Changed
 
@@ -43,7 +45,7 @@ under `generated/source/kapt/`. Local + remote (`34941411912`) green: **327 test
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (P1E2) | `f84a18f8a38952933ff2defec5049916053bab35` |
+| Feature HEAD (P1E3-P baseline) | `ea6624fbcf7e26a1b5fba242553479c4de6f5538` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -108,10 +110,10 @@ verified on a device at the Golden Candidate gate; no physical acceptance is cla
 
 ## Next Safe Action
 
-**P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe — NOT STARTED.** A disposable probe (as
-with P1E1-P) to prove the AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2 bridge and the AGP-8 DSL
-breakage before implementation. Sentry and Billing remain active and require a dedicated
-decision before any change. Do not begin without explicit authorization.
+**P1E3 — AGP 8.10 / Kotlin 2.2 Implementation — NOT STARTED.** Implement the proven P1E3-P
+recipe (`docs/P1E_ANDROID16_MIGRATION_PLAN.md` §20) keeping compileSdk/targetSdk at 30. Sentry
+and Billing remain active and require a dedicated decision before any change. Do not begin
+without explicit authorization.
 
 ## Resume Procedure
 

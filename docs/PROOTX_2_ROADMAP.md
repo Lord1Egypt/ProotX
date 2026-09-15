@@ -32,7 +32,10 @@
 >       NDK 21.4; plan: [`P1E_ANDROID16_MIGRATION_PLAN.md`](P1E_ANDROID16_MIGRATION_PLAN.md));
 >     - **P1E2 — Moshi Codegen KAPT → KSP Migration:** CLOSED / PASS
 >       (Moshi codegen → KSP 1.9.25-1.0.20; Room stays KAPT);
->       next authorized candidate **P1E3-P** (not started)
+>     - **P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe:** CLOSED / BRIDGE_FOUND
+>       (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 / KSP 2.2.20-2.0.4 / JDK 17 / Build Tools
+>       35.0.0 / NDK 21.4; compileSdk stays 30);
+>       next authorized candidate **P1E3** (not started)
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.

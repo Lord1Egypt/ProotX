@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-15 (P1E2 Moshi KAPT → KSP migration — CLOSED / PASS; P1E IN PROGRESS)
+Last updated: 2026-09-15 (P1E3-P AGP 8.10 / Kotlin 2.2 probe — BRIDGE_FOUND; P1E IN PROGRESS)
 
 ## Project Identity
 
@@ -47,29 +47,30 @@ Last updated: 2026-09-15 (P1E2 Moshi KAPT → KSP migration — CLOSED / PASS; P
 | P1E1-P — Kotlin / AGP Build-Tooling Bridge Compatibility Probe | **CLOSED / BRIDGE_FOUND** |
 | P1E1 — Kotlin/AndroidX Codegen + Build-Tooling Bridge | **CLOSED / PASS** |
 | P1E2 — Moshi Codegen KAPT → KSP Migration | **CLOSED / PASS** |
-| P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe | **NOT STARTED** |
+| P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe | **CLOSED / BRIDGE_FOUND** |
+| P1E3 — AGP 8.10 / Kotlin 2.2 Implementation | **NOT STARTED** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1E2 — Moshi Codegen KAPT → KSP Migration: CLOSED / PASS.** Moshi code generation now runs
-on **KSP `1.9.25-1.0.20`** (`ksp "com.squareup.moshi:moshi-kotlin-codegen:1.15.2"`) while
-**Room remains on KAPT** (`kapt "androidx.room:room-compiler:2.1.0"`, `kotlin-kapt` retained).
-The Moshi KAPT deprecation warning is gone; the two Moshi adapters are generated only under
-`build/generated/ksp/` and Room `*_Impl` only under `build/generated/source/kapt/`. No
-production source change. Local canonical gate and remote CI (run `34941411912`) are green:
-**37 suites / 327 tests / 0 failures / 0 errors / 0 skipped** (+ `MoshiKspGuardTest`).
-Details: [`docs/P1E_ANDROID16_MIGRATION_PLAN.md`](docs/P1E_ANDROID16_MIGRATION_PLAN.md) §19.
-Next milestone: **P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe — NOT STARTED**. Do not
-start it from this document.
+**P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe: CLOSED / BRIDGE_FOUND.** A disposable
+probe (all edits reverted) proved ProotX can reach **Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20
+/ KSP 2.2.20-2.0.4 / JDK 17 / Build Tools 35.0.0 / NDK 21.4** while keeping compileSdk/
+targetSdk/minSdk **30/30/21** (terminal 29/29/21) and Moshi-KSP2 + Room-KAPT + Navigation 2.3.5.
+Local canonical gate: **37 suites / 327 tests / 0 failures**. Required changes (namespaces,
+`buildConfig true`, JaCoCo `required` DSL, 5× `toLowerCase`→`lowercase`, androidTest
+`com.termux.R` qualification, KSP guard pin) are recorded in
+[`docs/P1E_ANDROID16_MIGRATION_PLAN.md`](docs/P1E_ANDROID16_MIGRATION_PLAN.md) §20. Next
+milestone: **P1E3 — AGP 8.10 / Kotlin 2.2 Implementation — NOT STARTED**. Do not start it from
+this document.
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `f84a18f8a38952933ff2defec5049916053bab35` | P1E2 implementation (KSP + guard); control-plane commit follows |
+| Feature HEAD | `ea6624fbcf7e26a1b5fba242553479c4de6f5538` | P1E2 implementation / P1E3-P probe baseline; control-plane commit follows |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -239,6 +240,7 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe — NOT STARTED.** A disposable probe (as
-with P1E1-P) to prove the AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2 bridge and the AGP-8 DSL
-breakage before implementation. Do **not** start it from this document.
+**P1E3 — AGP 8.10 / Kotlin 2.2 Implementation — NOT STARTED.** Implement the proven P1E3-P
+recipe (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20 / KSP 2.2.20-2.0.4 + namespaces,
+`buildConfig true`, JaCoCo `required` DSL, source contract fixes), keeping compileSdk/targetSdk
+at 30. Do **not** start it from this document.
