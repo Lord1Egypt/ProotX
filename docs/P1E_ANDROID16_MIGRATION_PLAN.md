@@ -526,4 +526,25 @@ download path, then the canonical clean build).
 Moshi **1.15.2** (KAPT) · Navigation **2.3.5** · JaCoCo **0.8.8** (+`jdk.internal.*` exclusion)
 · Mockito **4.11.0** (test-only) · JDK **17** · Build Tools **30.0.3** · NDK **21.4.7075529**
 (explicit `ndkVersion`) · gradle-download-task **5.0.0**. compileSdk/targetSdk/minSdk unchanged
-(30/30/21; terminal 29/29/21). CI is a single JDK 17 stage (JDK 8 stage removed).
+(30/30/21; terminal 29/29/21). CI is a single JDK 17 stage (JDK 8 stage removed). *(Superseded
+by §19 for the Moshi codegen processor.)*
+
+---
+
+## 19. P1E2 result — Moshi codegen KAPT → KSP (CLOSED / PASS)
+
+- **KSP `1.9.25-1.0.20`** pinned in the root buildscript (`ksp_version`) and applied to `:app`
+  only. **Moshi codegen moved `kapt → ksp`**; **Room stays on KAPT** (`kotlin-kapt` retained).
+- Processor separation (clean build): Moshi adapters
+  (`GithubApiClient_ReleasesResponseJsonAdapter`, `GithubApiClient_GithubAssetJsonAdapter`)
+  generate **only** under `app/build/generated/ksp/<variant>/kotlin/…`; Room `*_Impl` generates
+  **only** under `app/build/generated/source/kapt/…`. No duplicate processors or adapters. The
+  **Moshi KAPT deprecation warning is gone**. Generated adapter semantics are unchanged
+  (same fields, `@Json` names, nullability, constructor mapping).
+- `MoshiKspGuardTest` guards the split. Local + remote green:
+  **37 suites / 327 tests / 0 failures / 0 errors / 0 skipped** (remote run `34941411912`).
+- No production source, manifest, resource, SDK, NDK, wrapper, or CI change.
+
+**P1E3-P boundary:** AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2 + AGP-8 DSL is the next stage and
+should be probed (P1E3-P) before implementation — it is a large jump (Kotlin 2.2, namespaces,
+`buildConfig`, non-transitive R).

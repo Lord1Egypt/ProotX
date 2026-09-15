@@ -30,7 +30,9 @@
 >     - **P1E1 — Kotlin/AndroidX Codegen + Build-Tooling Bridge:** CLOSED / PASS
 >       (Gradle 7.6.4 / AGP 7.4.2 / Kotlin 1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 / JDK 17 /
 >       NDK 21.4; plan: [`P1E_ANDROID16_MIGRATION_PLAN.md`](P1E_ANDROID16_MIGRATION_PLAN.md));
->       next authorized candidate **P1E2** (not started)
+>     - **P1E2 — Moshi Codegen KAPT → KSP Migration:** CLOSED / PASS
+>       (Moshi codegen → KSP 1.9.25-1.0.20; Room stays KAPT);
+>       next authorized candidate **P1E3-P** (not started)
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.

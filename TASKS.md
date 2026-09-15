@@ -131,7 +131,10 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         (persisted Gradle 7.6.4 / AGP 7.4.2 / Kotlin 1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 /
         JaCoCo 0.8.8 / Mockito 4.11.0 / JDK 17 / NDK 21.4 / gradle-download-task 5.0.0;
         7 Kotlin-1.9 source fixes; CI on JDK 17; local + remote 326 tests green)
-  - [ ] **P1E2 — Moshi codegen KAPT → KSP readiness** — NOT STARTED
+  - [x] **P1E2 — Moshi codegen KAPT → KSP migration** — CLOSED / PASS
+        (KSP 1.9.25-1.0.20 on `:app`; Moshi codegen → `ksp`; Room stays `kapt`; kotlin-kapt
+        retained; Moshi KAPT warning gone; + `MoshiKspGuardTest`; local + remote 327 tests)
+  - [ ] **P1E3-P — AGP 8.10 / Kotlin 2.2 compatibility probe** — NOT STARTED
   - [ ] P1E3 — AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2.x / JDK 17 + AGP8 DSL — NOT STARTED
   - [ ] P1E4 — compileSdk 36 (targetSdk still 30) — NOT STARTED
   - [ ] P1E5 — API 31 exported + PendingIntent flags + receiver export flags — NOT STARTED

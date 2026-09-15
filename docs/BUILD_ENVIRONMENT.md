@@ -12,7 +12,9 @@ The ProotX application currently builds with:
 | Gradle (wrapper) | 7.6.4 |
 | Android Gradle Plugin | 7.4.2 |
 | Kotlin / KGP | **1.9.25** |
-| Moshi (runtime + codegen) | **1.15.2** (codegen via KAPT) |
+| Moshi (runtime + codegen) | **1.15.2** (codegen via **KSP**) |
+| KSP (Moshi codegen) | **1.9.25-1.0.20** |
+| Room codegen | KAPT (Room 2.1.0) |
 | AndroidX Navigation | **2.3.5** |
 | JaCoCo | **0.8.8** |
 | Mockito (test-only) | **4.11.0** |
@@ -112,6 +114,11 @@ packages/`platform-tools` are instead owned explicitly by the pinned `sdkmanager
 **Download task (P1E1):** `de.undercouch:gradle-download-task` is **5.0.0** — the 3.4.3 task
 type fails Gradle 7.6 task-property validation when `:app:downloadAssets` runs on a clean
 checkout (no pre-existing `jniLibs`).
+
+**Code generation (P1E2):** Moshi runs on **KSP 1.9.25-1.0.20** (`apply plugin:
+'com.google.devtools.ksp'` on `:app`; `ksp "com.squareup.moshi:moshi-kotlin-codegen"`). **Room
+remains on KAPT** (`kotlin-kapt` applied) — a deliberate mixed-processing build until Room also
+moves to KSP.
 
 ## Baseline result (reference)
 

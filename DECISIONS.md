@@ -518,3 +518,27 @@
 - **Trade-offs:** A third-party build plugin moves earlier than the AGP 8 milestone; no
   application API or behavior change.
 - **Affected components:** `build.gradle`, `:app:downloadAssets`/`fetchAssets`, CI, P1E1.
+
+---
+
+## D028 — Moshi codegen on KSP; Room stays on KAPT (mixed processing)
+
+- **Date:** 2026-09-15
+- **Status:** Accepted (P1E2)
+- **Decision:** Moshi code generation runs on **KSP `1.9.25-1.0.20`**
+  (`ksp "com.squareup.moshi:moshi-kotlin-codegen:1.15.2"`), while Room code generation remains
+  on **KAPT** (`kapt "androidx.room:room-compiler:2.1.0"`; `kotlin-kapt` retained). The two
+  processors are intentionally split for the Kotlin 1.9 bridge. A guard
+  (`MoshiKspGuardTest`) enforces the split and the pinned versions.
+- **Reason:** Moshi 1.15.2 KAPT emits a deprecation warning and is a Kotlin-1.9-only path;
+  moving Moshi to KSP removes that path before the Kotlin 2.2 jump without forcing a Room KSP
+  migration (Room 2.1.0 predates KSP and would need an upgrade, which is out of scope here).
+  KSP also avoids the KAPT stub-generation step for Moshi.
+- **Alternatives considered:** Migrating Room to KSP too (rejected — Room 2.1.0 has no KSP
+  support; would require a Room upgrade); leaving Moshi on KAPT (rejected — deprecated,
+  blocks Kotlin 2.x readiness); moving both later (rejected — Moshi KAPT is the known blocker).
+- **Trade-offs:** A mixed KAPT+KSP build in the interim; `build/generated/ksp` becomes the
+  Moshi output of record. Runtime/serialization semantics are unchanged (same fields, `@Json`
+  names, nullability, constructor mapping).
+- **Affected components:** `build.gradle` (`ksp_version`, KSP plugin classpath),
+  `app/build.gradle` (ksp plugin, Moshi `ksp` config), `MoshiKspGuardTest`, P1E2/P1E3.

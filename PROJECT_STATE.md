@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-15 (P1E1 build-tooling bridge — CLOSED / PASS; P1E IN PROGRESS)
+Last updated: 2026-09-15 (P1E2 Moshi KAPT → KSP migration — CLOSED / PASS; P1E IN PROGRESS)
 
 ## Project Identity
 
@@ -46,30 +46,30 @@ Last updated: 2026-09-15 (P1E1 build-tooling bridge — CLOSED / PASS; P1E IN PR
 | P1E0 — Android 16 Toolchain + Platform Readiness Audit | **CLOSED / PASS** |
 | P1E1-P — Kotlin / AGP Build-Tooling Bridge Compatibility Probe | **CLOSED / BRIDGE_FOUND** |
 | P1E1 — Kotlin/AndroidX Codegen + Build-Tooling Bridge | **CLOSED / PASS** |
-| P1E2 — Moshi Codegen KAPT → KSP Readiness | **NOT STARTED** |
+| P1E2 — Moshi Codegen KAPT → KSP Migration | **CLOSED / PASS** |
+| P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe | **NOT STARTED** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1E1 — Kotlin/AndroidX Codegen + Build-Tooling Bridge: CLOSED / PASS.** The proven P1E1-P
-bridge is now persisted: **Gradle 7.6.4 / AGP 7.4.2 / Kotlin 1.9.25 / Moshi 1.15.2 (KAPT) /
-Navigation 2.3.5 / JaCoCo 0.8.8 / Mockito 4.11.0 (test-only) / JDK 17 / Build Tools 30.0.3 /
-NDK 21.4.7075529**. Seven behavior-neutral Kotlin-1.9 source fixes and a Navigation guard
-update landed. CI is now a single JDK 17 stage. Final dependencies include a CI-forced minimal
-`gradle-download-task` 3.4.3 → **5.0.0** correction. Local canonical gate and remote CI
-(run `34938888803`) are green: **36 suites / 326 tests / 0 failures / 0 errors / 0 skipped**.
-compileSdk/targetSdk/minSdk unchanged. Details:
-[`docs/P1E_ANDROID16_MIGRATION_PLAN.md`](docs/P1E_ANDROID16_MIGRATION_PLAN.md) §18.
-Next milestone: **P1E2 — Moshi Codegen KAPT → KSP Readiness — NOT STARTED**. Do not start it
-from this document.
+**P1E2 — Moshi Codegen KAPT → KSP Migration: CLOSED / PASS.** Moshi code generation now runs
+on **KSP `1.9.25-1.0.20`** (`ksp "com.squareup.moshi:moshi-kotlin-codegen:1.15.2"`) while
+**Room remains on KAPT** (`kapt "androidx.room:room-compiler:2.1.0"`, `kotlin-kapt` retained).
+The Moshi KAPT deprecation warning is gone; the two Moshi adapters are generated only under
+`build/generated/ksp/` and Room `*_Impl` only under `build/generated/source/kapt/`. No
+production source change. Local canonical gate and remote CI (run `34941411912`) are green:
+**37 suites / 327 tests / 0 failures / 0 errors / 0 skipped** (+ `MoshiKspGuardTest`).
+Details: [`docs/P1E_ANDROID16_MIGRATION_PLAN.md`](docs/P1E_ANDROID16_MIGRATION_PLAN.md) §19.
+Next milestone: **P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe — NOT STARTED**. Do not
+start it from this document.
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `bd3f6e4f335c4a1e9371c554e2850b69b1e2f30d` | P1E1 implementation (download-task fix); control-plane commit follows |
+| Feature HEAD | `f84a18f8a38952933ff2defec5049916053bab35` | P1E2 implementation (KSP + guard); control-plane commit follows |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -97,7 +97,9 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Gradle (wrapper) | **7.6.4** |
 | Android Gradle Plugin | **7.4.2** |
 | Kotlin / KGP | **1.9.25** |
-| Moshi (runtime + codegen) | **1.15.2** (codegen via KAPT) |
+| Moshi (runtime + codegen) | **1.15.2** (codegen via **KSP**) |
+| KSP (Moshi codegen) | **1.9.25-1.0.20** |
+| Room codegen | KAPT (Room 2.1.0 `room-compiler`) |
 | AndroidX Navigation | **2.3.5** (stable) |
 | AndroidX Room | 2.1.0 (stable; runtime/compiler/testing) |
 | AndroidX Preference | 1.1.0 (stable) |
@@ -136,14 +138,14 @@ removed in P1E1). `google()` + `mavenCentral()` only. Pinned packages: `platform
 `tools platform-tools` install broke when the legacy `tools` package was retired);
 `platform-tools` is owned explicitly by the pinned `sdkmanager` step. Triggers unchanged.
 
-Verified remote evidence (P1E1):
+Verified remote evidence (P1E2):
 
 | Field | Value |
 |---|---|
-| Run | `34938888803` (push, commit `bd3f6e4`) — **success** (4m57s) |
-| Log proof | `sdkmanager 16.0`; installed `platform-tools`, `android-29`, `android-30`, `build-tools;30.0.3`, `ndk;21.4.7075529`; `Gradle 7.6.4` on `JVM 17.0.20.1`; `:app:downloadAssets`/`:app:fetchAssets` executed; two `BUILD SUCCESSFUL` (app + androidTest) |
-| Remote test summary | `suites=36 tests=326 failures=0 errors=0 skipped=0` |
-| Artifacts | `prootx-debug-apk` (ZIP 19,118,467 bytes; extracted APK 19,938,185 bytes, SHA-256 `d2090b90…803b90150`) and `prootx-debug-androidTest-apk` (ZIP 1,370,435 bytes; extracted APK 1,824,590 bytes, SHA-256 `54584e3f…d3856c21`) |
+| Run | `34941411912` (push, commit `f84a18f`) — **success** (5m14s) |
+| Log proof | `sdkmanager 16.0`; `Gradle 7.6.4` on `JVM 17.0.20.1`; `:app:kspDebugKotlin` **and** `:app:kaptDebugKotlin` ran; `:app:downloadAssets`/`:app:fetchAssets` executed; no Moshi KAPT warning; two `BUILD SUCCESSFUL` (app + androidTest) |
+| Remote test summary | `suites=37 tests=327 failures=0 errors=0 skipped=0` |
+| Artifacts | `prootx-debug-apk` (ZIP 19,118,477 bytes; extracted APK 19,938,198 bytes, SHA-256 `ffaed71f…c8bac1`) and `prootx-debug-androidTest-apk` (ZIP 1,370,438 bytes; extracted APK 1,824,591 bytes, SHA-256 `d61a4539…b3ee90`) |
 | Artifact identity | app: `io.github.lord1egypt.prootx` / 1.0.0 / targetSdk 30 / ABIs arm64-v8a, armeabi-v7a, x86, x86_64; androidTest: `io.github.lord1egypt.prootx.test` |
 
 The workflow also runs `:app:assembleDebugAndroidTest` and uploads both APKs, so androidTest
@@ -166,7 +168,7 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-**None.** P1D is closed; P1E1 is closed and remote CI is green (run `34938888803`).
+**None.** P1D is closed; P1E1 and P1E2 are closed and remote CI is green (run `34941411912`).
 
 ## Deferred Findings
 
@@ -237,7 +239,6 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1E2 — Moshi Codegen KAPT → KSP Readiness — NOT STARTED.** Migrate Moshi codegen from KAPT
-to KSP on the current Kotlin 1.9.25 bridge (Room may keep KAPT temporarily) so the Kotlin 2.2
-jump (P1E3) does not carry a deprecated KAPT codegen path. Do **not** start it from this
-document.
+**P1E3-P — AGP 8.10 / Kotlin 2.2 Compatibility Probe — NOT STARTED.** A disposable probe (as
+with P1E1-P) to prove the AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2 bridge and the AGP-8 DSL
+breakage before implementation. Do **not** start it from this document.

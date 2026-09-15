@@ -445,3 +445,28 @@
 - compileSdk/targetSdk/minSdk unchanged (30/30/21; terminal 29/29/21); source manifests
   byte-identical; runtime/UI unchanged.
 - **P1E1 CLOSED / PASS. P1E IN PROGRESS. P1E2 NOT STARTED.**
+
+## P1E2 — Moshi Codegen KAPT → KSP Migration (2026-09-15) — PASS
+
+- Pinned **KSP `1.9.25-1.0.20`** (`ksp_version`) and added the KSP Gradle plugin
+  (`com.google.devtools.ksp:symbol-processing-gradle-plugin`) to the root buildscript; applied
+  `com.google.devtools.ksp` to **`:app` only** (Groovy buildscript style preserved).
+- Moved Moshi code generation `kapt → ksp`:
+  `ksp "com.squareup.moshi:moshi-kotlin-codegen:1.15.2"`; Moshi runtime stays `1.15.2`. **Room
+  compiler stays on `kapt`** and `kotlin-kapt` remains applied — deliberate mixed build.
+- Added `MoshiKspGuardTest` (asserts the KSP pin, Moshi-on-ksp, Moshi-not-on-kapt,
+  Room-on-kapt, and both plugins applied). +1 suite / +1 test.
+- Processor separation proven on a clean build: the two Moshi adapters
+  (`GithubApiClient_ReleasesResponseJsonAdapter`, `GithubApiClient_GithubAssetJsonAdapter`)
+  generate **only** under `app/build/generated/ksp/`; Room `*_Impl` classes generate **only**
+  under `app/build/generated/source/kapt/`; no duplicates. The Moshi KAPT deprecation warning
+  is **gone**.
+- No production source change; no manifest/resource/SDK/wrapper/CI change. Room schema 7
+  unchanged.
+- Local canonical gate green: `clean assembleDebug testDebugUnitTest` = **37 suites / 327 tests
+  / 0 failures / 0 errors / 0 skipped**; compile/kapt/androidTest/ktlint PASS.
+- Remote run `34941411912` (commit `f84a18f`): all steps **success** (5m14s),
+  `:app:kspDebugKotlin` + `:app:kaptDebugKotlin` both ran, no Moshi KAPT warning,
+  `suites=37 tests=327 failures=0 errors=0 skipped=0`, both artifacts uploaded (normal APK
+  19,938,198 B SHA `ffaed71f…`; androidTest APK 1,824,591 B SHA `d61a4539…`).
+- **P1E2 CLOSED / PASS. P1E IN PROGRESS. P1E3-P NOT STARTED.**
