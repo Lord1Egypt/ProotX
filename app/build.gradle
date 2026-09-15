@@ -183,7 +183,7 @@ task jacocoCoverageReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', '
     sourceDirectories.from = files(mainSrc)
     classDirectories.from = files([javaClasses, kotlinClasses])
     executionData.from = fileTree(dir: project.buildDir, includes: [
-            'jacoco/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'
+            'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*coverage.ec'
     ])
 }
 
@@ -204,7 +204,7 @@ task jacocoCoverageReportForCi(type: JacocoReport, dependsOn: ['testDebugUnitTes
     sourceDirectories.from = files(mainSrc)
     classDirectories.from = files([javaClasses, kotlinClasses])
     executionData.from = fileTree(dir: project.buildDir, includes: [
-            'jacoco/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*.ec'
+            'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec', 'outputs/code-coverage/connected/*.ec'
     ])
 }
 
