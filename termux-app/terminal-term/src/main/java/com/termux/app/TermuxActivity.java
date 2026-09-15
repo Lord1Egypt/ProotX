@@ -1,8 +1,6 @@
 package com.termux.app;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -15,14 +13,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.media.AudioAttributes;
 import android.media.SoundPool;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
@@ -93,8 +89,6 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
 
     private static final int MAX_SESSIONS = 8;
 
-    private static final int REQUESTCODE_PERMISSION_STORAGE = 1234;
-
     private static final String RELOAD_STYLE_ACTION = "com.termux.app.reload_style";
 
     private String prefix_path;
@@ -140,10 +134,6 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
         @Override
         public void onReceive(Context context, Intent intent) {
             if (mIsVisible) {
-                String whatToReload = intent.getStringExtra(RELOAD_STYLE_ACTION);
-                if ("storage".equals(whatToReload)) {
-                    ensureStoragePermissionGranted();
-                }
                 checkForFontAndColors();
                 mSettings.reloadFromProperties(TermuxActivity.this);
             }
@@ -180,22 +170,6 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
         TerminalSession session = getCurrentTermSession();
         if (session != null && session.getEmulator() != null) {
             getWindow().getDecorView().setBackgroundColor(session.getEmulator().mColors.mCurrentColors[TextStyle.COLOR_INDEX_BACKGROUND]);
-        }
-    }
-
-    /** For processes to access shared internal storage (/sdcard) we need this permission. */
-    @TargetApi(Build.VERSION_CODES.M)
-    public boolean ensureStoragePermissionGranted() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                return true;
-            } else {
-                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUESTCODE_PERMISSION_STORAGE);
-                return false;
-            }
-        } else {
-            // Always granted before Android 6.0.
-            return true;
         }
     }
 

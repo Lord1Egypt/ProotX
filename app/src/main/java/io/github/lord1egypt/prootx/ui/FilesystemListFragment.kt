@@ -155,10 +155,6 @@ class FilesystemListFragment : Fragment() {
     }
 
     private fun exportFilesystem(filesystem: Filesystem) {
-        if (!PermissionHandler.permissionsAreGranted(activityContext)) {
-            PermissionHandler.showPermissionsNecessaryDialog(activityContext)
-            return
-        }
         val suggestedFilesystemBackupName = filesystemListViewModel.getFilesystemBackupName(filesystem)
         val intent = createExportExternalIntent(suggestedFilesystemBackupName)
         filesystemListViewModel.setFilesystemToBackup(filesystem)

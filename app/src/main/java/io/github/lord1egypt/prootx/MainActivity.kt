@@ -298,20 +298,10 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
     }
 
     override fun appHasBeenSelected(app: App, autoStart: Boolean) {
-        if (!PermissionHandler.permissionsAreGranted(this)) {
-            PermissionHandler.showPermissionsNecessaryDialog(this)
-            viewModel.waitForPermissions(appToContinue = app)
-            return
-        }
         viewModel.submitAppSelection(app, autoStart)
     }
 
     override fun sessionHasBeenSelected(session: Session) {
-        if (!PermissionHandler.permissionsAreGranted(this)) {
-            PermissionHandler.showPermissionsNecessaryDialog(this)
-            viewModel.waitForPermissions(sessionToContinue = session)
-            return
-        }
         viewModel.submitSessionSelection(session)
     }
 
@@ -494,15 +484,6 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
         val assetDirectoryNames = appsPreferences.getDistributionsList().plus("support")
         val assetFileClearer = AssetFileClearer(prootxFiles, assetDirectoryNames, busyboxExecutor)
         CoroutineScope(Dispatchers.Main).launch { viewModel.handleClearSupportFiles(assetFileClearer) }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (PermissionHandler.permissionsWereGranted(requestCode, grantResults)) {
-            viewModel.permissionsHaveBeenGranted()
-        } else {
-            PermissionHandler.showPermissionsNecessaryDialog(this)
-        }
     }
 
     private fun handleProgressBarUpdateState(state: ProgressBarUpdateState) {

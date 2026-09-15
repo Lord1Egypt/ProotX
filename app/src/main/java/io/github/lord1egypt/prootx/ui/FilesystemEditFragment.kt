@@ -24,7 +24,6 @@ import io.github.lord1egypt.prootx.databinding.FragFilesystemEditBinding
 import io.github.lord1egypt.prootx.MainActivity
 import io.github.lord1egypt.prootx.R
 import io.github.lord1egypt.prootx.model.repositories.ProotXDatabase
-import io.github.lord1egypt.prootx.utils.PermissionHandler
 import io.github.lord1egypt.prootx.utils.CredentialValidator
 import io.github.lord1egypt.prootx.utils.ProotXFiles
 import io.github.lord1egypt.prootx.utils.preferences.AppsPreferences
@@ -192,10 +191,6 @@ class FilesystemEditFragment : Fragment() {
             val filePickerIntent = Intent(Intent.ACTION_OPEN_DOCUMENT)
             filePickerIntent.addCategory(Intent.CATEGORY_OPENABLE)
             filePickerIntent.type = "application/*"
-            if (!PermissionHandler.permissionsAreGranted(activityContext)) {
-                PermissionHandler.showPermissionsNecessaryDialog(activityContext)
-                return@setOnClickListener
-            }
 
             try {
                 filesystem.isCreatedFromBackup = true

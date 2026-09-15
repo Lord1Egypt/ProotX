@@ -1,6 +1,5 @@
 package io.github.lord1egypt.prootx.ui
 
-import android.Manifest
 // import android.content.Intent
 // import android.net.Uri
 import androidx.test.espresso.Espresso
@@ -9,7 +8,6 @@ import androidx.test.espresso.intent.rule.IntentsTestRule
 // import androidx.test.espresso.intent.matcher.IntentMatchers.* // ktlint-disable no-wildcard-imports
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
-import androidx.test.rule.GrantPermissionRule
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -26,14 +24,6 @@ class MainActivityTest {
 
     @get:Rule
     val intentTestRule = IntentsTestRule(MainActivity::class.java)
-
-    // Permissions are granted automatically by firebase, so to keep parity we skip that step
-    // locally as well.
-    @get:Rule
-    val grantPermission: GrantPermissionRule = GrantPermissionRule.grant(
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    )
 
     private lateinit var activity: MainActivity
     private val appName = "Alpine"
