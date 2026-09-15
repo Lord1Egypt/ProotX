@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        P1E8: from targetSdk 31+ the manifest merger requires an explicit android:exported value
+        for components that declare an intent filter. androidx.test:core:1.2.0 predates that
+        requirement and declares InstrumentationActivityInvoker's three helper activities without
+        it, which previously only surfaced because the app targeted API 30. This test-only overlay
+        supplies the values (matching the upstream androidx.test fix) so :app:assembleDebugAndroidTest
+        keeps building at targetSdk 34. These components are merged only into the instrumentation
+        APK and are never part of the shipped application.
+    -->
+    <application>
+        <activity
+            android:name="androidx.test.core.app.InstrumentationActivityInvoker$BootstrapActivity"
+            android:exported="true" />
+        <activity
+            android:name="androidx.test.core.app.InstrumentationActivityInvoker$EmptyActivity"
+            android:exported="true" />
+        <activity
+            android:name="androidx.test.core.app.InstrumentationActivityInvoker$EmptyFloatingActivity"
+            android:exported="true" />
+    </application>
+
+</manifest>

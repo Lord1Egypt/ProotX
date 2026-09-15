@@ -1,13 +1,18 @@
 package io.github.lord1egypt.prootx
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DownloadManager
+import android.app.ForegroundServiceStartNotAllowedException
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
@@ -53,6 +58,14 @@ import io.github.lord1egypt.prootx.utils.preferences.* // ktlint-disable no-wild
 
 class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, AppsListFragment.AppSelection, FilesystemListFragment.FilesystemListProgress {
 
+    companion object {
+        // Shared one-time notification-permission prompt state. Both MainActivity and the
+        // terminal activity (a separate module) must agree on these exact names.
+        const val NOTIFICATION_PERMISSION_PREFS = "notification_permission"
+        const val NOTIFICATION_PERMISSION_PROMPT_COMPLETED_KEY = "prompt_completed"
+        private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 11
+    }
+
     val className = "MainActivity"
 
     private lateinit var binding: ActivityMainBinding
@@ -60,6 +73,12 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
     private var progressBarIsVisible = false
     private var currentFragmentDisplaysProgressDialog = false
     private var autoStarted = false
+
+    // The session that has been requested but not yet handed to ServerService, e.g. while the
+    // notification-permission dialog is open or while the activity is not eligible to start a
+    // foreground service.
+    private var pendingSession: Session? = null
+    private var notificationPermissionRequestInFlight = false
 
     private val logger = SentryLogger()
     private val prootxFiles by lazy { ProotXFiles(this, this.applicationInfo.nativeLibraryDir) }
@@ -70,6 +89,10 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
 
     private val navController: NavController by lazy {
         findNavController(R.id.nav_host_fragment)
+    }
+
+    private val notificationPermissionPreferences by lazy {
+        getSharedPreferences(NOTIFICATION_PERMISSION_PREFS, Context.MODE_PRIVATE)
     }
 
     private val userFeedbackPrompter by lazy {
@@ -244,6 +267,11 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
             }
     }
 
+    // DownloadManager.ACTION_DOWNLOAD_COMPLETE is a system broadcast. Android 14 exempts
+    // receivers registered only for system broadcasts from the exported/not-exported flag
+    // requirement, so the flag-less platform registration is intentional; the lint check is a
+    // known false positive for this case.
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onStart() {
         super.onStart()
         LocalBroadcastManager.getInstance(this)
@@ -256,6 +284,25 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
         billingManager.querySubPurchases()
         billingManager.queryInAppPurchases()
         viewModel.handleOnResume()
+        // A session may have been deferred while the notification-permission dialog was open or
+        // while the activity was not eligible to start a foreground service.
+        continuePendingSessionIfPossible()
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != NOTIFICATION_PERMISSION_REQUEST_CODE) return
+
+        notificationPermissionRequestInFlight = false
+        // grantResults is empty when the dialog was dismissed without an explicit decision; only
+        // an explicit allow/deny result is recorded as a completed prompt.
+        if (grantResults.isNotEmpty()) {
+            notificationPermissionPreferences.edit()
+                    .putBoolean(NOTIFICATION_PERMISSION_PROMPT_COMPLETED_KEY, true)
+                    .apply()
+        }
+        // Notification permission never blocks the Linux session.
+        continuePendingSessionIfPossible()
     }
 
     override fun onDestroy() {
@@ -349,18 +396,85 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
     }
 
     private fun startSession(session: Session) {
+        pendingSession = session
+        continuePendingSessionIfPossible()
+    }
+
+    private fun notificationPermissionIsGranted(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
+        return checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun notificationPermissionPromptHasCompleted(): Boolean =
+            notificationPermissionPreferences.getBoolean(NOTIFICATION_PERMISSION_PROMPT_COMPLETED_KEY, false)
+
+    private fun shouldRequestNotificationPermission(): Boolean =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    !notificationPermissionIsGranted() &&
+                    !notificationPermissionPromptHasCompleted()
+
+    private fun activityIsEligibleToStartForegroundService(): Boolean =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+                    lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+
+    // Final session-start boundary: gate on foreground eligibility, present the one-time
+    // notification-permission request in context, then launch ServerService regardless of the
+    // permission outcome.
+    private fun continuePendingSessionIfPossible() {
+        val session = pendingSession ?: return
+        if (!activityIsEligibleToStartForegroundService()) return
+        if (notificationPermissionRequestInFlight) return
+
+        if (shouldRequestNotificationPermission()) {
+            notificationPermissionRequestInFlight = true
+            requestPermissions(
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    NOTIFICATION_PERMISSION_REQUEST_CODE
+            )
+            return
+        }
+
+        pendingSession = null
+        launchServerServiceForSession(session)
+    }
+
+    private fun launchServerServiceForSession(session: Session) {
         val serviceIntent = Intent(this, ServerService::class.java)
                 .putExtra("type", "start")
                 .putExtra("session", session)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent)
-        } else {
-            startService(serviceIntent)
+        if (!launchForegroundService(serviceIntent)) {
+            // The foreground-service start raced with a background transition; keep the
+            // user-requested session pending and retry on the next resume.
+            pendingSession = session
+            val breadcrumb = ProotXBreadcrumb(
+                    className,
+                    BreadcrumbType.RuntimeError,
+                    "ForegroundServiceStartNotAllowedException; session start deferred until foreground"
+            )
+            logger.addBreadcrumb(breadcrumb)
+            return
         }
         if (autoStarted) {
             Handler(Looper.getMainLooper()).postDelayed({
                 finish()
             }, 2000)
+        }
+    }
+
+    private fun launchForegroundService(serviceIntent: Intent): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            try {
+                startForegroundService(serviceIntent)
+                true
+            } catch (e: ForegroundServiceStartNotAllowedException) {
+                false
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+            true
+        } else {
+            startService(serviceIntent)
+            true
         }
     }
 

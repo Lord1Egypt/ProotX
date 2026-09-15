@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 
 android {
     namespace 'com.termux'
-    compileSdkVersion 29
+    compileSdkVersion 36
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 29

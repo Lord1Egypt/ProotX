@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <queries>
@@ -63,10 +64,10 @@
         </service>
 
         <!--
-            Manifest overlay for the existing library terminal service. The terminal module
-            still compiles against API 29, whose AAPT does not recognize the API 34 specialUse
-            FGS type, so the type and the special-use subtype property are declared here from
-            the API 36 app manifest. This merges into the single existing library component.
+            Manifest overlay for the existing library terminal service. The specialUse type and
+            the special-use subtype property are declared here from the API 36 app manifest so the
+            terminal library manifest stays free of the app-owned foreground-service policy. This
+            merges into the single existing library component.
         -->
         <service
             android:name="com.termux.app.TermuxService"

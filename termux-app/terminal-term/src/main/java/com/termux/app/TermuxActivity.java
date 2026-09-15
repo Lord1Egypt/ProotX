@@ -1,5 +1,6 @@
 package com.termux.app;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -13,6 +14,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
@@ -91,6 +94,17 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
     private static final int MAX_SESSIONS = 8;
 
     private static final String RELOAD_STYLE_ACTION = "com.termux.app.reload_style";
+
+    /**
+     * Shared one-time notification-permission prompt state. Both the MainActivity and this
+     * terminal activity (a separate module) must agree on these exact names.
+     */
+    private static final String NOTIFICATION_PERMISSION_PREFS = "notification_permission";
+    private static final String NOTIFICATION_PERMISSION_PROMPT_COMPLETED_KEY = "prompt_completed";
+    private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 11;
+
+    /** Prevents repeated concurrent permission requests while the dialog is up. */
+    private static boolean sNotificationPermissionRequestInFlight = false;
 
     private String prefix_path;
 
@@ -291,17 +305,64 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
 
         serviceIntent.setAction(TermuxService.ACTION_EXECUTE);
 
-        // Start the service and make it run regardless of who is bound to it:
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent);
-        } else {
-            startService(serviceIntent);
-        }
-        doBindService(serviceIntent);
+        mServiceIntent = serviceIntent;
 
         checkForFontAndColors();
 
         mBellSoundId = mBellSoundPool.load(this, R.raw.bell, 1);
+
+        // Start/bind the service exactly once. On API 33+ the first direct launch presents the
+        // shared one-time notification-permission request before the foreground service starts;
+        // an explicit denial still starts the terminal session.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && shouldRequestNotificationPermission()) {
+            sNotificationPermissionRequestInFlight = true;
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION_REQUEST_CODE);
+        } else {
+            startAndBindService();
+        }
+    }
+
+    private Intent mServiceIntent;
+    private boolean mServiceStarted = false;
+
+    private SharedPreferences notificationPermissionPreferences() {
+        return getSharedPreferences(NOTIFICATION_PERMISSION_PREFS, Context.MODE_PRIVATE);
+    }
+
+    private boolean shouldRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false;
+        if (sNotificationPermissionRequestInFlight) return false;
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return false;
+        return !notificationPermissionPreferences().getBoolean(NOTIFICATION_PERMISSION_PROMPT_COMPLETED_KEY, false);
+    }
+
+    private void startAndBindService() {
+        if (mServiceStarted) return;
+        mServiceStarted = true;
+
+        // Start the service and make it run regardless of who is bound to it:
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(mServiceIntent);
+        } else {
+            startService(mServiceIntent);
+        }
+        doBindService(mServiceIntent);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != NOTIFICATION_PERMISSION_REQUEST_CODE) return;
+
+        sNotificationPermissionRequestInFlight = false;
+        // grantResults is empty when the dialog was dismissed without an explicit decision; only
+        // an explicit allow/deny result is recorded as a completed prompt.
+        if (grantResults.length > 0) {
+            notificationPermissionPreferences().edit()
+                .putBoolean(NOTIFICATION_PERMISSION_PROMPT_COMPLETED_KEY, true)
+                .apply();
+        }
+        startAndBindService();
     }
 
     /** Parse intent for connection parameters **/
@@ -543,7 +604,12 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
             mListViewAdapter.notifyDataSetChanged();
         }
 
-        registerReceiver(mBroadcastReceiever, new IntentFilter(RELOAD_STYLE_ACTION));
+        // This receiver is application-internal; on API 33+ it must be explicitly not exported.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(mBroadcastReceiever, new IntentFilter(RELOAD_STYLE_ACTION), Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(mBroadcastReceiever, new IntentFilter(RELOAD_STYLE_ACTION));
+        }
 
         // The current terminal session may have changed while being away, force
         // a refresh of the displayed terminal:

@@ -7,20 +7,19 @@ import org.junit.Test
 import java.io.File
 
 /**
- * P1E7 guard: the two real foreground services must stay structurally compatible with the
- * Android 12–16 foreground-service rules while the persistent app targetSdk stays 30.
+ * P1E7/P1E8 guard: the two real foreground services must stay structurally compatible with the
+ * Android 12–16 foreground-service rules after the app targetSdk moved to 34.
  *
- * Invariants:
+ * Durable invariants:
  *  - app manifest declares `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_SPECIAL_USE`
- *  - `POST_NOTIFICATIONS` is intentionally deferred to P1E8 (must be absent)
+ *    + `POST_NOTIFICATIONS`
  *  - both services declare `android:foregroundServiceType="specialUse"` with a
  *    `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` property describing the real user-facing reason
- *  - `TermuxService` is declared once, via the API-36 app manifest overlay (the terminal
- *    module keeps compiling against API 29)
+ *  - `TermuxService` is declared once, via the API-36 app manifest overlay
  *  - both services create their own notification channel
  *  - the initial FGS launch paths use `startForegroundService` on API 26+
  *  - foreground promotion uses `FOREGROUND_SERVICE_TYPE_MANIFEST` on API 29+
- *  - terminal module SDK levels are unchanged (29/29/21)
+ *  - terminal-term compiles against API 36 while its targetSdk stays 29
  *
  * This guard inspects production source and the source manifests only; historical
  * documentation references are out of scope.
@@ -42,7 +41,7 @@ class ForegroundServiceCompatibilityGuardTest {
     }
 
     @Test
-    fun `app manifest declares foreground service permissions and defers POST_NOTIFICATIONS`() {
+    fun `app manifest declares foreground service and notification permissions`() {
         assertTrue("Expected to locate the app manifest", appManifest.isFile)
         val text = appManifest.readText()
 
@@ -54,9 +53,9 @@ class ForegroundServiceCompatibilityGuardTest {
             "FOREGROUND_SERVICE_SPECIAL_USE must be declared",
             text.contains("android.permission.FOREGROUND_SERVICE_SPECIAL_USE\"")
         )
-        assertFalse(
-            "POST_NOTIFICATIONS is intentionally deferred to P1E8 and must be absent in P1E7",
-            text.contains("POST_NOTIFICATIONS")
+        assertTrue(
+            "POST_NOTIFICATIONS must be declared from P1E8",
+            text.contains("android.permission.POST_NOTIFICATIONS\"")
         )
     }
 
@@ -116,11 +115,11 @@ class ForegroundServiceCompatibilityGuardTest {
         val text = terminalManifest.readText()
 
         assertFalse(
-            "foregroundServiceType must not be declared in the API-29 terminal manifest",
+            "foregroundServiceType must not be declared in the terminal manifest overlay-free source",
             text.contains("foregroundServiceType")
         )
         assertFalse(
-            "specialUse must not appear in the API-29 terminal manifest",
+            "specialUse must not appear in the terminal source manifest",
             text.contains("specialUse")
         )
     }
@@ -169,11 +168,11 @@ class ForegroundServiceCompatibilityGuardTest {
         val termuxText = termuxActivity.readText()
         assertTrue(
             "TermuxActivity must launch TermuxService with startForegroundService",
-            termuxText.contains("startForegroundService(serviceIntent)")
+            termuxText.contains("startForegroundService(mServiceIntent)")
         )
         assertTrue(
             "TermuxActivity must retain binding after the start",
-            termuxText.contains("doBindService(serviceIntent)")
+            termuxText.contains("doBindService(mServiceIntent)")
         )
     }
 
@@ -201,11 +200,11 @@ class ForegroundServiceCompatibilityGuardTest {
     }
 
     @Test
-    fun `terminal module SDK levels are unchanged`() {
+    fun `terminal-term compiles against API 36 while targetSdk stays 29`() {
         assertTrue("Expected to locate terminal-term/build.gradle", terminalBuild.isFile)
         val text = terminalBuild.readText()
 
-        assertTrue("terminal-term compileSdk must remain 29", text.contains("compileSdkVersion 29"))
+        assertTrue("terminal-term compileSdk must be 36", text.contains("compileSdkVersion 36"))
         assertTrue("terminal-term targetSdk must remain 29", text.contains("targetSdkVersion 29"))
         assertTrue("terminal-term minSdk must remain 21", text.contains("minSdkVersion 21"))
     }
