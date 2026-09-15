@@ -16,7 +16,7 @@ apply plugin: 'de.undercouch.download'
 
 android {
     namespace 'io.github.lord1egypt.prootx'
-    compileSdkVersion 30
+    compileSdkVersion 36
     ndkVersion "21.4.7075529"
 
     buildFeatures {

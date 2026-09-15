@@ -201,6 +201,6 @@ class AppsListFragment : Fragment(), AppsListAdapter.AppsClickHandler {
 
     private fun getProotXVersion(): String {
         val info = activityContext.packageManager.getPackageInfo(activityContext.packageName, 0)
-        return info.versionName
+        return info.versionName!!
     }
 }
