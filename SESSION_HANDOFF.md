@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-15 (CI-R1 Android SDK bootstrap remediation: PASS)
+Last updated: 2026-09-15 (P1E0 Android 16 readiness audit: PASS — P1E IN PROGRESS)
 
 ## Current Objective
 
@@ -13,25 +13,24 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**CI-R1 — Android SDK Bootstrap Remediation**: **PASS**. GitHub Actions SDK bootstrap
-restored: `android-actions/setup-android@v3` now runs with `packages: ''` (its default
-`tools platform-tools` install broke when the legacy `tools` package retired) and
-`platform-tools` is installed explicitly by the pinned `sdkmanager` step. Remote run
-`34919847167` (commit `4f3c812`) is **green** end-to-end. **P1D remains CLOSED / PASS.**
+**P1E0 — Android 16 Toolchain + Platform Readiness Audit**: **PASS** (read-only). The audit
+determined the safe path from compileSdk/targetSdk 30 to **36**. Minimum API-36 toolchain:
+**AGP 8.10 / Gradle 8.11.1 / JDK 17** (Build Tools 35.0.0); Kotlin must move to **2.2.x**,
+which cannot run on the current Gradle 6.7.1/AGP 4.2.2 — so a staged bridge is required. Full
+audit + approved sequence (P1E1–P1E9): `docs/P1E_ANDROID16_MIGRATION_PLAN.md`.
 
 ## Current Milestone
 
-**P1E — SDK 36 / Manifest Compatibility**: NOT STARTED.
+**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS (P1E0 done; P1E1 not started).
 
 ## What Was Completed
 
-- Diagnosed the CI failure (`setup-android@v3` → `sdkmanager tools` → "Failed to find
-  package 'tools'") as an upstream SDK package retirement, occurring before any ProotX step.
-- Applied the minimal authorized workflow fix (`.github/workflows/build.yml`): `packages: ''`
-  on `setup-android`; explicit `platform-tools` in the existing pinned `sdkmanager` call;
-  corrected a stale stage-2 comment. No action major-version, pin, trigger, or JDK-stage change.
-- Verified remote green: SDK bootstrap PASS, JDK 8 build PASS, `326/36` tests, androidTest
-  APK PASS, both artifacts uploaded.
+- Inventoried all four modules (SDK matrix, plugins, DSL usage), resolved dependency graph,
+  non-transitive-R risk, exported/PendingIntent/FGS/notification/storage/package-visibility/
+  dynamic-receiver surfaces, and API 34/35/36 behavior applicability.
+- Confirmed the shipped APK has **no `sharedUserId`** (the terminal library's attribute is
+  inert), and that `:app` code does **not** reference `com.termux.*` at all (structural finding).
+- Authored the approved migration plan; **no** source/manifest/Gradle/workflow change.
 
 ## What Was Intentionally NOT Changed
 
@@ -53,7 +52,7 @@ restored: `android-actions/setup-android@v3` now runs with `packages: ''` (its d
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (CI-R1) | `4f3c812a54b941c0293ab01d54689d391530e14c` |
+| Feature HEAD (P1E0 baseline) | `4c6028ec2483f85cad9e31aad47458729550bdfa` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -116,10 +115,10 @@ verified on a device at the Golden Candidate gate; no physical acceptance is cla
 
 ## Next Safe Action
 
-**P1E — SDK 36 / Manifest Compatibility — NOT STARTED.** It owns `compileSdk`/`targetSdk`
-uplift, `android:exported` and modern manifest compatibility, and SDK-driven source changes.
-Sentry and Billing remain active and require a dedicated decision before any change. Do not
-begin without explicit authorization.
+**P1E1 — Kotlin/AndroidX codegen + build-tooling bridge (Gradle 7.6 / AGP 7.4.2 / Kotlin 1.9.x
+/ JDK 17) — NOT STARTED.** See `docs/P1E_ANDROID16_MIGRATION_PLAN.md`. Sentry and Billing
+remain active and require a dedicated decision before any change. Do not begin without
+explicit authorization.
 
 ## Resume Procedure
 

@@ -364,3 +364,29 @@
 - No application source, dependency, Gradle/AGP/Kotlin, SDK/NDK, manifest, resource, runtime,
   UI, or database change.
 - **CI-R1 CLOSED / PASS. P1D remains CLOSED / PASS. P1E NOT STARTED.**
+
+## P1E0 — Android 16 Toolchain + Platform Readiness Audit (2026-09-15) — PASS
+
+- Read-only audit defining the safe path from compileSdk/targetSdk **30 → 36**.
+- Official API-36 requirement: **AGP 8.10 is the minimum** (AGP 8.9 caps at API 35); AGP 8.10
+  needs Gradle **8.11.1**, Build Tools **35.0.0**, JDK **17**; AGP 8.11 needs Gradle 8.13.
+- Kotlin 1.4.32 (KGP) cannot run on Gradle 8/AGP 8. Minimum KGP for AGP 8.10 is **2.2.0**;
+  Kotlin 1.9.10 is the highest compatible with the last AGP 7 line, enabling an intermediate
+  bridge. Moshi 1.9.3 (the Kotlin 1.4 bridge) must move with Kotlin; Navigation Safe Args
+  2.1.0, Jacoco 0.8.4 and gradle-download-task 3.4.3 are Gradle-8-incompatible.
+- AGP 8 breakage inventory: `namespace` required + manifest `package` removed (all 4 modules),
+  `buildFeatures { buildConfig true }` required in `:app`, `lintOptions`→`lint`, custom-task
+  API fixes. Non-transitive R verified **safe** (no cross-module `R` references).
+- Platform findings: 2 exported fixes, 6 PendingIntents needing `FLAG_IMMUTABLE`, 2 FGS needing
+  a `specialUse` type + `FOREGROUND_SERVICE_SPECIAL_USE`, `POST_NOTIFICATIONS` for visibility,
+  a **HIGH** storage finding (`PermissionHandler` gates launch on non-grantable
+  `READ/WRITE_EXTERNAL_STORAGE`), 1 custom dynamic receiver needing an export flag, and
+  API 34/35/36 applicability (predictive back, edge-to-edge, large-screen).
+- Structural findings: the shipped APK has **no `sharedUserId`**; `:app` references **no**
+  `com.termux.*` (the embedded terminal library is unused by app code).
+- Approved sequence P1E1–P1E9 + target stack recorded in
+  `docs/P1E_ANDROID16_MIGRATION_PLAN.md`. Recommended target: **AGP 8.10.x / Gradle 8.11.1 /
+  Kotlin 2.2.x / JDK 17 / Build Tools 35.0.0 / compileSdk 36 / targetSdk 36**, NDK 21.4
+  preserved through P1E (P1F owns NDK/16 KB).
+- **No source, manifest, Gradle, wrapper, workflow, or resource change.** P1E IN PROGRESS;
+  next authorized candidate **P1E1** (not started).

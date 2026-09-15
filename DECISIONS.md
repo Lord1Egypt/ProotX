@@ -390,3 +390,57 @@
   `LocalBroadcastManager` is deprecated technology — its eventual replacement is recorded as
   deferred debt, not done here.
 - **Affected components:** `app/build.gradle`, `P1D7-U2`, `P1D8+`.
+
+---
+
+## D023 — API 36 toolchain target and staged P1E migration
+
+- **Date:** 2026-09-15
+- **Status:** Accepted (P1E0)
+- **Decision:** The API-36 target stack is **AGP 8.10.x / Gradle 8.11.1 / Kotlin (KGP) 2.2.x /
+  JDK 17 / Build Tools 35.0.0 / compileSdk 36 / targetSdk 36**, keeping `minSdk 21` and, if
+  AGP 8.10 accepts it, **NDK 21.4.7075529** (NDK modernization and 16 KB alignment remain
+  P1F's). Because Kotlin 1.4.32 cannot run on Gradle 8/AGP 8 and Moshi 1.9.3 is coupled to it,
+  the migration is **staged** through an intermediate bridge:
+  **P1E1** Gradle 7.6 / AGP 7.4.2 / Kotlin 1.9.x / Moshi 1.15.x / Navigation 2.7.x / JDK 17
+  (compileSdk/targetSdk still 30) → **P1E2** the API-36 toolchain + AGP 8 DSL changes →
+  **P1E3** compileSdk 36 (targetSdk 30) → **P1E4–P1E8** behavior/permission/manifest work →
+  **P1E9** SDK 36 regression. Full design: `docs/P1E_ANDROID16_MIGRATION_PLAN.md`.
+- **Reason:** Official tooling: the minimum AGP supporting API 36 is 8.10 (8.9 caps at 35),
+  requiring Gradle 8.11.1 and JDK 17; KGP's support matrix makes an AGP 7.4 / Gradle 7.6 /
+  Kotlin 1.9 intermediate the last station that bridges the old and new toolchains with bounded
+  risk. Separating the Kotlin/codegen jump (P1E1) from the AGP-8 DSL breakage (P1E2), and
+  raising targetSdk last, keeps one independently testable risk class per milestone.
+- **Alternatives considered:** A single atomic jump to AGP 8.10/Gradle 8.11.1/Kotlin 2.2/JDK 17
+  (rejected — entangles the Kotlin↔Moshi codegen leap with AGP-8 DSL breakage); jumping through
+  more AGP 8 stations (rejected — crosses the AGP 8 defaults anyway); adopting AGP 8.11/Gradle
+  8.13 (rejected — newer than necessary).
+- **Trade-offs:** A larger total milestone count; each step is independently verifiable and
+  reversible. NDK 21.4 may not be accepted by AGP 8.10 — if so it is a cross-phase blocker for
+  P1F, not something to absorb silently.
+- **Affected components:** `build.gradle`, `app/build.gradle`, `termux-app/*/build.gradle`,
+  `.github/workflows/build.yml`, `gradle/wrapper`, P1E1–P1E9.
+
+---
+
+## D024 — App-scoped storage; external-storage permissions are not part of the runtime contract
+
+- **Date:** 2026-09-15
+- **Status:** Accepted (P1E0)
+- **Decision:** ProotX's runtime uses only app-private/app-scoped storage
+  (`filesDir`, `getExternalFilesDir`, `getExternalFilesDirs`). It does **not** require
+  `READ_EXTERNAL_STORAGE`/`WRITE_EXTERNAL_STORAGE`. The current `PermissionHandler` gate that
+  blocks app/session launch on those permissions must be removed/replaced in **P1E5** before
+  targetSdk reaches 33 (where `READ_EXTERNAL_STORAGE` becomes non-grantable and would
+  permanently block session launch). The manifest declarations and the terminal module's
+  `WRITE_EXTERNAL_STORAGE` request are removed in the same milestone.
+- **Reason:** Verified during P1E0 that no code path reads/writes public/shared external
+  storage; the permissions are legacy UserLAnd behavior. Retaining them would hard-block the
+  target-36 upgrade.
+- **Alternatives considered:** Keeping the permissions and requesting them anyway (rejected —
+  non-grantable at target 33+, would block launch); adding `MANAGE_EXTERNAL_STORAGE` (rejected —
+  not needed and Play-restricted).
+- **Trade-offs:** A deliberate runtime-permission behavior change, isolated to P1E5 with its own
+  regression validation.
+- **Affected components:** `PermissionHandler.kt`, `MainActivity.kt`, `AndroidManifest.xml`,
+  `terminal-term` manifest/`TermuxActivity`, P1E5.

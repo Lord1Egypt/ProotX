@@ -24,7 +24,10 @@
 >     - **P1D9 — AndroidX Core KTX 1.1.0 Alignment:** CLOSED / PASS
 >     - **P1D Final Dependency Closure Audit:** CLOSED / PASS (no blocker)
 >   - **CI-R1 — Android SDK Bootstrap Remediation:** CLOSED / PASS
->   - **P1E — SDK 36 / Manifest Compatibility:** NOT STARTED
+>   - **P1E — SDK 36 / Manifest Compatibility:** IN PROGRESS
+>     - **P1E0 — Android 16 Toolchain + Platform Readiness Audit:** CLOSED / PASS
+>       (plan: [`P1E_ANDROID16_MIGRATION_PLAN.md`](P1E_ANDROID16_MIGRATION_PLAN.md));
+>       next authorized candidate **P1E1** (not started)
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.

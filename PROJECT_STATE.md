@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-15 (P1D Final Dependency Closure Audit — P1D CLOSED / PASS)
+Last updated: 2026-09-15 (P1E0 Android 16 Toolchain + Platform Readiness Audit — PASS; P1E IN PROGRESS)
 
 ## Project Identity
 
@@ -42,25 +42,26 @@ Last updated: 2026-09-15 (P1D Final Dependency Closure Audit — P1D CLOSED / PA
 | P1D9 — AndroidX Core KTX 1.1.0 Alignment | **CLOSED / PASS** |
 | P1D Final Dependency Closure Audit | **CLOSED / PASS** |
 | CI-R1 — Android SDK Bootstrap Remediation | **CLOSED / PASS** |
-| P1E — SDK 36 / Manifest Compatibility | **NOT STARTED** |
+| P1E — SDK 36 / Manifest Compatibility | **IN PROGRESS** |
+| P1E0 — Android 16 Toolchain + Platform Readiness Audit | **CLOSED / PASS** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**CI-R1 — Android SDK Bootstrap Remediation: CLOSED / PASS.** GitHub Actions SDK bootstrap
-restored after the legacy `tools` package retired. `setup-android@v3` now runs with
-`packages: ''`, and `platform-tools` is installed explicitly by the pinned `sdkmanager` step.
-Remote run `34919847167` (commit `4f3c812`) is **green** end-to-end. **P1D remains
-CLOSED / PASS.** Next milestone: **P1E — SDK 36 / Manifest Compatibility (NOT STARTED)**. Do
-not start it from this document.
+**P1E0 — Android 16 Toolchain + Platform Readiness Audit: CLOSED / PASS.** The audit
+determined the safe path from compileSdk/targetSdk 30 to **36**. Minimum API-36 toolchain is
+**AGP 8.10 / Gradle 8.11.1 / JDK 17**; current Kotlin 1.4.32 cannot run on Gradle 8/AGP 8, so
+a staged bridge is required. Full audit + approved sequence: **`docs/P1E_ANDROID16_MIGRATION_PLAN.md`**.
+Next milestone: **P1E1 — Kotlin/AndroidX codegen + build-tooling bridge (Gradle 7.6 / AGP 7.4.2
+/ Kotlin 1.9.x / JDK 17) — NOT STARTED**. Do not start it from this document.
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `4f3c812a54b941c0293ab01d54689d391530e14c` | CI-R1 workflow fix (`ci: repair Android SDK bootstrap`); control-plane commit follows |
+| Feature HEAD | `4c6028ec2483f85cad9e31aad47458729550bdfa` | CI-R1 docs tip / P1E0 audit baseline; control-plane commit follows |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -223,6 +224,7 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1E — SDK 36 / Manifest Compatibility — NOT STARTED.** It owns `compileSdk`/`targetSdk`
-uplift, `android:exported` and modern manifest compatibility, Android platform/API behavior
-changes, and SDK-driven source changes. Do **not** start it from this document.
+**P1E1 — Kotlin/AndroidX codegen + build-tooling bridge (Gradle 7.6 / AGP 7.4.2 / Kotlin
+1.9.x / JDK 17) — NOT STARTED.** The full migration design and sequence (P1E1–P1E9) is in
+[`docs/P1E_ANDROID16_MIGRATION_PLAN.md`](docs/P1E_ANDROID16_MIGRATION_PLAN.md). Do **not**
+start it from this document.

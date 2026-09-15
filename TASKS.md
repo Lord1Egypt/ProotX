@@ -119,8 +119,21 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
   - [x] `packages: ''` on `setup-android`; explicit `platform-tools` in pinned `sdkmanager` step
   - [x] Remote run `34919847167` (commit `4f3c812`) green: bootstrap, build, `326/36` tests,
         androidTest APK, both artifacts
-- [ ] **P1E — SDK 36 / manifest compatibility** — NOT STARTED
-  - [ ] Raise `compileSdk`/`targetSdk`; add `android:exported` and related manifest work
+- [~] **P1E — SDK 36 / manifest compatibility** — IN PROGRESS
+  - Plan: `docs/P1E_ANDROID16_MIGRATION_PLAN.md`
+  - [x] **P1E0 — Android 16 toolchain + platform readiness audit** — PASS
+        (target: AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2.x / JDK 17 / Build Tools 35;
+        staged bridge required; no changes made)
+  - [ ] **P1E1 — Kotlin/AndroidX codegen + build-tooling bridge** (Gradle 7.6 / AGP 7.4.2 /
+        Kotlin 1.9.x / Moshi 1.15.x / Navigation 2.7.x / JDK 17) — NOT STARTED
+  - [ ] P1E2 — AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2.x / JDK 17 + AGP8 DSL — NOT STARTED
+  - [ ] P1E3 — compileSdk 36 (targetSdk still 30) — NOT STARTED
+  - [ ] P1E4 — API 31 exported + PendingIntent flags + receiver export flags — NOT STARTED
+  - [ ] P1E5 — storage/permission runtime compatibility — NOT STARTED
+  - [ ] P1E6 — FGS type/permission compatibility — NOT STARTED
+  - [ ] P1E7 — targetSdk 33/34 behavior + POST_NOTIFICATIONS — NOT STARTED
+  - [ ] P1E8 — targetSdk 35/36 behavior (edge-to-edge, predictive back, large screen) — NOT STARTED
+  - [ ] P1E9 — final SDK 36 regression build — NOT STARTED
 - [ ] **P1F — Modern native/NDK and 16 KB page readiness**
   - [ ] Update NDK / native toolchain; verify 16 KB page-size compatibility
 - [ ] **P1G — Modernization regression candidate and physical acceptance**
