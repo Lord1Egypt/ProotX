@@ -148,6 +148,7 @@ class FilesystemEditFragment : Fragment() {
         if (filesystem.isAppsFilesystem) {
             binding.inputFilesystemName.isEnabled = false
         }
+
         binding.inputFilesystemName.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(p0: Editable?) {
                 filesystem.name = p0.toString()
