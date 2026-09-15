@@ -298,3 +298,41 @@
 - Local: **326 tests / 36 suites / 0 failures**; app + androidTest builds green. Remote
   (run `34741460145`, commit `99f27c0`): all steps success, both APKs uploaded.
 - P1D remains IN PROGRESS; next action is the P1D Final Dependency Closure Audit.
+
+## P1D Final Dependency Closure Audit (2026-09-15) — PASS
+
+- Audited the complete direct dependency and plugin inventory across `root`, `:app`,
+  `:terminal-term`, `:terminal-view`, and `:terminal-emulator`, and inspected the resolved
+  graphs for `debugCompileClasspath`, `debugRuntimeClasspath`, `releaseRuntimeClasspath`,
+  `debugAndroidTestCompileClasspath`, `debugAndroidTestRuntimeClasspath`, and the unit-test
+  compile/runtime classpaths. **No dependency was changed.**
+- **Zero active direct pre-release artifacts** and **zero pre-release transitives** in every
+  resolved graph. `androidx.core:core-ktx` and `androidx.core:core` are coherent at `1.1.0`;
+  `androidx.collection:collection` resolves `1.1.0`.
+- `androidx.legacy` is **not** on the app compile classpath. It remains only via
+  `:terminal-term` (runtime, `legacy-support-core-ui:1.0.0`) and via `room-testing` +
+  `espresso-contrib` (androidTest, `legacy-support-core-utils:1.0.0`) — legitimate parents.
+- **Sentry** (`io.sentry:sentry-android:1.7.22`) and **Billing**
+  (`com.android.billingclient:billing-ktx:3.0.3`) confirmed **ACTIVE** production code
+  (`SentryLogger`/`Logger` consumers; `BillingManager`/`BillingClient`/`Purchase`,
+  `com.android.vending.BILLING`, `ProxyBillingActivity`); both left untouched.
+- Dead-dependency audit: every direct production dependency has a concrete consumer
+  (Sentry, Billing, Gson, SLF4J-nop backend, JArchiveLib, OkHttp, Moshi, Coroutines,
+  ConstraintLayout, SwipeRefreshLayout, LocalBroadcastManager). **No proven-dead dependency
+  found; nothing removed.**
+- Deferred dependency debt recorded for later dedicated milestones: Coroutines `1.0.0`
+  declaration superseded at resolution (`core` → `1.3.9` via `billing-ktx`, `android` →
+  `1.1.1` via `lifecycle-viewmodel-ktx:2.1.0`); Sentry, Billing, OkHttp `3.14.7`,
+  Moshi `1.9.3`, Gson `2.8.6`, JArchiveLib `0.8.0`, ConstraintLayout `1.1.3`,
+  LocalBroadcastManager `1.0.0` (deprecated tech), and the JUnit4/Mockito/AndroidX-Test
+  stack. AppCompat/Fragment/RecyclerView are consumed directly but supplied transitively;
+  ownership hardening is deferred. **None of these blocks P1E.**
+- Canonical verification: `:app:compileDebugKotlin`, `:app:kaptDebugKotlin`,
+  `:app:compileDebugUnitTestKotlin`, `:app:compileDebugAndroidTestKotlin`,
+  `:app:assembleDebugAndroidTest`, and `clean assembleDebug testDebugUnitTest` all
+  **BUILD SUCCESSFUL**; **326 tests / 36 suites / 0 failures / 0 errors / 0 skipped**.
+  Room 2.1.0 / schema 7 unchanged; merged debug manifest unchanged; APK keeps four ABIs and
+  the native support payload. No production source, test source, dependency, manifest, or
+  resource change.
+- **P1D is CLOSED / PASS.** Next milestone: **P1E — SDK 36 / Manifest Compatibility
+  (NOT STARTED)**.

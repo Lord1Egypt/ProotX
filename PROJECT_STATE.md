@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-12 (P1D9 — AndroidX Core KTX 1.1.0 alignment)
+Last updated: 2026-09-15 (P1D Final Dependency Closure Audit — P1D CLOSED / PASS)
 
 ## Project Identity
 
@@ -30,7 +30,7 @@ Last updated: 2026-09-12 (P1D9 — AndroidX Core KTX 1.1.0 alignment)
 | P1C2-U — Moshi Compatibility Unblocker | **CLOSED / BLOCKED (superseded)** |
 | P1C2-P — Moshi 1.9.3 / Kotlin 1.4 Bridge Probe | **CLOSED / BRIDGE_FOUND** |
 | P1C2 — Kotlin + Legacy Parcelize + Plugin Removal | **CLOSED / PASS** |
-| P1D — Dependency / AndroidX Modernization | **IN PROGRESS** |
+| P1D — Dependency / AndroidX Modernization | **CLOSED / PASS** |
 | P1D1 — Barista Removal / AndroidTest Build Restoration | **CLOSED / PASS** |
 | P1D2 — Dead Play Services Dependency Cleanup | **CLOSED / PASS** |
 | P1D3 — Lifecycle Extensions Removal / ViewModelProvider Migration | **CLOSED / PASS** |
@@ -40,22 +40,26 @@ Last updated: 2026-09-12 (P1D9 — AndroidX Core KTX 1.1.0 alignment)
 | P1D7 — Material Components 1.1.0 Stable Migration | **CLOSED / PASS** |
 | P1D8 — Arch Core Testing 2.1.0 Stabilization | **CLOSED / PASS** |
 | P1D9 — AndroidX Core KTX 1.1.0 Alignment | **CLOSED / PASS** |
+| P1D Final Dependency Closure Audit | **CLOSED / PASS** |
+| P1E — SDK 36 / Manifest Compatibility | **NOT STARTED** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1D9 — AndroidX Core KTX 1.1.0 Alignment: COMPLETE.** The direct `androidx.core:core-ktx`
-declaration moved from 1.0.2 to **1.1.0** stable, matching the already-resolved
-`androidx.core:core` 1.1.x family. No source change; no direct `core`/`collection` dependency
-added. Next action is the **P1D Final Dependency Closure Audit** (not started).
+**P1D — Dependency / AndroidX Modernization: CLOSED / PASS.** The final closure audit found
+**no dependency blocker**. All direct AndroidX/application dependencies are stable (zero
+active direct pre-releases; zero pre-release transitives), `core-ktx`/`core` are coherent at
+`1.1.0`, and the canonical build + `326/36` JVM tests are green. Remaining dependency debt is
+classified and deferred (see Deferred Findings). Next milestone: **P1E — SDK 36 / Manifest
+Compatibility (NOT STARTED)**. Do not start it from this document.
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `99f27c0dba03d7ed456c7389a696ee3875eb4ba0` | P1D9 commits (Core KTX 1.1.0, guard); updated by the follow-up control-plane commit |
+| Feature HEAD | `6b442aa5ea6de95dc17e4ecbdfd849b3ad1d9088` | P1D9 docs tip / P1D closure-audit baseline; advanced by the closure control-plane commit |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -178,14 +182,36 @@ The canonical list lives in
   Arch Core family now coherent at 2.1.0. Test-only.
 - **Resolved in P1D9:** misaligned `androidx.core:core-ktx` (1.0.2 → **1.1.0** stable), now
   matching the `androidx.core:core` 1.1.x family; `collection` resolves 1.1.0.
+- **Classified in P1D closure audit (deferred dependency debt, non-blocking).** None of these
+  blocks P1E; each requires a dedicated future milestone/decision:
+  - **Coroutines:** direct `kotlinx-coroutines-core`/`-android` declaration is `1.0.0`, but
+    resolution selects `core` `1.3.9` (via `billing-ktx:3.0.3`) and `android` `1.1.1` (via
+    `lifecycle-viewmodel-ktx:2.1.0`). Source compiles against the resolved versions.
+  - **Sentry** `io.sentry:sentry-android:1.7.22` — ACTIVE; legacy API (`Sentry.init`,
+    `AndroidSentryClientFactory`, `EventBuilder`) deeply coupled to production logging;
+    dedicated migration.
+  - **Billing** `com.android.billingclient:billing-ktx:3.0.3` — ACTIVE; upgrade requires
+    API/source migration (Play Billing library policy is a later release concern).
+  - **OkHttp** `3.14.7`, **Moshi** `1.9.3` (pinned as the verified Kotlin 1.4 bridge),
+    **Gson** `2.8.6` (rationalize/remove vs Moshi), **JArchiveLib** `0.8.0`,
+    **SLF4J-nop** logging backend.
+  - **UI support:** `androidx.constraintlayout:constraintlayout:1.1.3`; and
+    `androidx.appcompat` / `androidx.fragment` / `androidx.recyclerview` are consumed
+    directly but supplied transitively — explicit ownership hardening deferred.
+  - **LocalBroadcastManager** `1.0.0` — deprecated technology; replacement deferred.
+  - **Test stack:** JUnit `4.12`, Mockito `2.23.0` (+inline), mockito-kotlin `2.1.0`,
+    AndroidX Test `1.2.0` / Ext-JUnit `1.1.0` / Espresso `3.2.0` / UiAutomator `2.2.0` /
+    Orchestrator `1.2.0`.
+- **P1D closure blockers found:** none.
 - **Correction:** Sentry and Billing are **ACTIVE** production dependencies (SentryLogger /
   Sentry; BillingManager / BillingClient / Purchase) — they are **not** unused and were left
   untouched.
 - **Still open:** prebuilt rootfs profile remnant; network-dependent unit tests; Play-readiness
   gaps (→ P1E); dynamic time-based `versionCode`; LocalBroadcastManager modernization
-  (deprecated tech; deferred).
+  (deprecated tech; deferred, and classified above).
 
 ## Next Safe Action
 
-**P1D Final Dependency Closure Audit — NOT STARTED.** This audit will determine whether P1D
-can close before P1E. Do **not** start it from this document.
+**P1E — SDK 36 / Manifest Compatibility — NOT STARTED.** It owns `compileSdk`/`targetSdk`
+uplift, `android:exported` and modern manifest compatibility, Android platform/API behavior
+changes, and SDK-driven source changes. Do **not** start it from this document.

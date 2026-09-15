@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-12 (P1D9 — AndroidX Core KTX 1.1.0 alignment: PASS)
+Last updated: 2026-09-15 (P1D Final Dependency Closure Audit: PASS — P1D CLOSED)
 
 ## Current Objective
 
@@ -13,26 +13,39 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1D9 — AndroidX Core KTX 1.1.0 Alignment**: **PASS**.
-The direct `androidx.core:core-ktx` declaration moved from 1.0.2 to **1.1.0** stable, matching
-the resolved `androidx.core:core` 1.1.x family. No source change.
+**P1D Final Dependency Closure Audit**: **PASS**. The audit found **no dependency blocker**;
+P1D is now **CLOSED / PASS**. All direct dependencies are stable (zero active direct
+pre-releases; zero pre-release transitives), `core-ktx`/`core` are coherent at `1.1.0`, and
+the canonical build plus `326/36` JVM tests are green. No dependency, source, manifest, or
+resource change was made; remaining dependency debt is classified and deferred.
 
 ## Current Milestone
 
-**P1D Final Dependency Closure Audit**: NOT STARTED.
+**P1E — SDK 36 / Manifest Compatibility**: NOT STARTED.
 
 ## What Was Completed
 
-- Moved `ktx_version` `1.0.2` → `1.1.0`; `androidx.core:core-ktx` remains driven by it.
-- Confirmed no direct `androidx.collection` usage (no direct dependency added).
-- Added `CoreKtxAlignmentGuardTest`.
+- Full direct dependency/plugin inventory across all modules and resolved-graph inspection
+  (`debug`/`release`/androidTest/unit-test classpaths).
+- Pre-release scan (none), dead-dependency audit (none proven dead), Sentry/Billing/Coroutines
+  /OkHttp/Moshi/Gson/JArchiveLib/UI/test-stack classification.
+- Canonical verification build: compile, kapt, app unit-test compile, androidTest compile,
+  androidTest APK, and `clean assembleDebug testDebugUnitTest` — all green; **326 / 36**.
+- Control-plane closure record; no production or test source change.
 
 ## What Was Intentionally NOT Changed
 
+- **No dependency version was changed** (no upgrade, addition, removal, force, or exclusion);
+  the closure audit only inspected and classified.
+- Deferred (non-blocking) debt recorded: Coroutines (declared `1.0.0`, resolved `1.3.9`/
+  `1.1.1`), Sentry `1.7.22`, Billing `3.0.3`, OkHttp `3.14.7`, Moshi `1.9.3`, Gson `2.8.6`,
+  JArchiveLib `0.8.0`, ConstraintLayout `1.1.3`, LocalBroadcastManager `1.0.0`, and the
+  JUnit4/Mockito/AndroidX-Test stack.
 - Kotlin 1.4.32 (jvmTarget 1.8), Moshi 1.9.3, Gradle 6.7.1, AGP 4.2.2, Lifecycle 2.2.0,
-  Navigation 2.1.0, Room 2.1.0, and all other dependency versions; SDK/NDK/build-tools.
+  Navigation 2.1.0, Room 2.1.0, Core KTX 1.1.0, and all other dependency versions;
+  SDK/NDK/build-tools.
 - Preference keys/defaults/dependencies/persistence, SharedPreferences names, AutoApp
-  clearing, Proot debug settings. No DataStore migration; no `preference-ktx` added.
+  clearing, Proot debug settings.
 - Runtime, UI, navigation, database, PRoot, network, billing, Sentry, assets.
 
 ## Current Repository State
@@ -40,7 +53,7 @@ the resolved `androidx.core:core` 1.1.x family. No source change.
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (P1D9) | `99f27c0dba03d7ed456c7389a696ee3875eb4ba0` |
+| Feature HEAD (P1D closure audit baseline) | `6b442aa5ea6de95dc17e4ecbdfd849b3ad1d9088` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -68,10 +81,14 @@ SDK setup (P1A), `jcenter()` (P1B), Kotlin/Android Extensions (P1C), Barista (P1
 Play Services (P1D2), Lifecycle extensions (P1D3), Navigation pre-release (P1D4), Room
 pre-release (P1D5), Preference pre-release (P1D6), Material pre-release (P1D7), Arch Core
 testing pre-release (P1D8), Core KTX misalignment (P1D9). **Sentry and Billing are ACTIVE
-production dependencies, not unused; both were left untouched.** Still open: prebuilt rootfs
-profile remnant; network-dependent unit tests; Play-readiness gaps (→ P1E); dynamic time-based
-`versionCode`;
-`LocalBroadcastManager` modernization (deprecated tech, deferred).
+production dependencies, not unused; both were left untouched.** Newly classified in the P1D
+closure audit (deferred, **non-blocking**): Coroutines (`1.0.0` declaration superseded at
+resolution), Sentry `1.7.22`, Billing `3.0.3`, OkHttp `3.14.7`, Moshi `1.9.3`, Gson `2.8.6`,
+JArchiveLib `0.8.0`, ConstraintLayout `1.1.3`, transitive AppCompat/Fragment/RecyclerView
+ownership, LocalBroadcastManager, and the JUnit4/Mockito/AndroidX-Test stack. Still open:
+prebuilt rootfs profile remnant; network-dependent unit tests; Play-readiness gaps (→ P1E);
+dynamic time-based `versionCode`; `LocalBroadcastManager` modernization (deprecated tech,
+deferred).
 
 **Deferred physical checks:** the `EditTextPreference` numeric input and all Material widget
 appearance/interaction (BottomNavigationView, TextInputLayout/EditText, FAB, dialogs) must be
@@ -94,9 +111,10 @@ verified on a device at the Golden Candidate gate; no physical acceptance is cla
 
 ## Next Safe Action
 
-**P1D Final Dependency Closure Audit — NOT STARTED.** It will determine whether P1D can close
-before P1E. (Note: Sentry and Billing are active and require a dedicated decision before any
-change.) Do not begin without explicit authorization.
+**P1E — SDK 36 / Manifest Compatibility — NOT STARTED.** It owns `compileSdk`/`targetSdk`
+uplift, `android:exported` and modern manifest compatibility, and SDK-driven source changes.
+Sentry and Billing remain active and require a dedicated decision before any change. Do not
+begin without explicit authorization.
 
 ## Resume Procedure
 

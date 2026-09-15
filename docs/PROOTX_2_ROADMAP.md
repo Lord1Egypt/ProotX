@@ -11,7 +11,7 @@
 >     - **P1C1 — Synthetic Views → View Binding:** CLOSED / PASS
 >     - **P1C2-P — Moshi 1.9.3 / Kotlin 1.4 Bridge Probe:** CLOSED / BRIDGE_FOUND
 >     - **P1C2 — Kotlin + Legacy Parcelize + Plugin Removal:** CLOSED / PASS
->   - **P1D — Dependency / AndroidX Modernization:** IN PROGRESS
+>   - **P1D — Dependency / AndroidX Modernization:** CLOSED / PASS
 >     - **P1D1 — Barista Removal / AndroidTest Build Restoration:** CLOSED / PASS
 >     - **P1D2 — Dead Play Services Dependency Cleanup:** CLOSED / PASS
 >     - **P1D3 — Lifecycle Extensions / ViewModelProvider Migration:** CLOSED / PASS
@@ -22,6 +22,8 @@
 >       - **P1D7-U2 — Explicit Legacy Replacements + Material Final Retry:** CLOSED / PASS
 >     - **P1D8 — Arch Core Testing 2.1.0 Stabilization:** CLOSED / PASS
 >     - **P1D9 — AndroidX Core KTX 1.1.0 Alignment:** CLOSED / PASS
+>     - **P1D Final Dependency Closure Audit:** CLOSED / PASS (no blocker)
+>   - **P1E — SDK 36 / Manifest Compatibility:** NOT STARTED
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -200,6 +202,26 @@ deferred to the appropriate later phase.
     declaration moved from 1.0.2 to **1.1.0** stable, matching the resolved
     `androidx.core:core` 1.1.x family. No direct `collection`/`core` dependency was required;
     no source change.
+19. **P1D Final Dependency Closure Audit — CLOSED / PASS (2026-09-15).** No dependency
+    blocker was found: zero active direct pre-releases, zero pre-release transitives in every
+    resolved graph, `core-ktx`/`core` coherent at `1.1.0`, and the canonical build + `326/36`
+    JVM tests green. The audit produced a **classified deferred-debt backlog** (each item
+    requires a dedicated future milestone/decision and none blocks P1E):
+    - **Coroutines** — direct `1.0.0` declaration superseded at resolution (`core` `1.3.9` via
+      `billing-ktx:3.0.3`, `android` `1.1.1` via `lifecycle-viewmodel-ktx:2.1.0`).
+    - **Sentry** `1.7.22` — ACTIVE; legacy API (`Sentry.init`,
+      `AndroidSentryClientFactory`, `EventBuilder`) coupled to production logging.
+    - **Billing** `3.0.3` — ACTIVE; upgrade is API/source migration and a Play/release-policy
+      concern, not a P1E prerequisite.
+    - **Networking/serialization** — OkHttp `3.14.7`, Moshi `1.9.3` (verified Kotlin 1.4
+      bridge), Gson `2.8.6` (rationalization/removal).
+    - **Other** — JArchiveLib `0.8.0`, SLF4J-nop `1.7.26`, ConstraintLayout `1.1.3`,
+      LocalBroadcastManager `1.0.0` (deprecated tech), and the JUnit4 / Mockito `2.23.0` /
+      mockito-kotlin `2.1.0` / AndroidX-Test stack.
+    - **Ownership** — `androidx.appcompat`, `androidx.fragment`, and `androidx.recyclerview`
+      are consumed directly but supplied transitively; explicit ownership hardening deferred.
+    - `androidx.legacy` remains only via `:terminal-term` (runtime) and
+      `room-testing`/`espresso-contrib` (androidTest) — legitimate parents, not excluded.
 
 ## Non-goals for P0
 

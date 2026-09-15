@@ -66,7 +66,7 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
     - [x] Verify Kotlin 1.3.61 + Moshi 1.9.3 (PASS)
     - [x] Verify the missing cell Kotlin 1.4.32 + Moshi 1.9.3 (kapt PASS, full build PASS)
     - [x] Commit the verified bridge (Kotlin 1.4.32 + Moshi 1.9.3); remote CI green
-- [~] **P1D — AndroidX / dependency modernization** — IN PROGRESS
+- [x] **P1D — AndroidX / dependency modernization** — CLOSED / PASS
   - [x] **P1D1 — Remove Barista / restore androidTest build** — PASS
     - [x] Remove `com.schibsted.spain:barista:3.1.0`
     - [x] Migrate Barista usage to AndroidX Espresso (core/contrib/intents 3.2.0)
@@ -108,11 +108,13 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
     - [x] `ktx_version` 1.0.2 → 1.1.0 (matches resolved `core` 1.1.0)
     - [x] No direct `collection`/`core` dependency needed
     - [x] Guard Core KTX alignment
-  - [ ] **P1D Final Dependency Closure Audit** — NOT STARTED (determines whether P1D closes before P1E)
-  - [ ] Update AndroidX and third-party dependencies to supported versions
+  - [x] **P1D Final Dependency Closure Audit** — PASS (no dependency blocker; P1D CLOSED)
+  - [ ] Dependency modernization beyond the accepted baseline — **DEFERRED** to dedicated
+        future migrations: Coroutines, Sentry, Billing, OkHttp, Moshi, Gson, JArchiveLib,
+        ConstraintLayout, AppCompat/Fragment/RecyclerView ownership, test stack.
   - [ ] Sentry/Billing: **ACTIVE** production code — requires a dedicated decision before any change
         (not "unused")
-- [ ] **P1E — SDK 36 / manifest compatibility**
+- [ ] **P1E — SDK 36 / manifest compatibility** — NOT STARTED
   - [ ] Raise `compileSdk`/`targetSdk`; add `android:exported` and related manifest work
 - [ ] **P1F — Modern native/NDK and 16 KB page readiness**
   - [ ] Update NDK / native toolchain; verify 16 KB page-size compatibility
