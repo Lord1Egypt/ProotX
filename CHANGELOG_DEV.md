@@ -390,3 +390,26 @@
   preserved through P1E (P1F owns NDK/16 KB).
 - **No source, manifest, Gradle, wrapper, workflow, or resource change.** P1E IN PROGRESS;
   next authorized candidate **P1E1** (not started).
+
+## P1E1-P — Kotlin / AGP Build-Tooling Bridge Compatibility Probe (2026-09-15) — BRIDGE_FOUND
+
+- Disposable compatibility probe; **all experimental edits reverted** (`git status` clean), no
+  implementation committed.
+- Proven intermediate bridge: **Gradle 7.6.4 / AGP 7.4.2 / Kotlin (KGP) 1.9.25 / Moshi 1.15.2
+  (KAPT) / Navigation 2.3.5 / JDK 17 / NDK 21.4.7075529**, with **JaCoCo 0.8.8** (+
+  `jacoco.excludes = ['jdk.internal.*']`) and test-only **Mockito 4.11.0**. compileSdk/
+  targetSdk/minSdk unchanged (30/30/21; terminal 29/29/21).
+- Probe findings: AGP 7.4.2 requires KGP ≥ 1.5.20; Safe Args 2.1.0 fails Gradle-7.6 task
+  validation; Navigation 2.5.3's whole graph needs compileSdk ≥ 31, so **2.3.5** is the smallest
+  working Navigation line; 7 behavior-neutral Kotlin-1.9 source fixes required; JaCoCo 0.8.4
+  fails on JDK 17; Mockito 2.23.0/Byte Buddy 1.9 cannot run on JDK 17. `gradle-download-task`
+  3.4.3 and the ktlint `JavaExec` task need **no** change.
+- Transitive movement: fragment 1.1.0→1.2.4, lifecycle→2.2.0, activity→1.1.0, core 1.1.0→1.3.0
+  (core-ktx stays 1.1.0), okio 1.17.2→3.7.0 (Moshi 1.15.2). No pre-release artifacts.
+- Local canonical gate: `clean assembleDebug testDebugUnitTest` = **36 suites / 326 tests /
+  0 failures / 0 errors / 0 skipped**, plus compile/kapt/androidTest PASS.
+- P1E0 corrections recorded: API-36 minimum AGP is **8.9.1** (final target stays 8.10.x);
+  KGP **1.9.20–1.9.25** supports AGP through 8.1.0 (not "1.9.10 highest for AGP 7.4"); Moshi
+  1.15.x KAPT is a **Kotlin 1.9** bridge only — **KSP migration required before Kotlin 2.2**.
+- Revised sequence: **P1E1** bridge → **P1E2** Moshi KAPT→KSP → **P1E3** AGP 8.10/Kotlin 2.2 →
+  compileSdk/platform milestones. **P1E1 NOT STARTED.**

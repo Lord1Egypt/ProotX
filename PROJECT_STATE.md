@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-15 (P1E0 Android 16 Toolchain + Platform Readiness Audit — PASS; P1E IN PROGRESS)
+Last updated: 2026-09-15 (P1E1-P bridge probe — BRIDGE_FOUND; P1E IN PROGRESS)
 
 ## Project Identity
 
@@ -44,24 +44,30 @@ Last updated: 2026-09-15 (P1E0 Android 16 Toolchain + Platform Readiness Audit �
 | CI-R1 — Android SDK Bootstrap Remediation | **CLOSED / PASS** |
 | P1E — SDK 36 / Manifest Compatibility | **IN PROGRESS** |
 | P1E0 — Android 16 Toolchain + Platform Readiness Audit | **CLOSED / PASS** |
+| P1E1-P — Kotlin / AGP Build-Tooling Bridge Compatibility Probe | **CLOSED / BRIDGE_FOUND** |
+| P1E1 — Kotlin/AndroidX Codegen + Build-Tooling Bridge | **NOT STARTED** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1E0 — Android 16 Toolchain + Platform Readiness Audit: CLOSED / PASS.** The audit
-determined the safe path from compileSdk/targetSdk 30 to **36**. Minimum API-36 toolchain is
-**AGP 8.10 / Gradle 8.11.1 / JDK 17**; current Kotlin 1.4.32 cannot run on Gradle 8/AGP 8, so
-a staged bridge is required. Full audit + approved sequence: **`docs/P1E_ANDROID16_MIGRATION_PLAN.md`**.
-Next milestone: **P1E1 — Kotlin/AndroidX codegen + build-tooling bridge (Gradle 7.6 / AGP 7.4.2
-/ Kotlin 1.9.x / JDK 17) — NOT STARTED**. Do not start it from this document.
+**P1E1-P — Build-Tooling Bridge Compatibility Probe: CLOSED / BRIDGE_FOUND.** A coherent
+intermediate bridge was proven locally (disposable, fully reverted): **Gradle 7.6.4 / AGP
+7.4.2 / Kotlin 1.9.25 / Moshi 1.15.2 (KAPT) / Navigation 2.3.5 / JDK 17 / NDK 21.4.7075529**,
+with **JaCoCo 0.8.8 + `jdk.internal.*` exclusion** and test-only **Mockito 4.11.0**; canonical
+`clean assembleDebug testDebugUnitTest` = **36 suites / 326 tests / 0 failures / 0 errors /
+0 skipped**. P1E0 factual corrections and the revised sequence (P1E1 bridge → P1E2 Moshi
+KAPT→KSP → P1E3 AGP 8.10/Kotlin 2.2 → platform milestones) are recorded in
+[`docs/P1E_ANDROID16_MIGRATION_PLAN.md`](docs/P1E_ANDROID16_MIGRATION_PLAN.md). Next milestone:
+**P1E1 — Kotlin/AndroidX codegen + build-tooling bridge — NOT STARTED**. Do not start it from
+this document.
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Feature HEAD | `4c6028ec2483f85cad9e31aad47458729550bdfa` | CI-R1 docs tip / P1E0 audit baseline; control-plane commit follows |
+| Feature HEAD | `577b6de98a1c4eceab0dd0e129711ad118ad935f` | P1E0 docs tip / P1E1-P probe baseline; control-plane commit follows |
 | `develop` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Equals baseline |
 | `main` HEAD | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` | Stable; unchanged since P0 |
 | Baseline tag | `v1.0.0-baseline` | Annotated tag object `edbabdf57c0d64264fae19f1a0298d9de6d82c5c` |
@@ -224,7 +230,8 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1E1 — Kotlin/AndroidX codegen + build-tooling bridge (Gradle 7.6 / AGP 7.4.2 / Kotlin
-1.9.x / JDK 17) — NOT STARTED.** The full migration design and sequence (P1E1–P1E9) is in
-[`docs/P1E_ANDROID16_MIGRATION_PLAN.md`](docs/P1E_ANDROID16_MIGRATION_PLAN.md). Do **not**
+**P1E1 — Kotlin/AndroidX codegen + build-tooling bridge (Gradle 7.6.4 / AGP 7.4.2 / Kotlin
+1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 / JDK 17) — NOT STARTED.** Exact version set and
+required behavior-neutral source fixes are in
+[`docs/P1E_ANDROID16_MIGRATION_PLAN.md`](docs/P1E_ANDROID16_MIGRATION_PLAN.md) §15.1. Do **not**
 start it from this document.

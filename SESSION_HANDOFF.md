@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-15 (P1E0 Android 16 readiness audit: PASS — P1E IN PROGRESS)
+Last updated: 2026-09-15 (P1E1-P bridge probe: BRIDGE_FOUND — P1E IN PROGRESS)
 
 ## Current Objective
 
@@ -13,24 +13,34 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1E0 — Android 16 Toolchain + Platform Readiness Audit**: **PASS** (read-only). The audit
-determined the safe path from compileSdk/targetSdk 30 to **36**. Minimum API-36 toolchain:
-**AGP 8.10 / Gradle 8.11.1 / JDK 17** (Build Tools 35.0.0); Kotlin must move to **2.2.x**,
-which cannot run on the current Gradle 6.7.1/AGP 4.2.2 — so a staged bridge is required. Full
-audit + approved sequence (P1E1–P1E9): `docs/P1E_ANDROID16_MIGRATION_PLAN.md`.
+**P1E1-P — Build-Tooling Bridge Compatibility Probe**: **BRIDGE_FOUND** (disposable;
+fully reverted). A coherent intermediate bridge is proven locally: **Gradle 7.6.4 / AGP 7.4.2 /
+Kotlin 1.9.25 / Moshi 1.15.2 (KAPT) / Navigation 2.3.5 / JDK 17 / NDK 21.4.7075529**,
+with JaCoCo **0.8.8** (+`jdk.internal.*` exclusion) and test-only Mockito **4.11.0** →
+canonical gate **326 tests / 36 suites / 0 failures/errors/skips**. See
+`docs/P1E_ANDROID16_MIGRATION_PLAN.md` §17.
 
 ## Current Milestone
 
-**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS (P1E0 done; P1E1 not started).
+**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS (P1E1-P done; P1E1 not started).
 
 ## What Was Completed
 
-- Inventoried all four modules (SDK matrix, plugins, DSL usage), resolved dependency graph,
-  non-transitive-R risk, exported/PendingIntent/FGS/notification/storage/package-visibility/
-  dynamic-receiver surfaces, and API 34/35/36 behavior applicability.
-- Confirmed the shipped APK has **no `sharedUserId`** (the terminal library's attribute is
-  inert), and that `:app` code does **not** reference `com.termux.*` at all (structural finding).
-- Authored the approved migration plan; **no** source/manifest/Gradle/workflow change.
+- Probe Cells 1–3 + final candidate (all disposable, reverted): attributed AGP 7.4.2's KGP
+  floor, Safe Args 2.1.0 task-validation break, Navigation 2.5.3 minCompileSdk wall, and the
+  smallest working Navigation (2.3.5).
+- Identified required JDK-17 fixes: JaCoCo 0.8.8 + exclusion, test-only Mockito 4.11.0, and 7
+  behavior-neutral Kotlin-1.9 source fixes.
+- Confirmed `gradle-download-task` 3.4.3 and the ktlint JavaExec task need **no** change.
+- Recorded P1E0 factual corrections and the revised sequence in the migration plan.
+- **No persistent implementation change** (only documentation).
+
+## What Was Intentionally NOT Changed
+
+- compileSdk/targetSdk/minSdk (30/30/21; terminal 29/29/21), NDK 21.4, manifests, production
+  source, Gradle files, wrapper, workflow, resources.
+- No `android:exported`, PendingIntent, FGS, storage or notification work (those are later P1E
+  milestones).
 
 ## What Was Intentionally NOT Changed
 
@@ -52,7 +62,7 @@ audit + approved sequence (P1E1–P1E9): `docs/P1E_ANDROID16_MIGRATION_PLAN.md`.
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Feature HEAD (P1E0 baseline) | `4c6028ec2483f85cad9e31aad47458729550bdfa` |
+| Feature HEAD (P1E1-P baseline) | `577b6de98a1c4eceab0dd0e129711ad118ad935f` |
 | `main` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | `develop` | `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
 | Baseline tag | `v1.0.0-baseline` → `94abf5fa520255bb10d087a6be3ba2bc70b0e127` |
@@ -115,10 +125,11 @@ verified on a device at the Golden Candidate gate; no physical acceptance is cla
 
 ## Next Safe Action
 
-**P1E1 — Kotlin/AndroidX codegen + build-tooling bridge (Gradle 7.6 / AGP 7.4.2 / Kotlin 1.9.x
-/ JDK 17) — NOT STARTED.** See `docs/P1E_ANDROID16_MIGRATION_PLAN.md`. Sentry and Billing
-remain active and require a dedicated decision before any change. Do not begin without
-explicit authorization.
+**P1E1 — Kotlin/AndroidX codegen + build-tooling bridge (Gradle 7.6.4 / AGP 7.4.2 / Kotlin
+1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 / JDK 17) — NOT STARTED.** See
+`docs/P1E_ANDROID16_MIGRATION_PLAN.md` §15.1 for the exact version set and required
+behavior-neutral source fixes. Sentry and Billing remain active and require a dedicated
+decision before any change. Do not begin without explicit authorization.
 
 ## Resume Procedure
 

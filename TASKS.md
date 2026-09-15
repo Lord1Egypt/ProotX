@@ -124,16 +124,19 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
   - [x] **P1E0 — Android 16 toolchain + platform readiness audit** — PASS
         (target: AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2.x / JDK 17 / Build Tools 35;
         staged bridge required; no changes made)
-  - [ ] **P1E1 — Kotlin/AndroidX codegen + build-tooling bridge** (Gradle 7.6 / AGP 7.4.2 /
-        Kotlin 1.9.x / Moshi 1.15.x / Navigation 2.7.x / JDK 17) — NOT STARTED
-  - [ ] P1E2 — AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2.x / JDK 17 + AGP8 DSL — NOT STARTED
-  - [ ] P1E3 — compileSdk 36 (targetSdk still 30) — NOT STARTED
-  - [ ] P1E4 — API 31 exported + PendingIntent flags + receiver export flags — NOT STARTED
-  - [ ] P1E5 — storage/permission runtime compatibility — NOT STARTED
-  - [ ] P1E6 — FGS type/permission compatibility — NOT STARTED
-  - [ ] P1E7 — targetSdk 33/34 behavior + POST_NOTIFICATIONS — NOT STARTED
-  - [ ] P1E8 — targetSdk 35/36 behavior (edge-to-edge, predictive back, large screen) — NOT STARTED
-  - [ ] P1E9 — final SDK 36 regression build — NOT STARTED
+  - [x] **P1E1-P — Kotlin / AGP build-tooling bridge compatibility probe** — BRIDGE_FOUND
+        (proven: Gradle 7.6.4 / AGP 7.4.2 / Kotlin 1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 /
+        JDK 17 / NDK 21.4 / JaCoCo 0.8.8 + Mockito 4.11.0; 326 tests green; reverted)
+  - [ ] **P1E1 — Kotlin/AndroidX codegen + build-tooling bridge** (Gradle 7.6.4 / AGP 7.4.2 /
+        Kotlin 1.9.25 / Moshi 1.15.2 / Navigation 2.3.5 / JDK 17) — NOT STARTED
+  - [ ] P1E2 — Kotlin 2.x codegen readiness (Moshi KAPT → KSP) — NOT STARTED
+  - [ ] P1E3 — AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2.x / JDK 17 + AGP8 DSL — NOT STARTED
+  - [ ] P1E4 — compileSdk 36 (targetSdk still 30) — NOT STARTED
+  - [ ] P1E5 — API 31 exported + PendingIntent flags + receiver export flags — NOT STARTED
+  - [ ] P1E6 — storage/permission runtime compatibility — NOT STARTED
+  - [ ] P1E7 — FGS type/permission + notification permission — NOT STARTED
+  - [ ] P1E8 — targetSdk 33/34 behavior migration — NOT STARTED
+  - [ ] P1E9 — targetSdk 35/36 behavior + final SDK 36 regression — NOT STARTED
 - [ ] **P1F — Modern native/NDK and 16 KB page readiness**
   - [ ] Update NDK / native toolchain; verify 16 KB page-size compatibility
 - [ ] **P1G — Modernization regression candidate and physical acceptance**

@@ -444,3 +444,56 @@
   regression validation.
 - **Affected components:** `PermissionHandler.kt`, `MainActivity.kt`, `AndroidManifest.xml`,
   `terminal-term` manifest/`TermuxActivity`, P1E5.
+
+---
+
+## D025 — Proven P1E1 intermediate bridge version set; Kotlin 2.x codegen gate
+
+- **Date:** 2026-09-15
+- **Status:** Accepted (P1E1-P, BRIDGE_FOUND)
+- **Decision:** The intermediate bridge is proven locally as **Gradle 7.6.4 / AGP 7.4.2 /
+  Kotlin (KGP) 1.9.25 / Moshi 1.15.2 (KAPT) / Navigation 2.3.5 / JDK 17 / NDK 21.4.7075529**,
+  with **JaCoCo 0.8.8** plus `jacoco.excludes = ['jdk.internal.*']`, test-only **Mockito
+  4.11.0**, and seven behavior-neutral Kotlin-1.9 source fixes. `gradle-download-task` 3.4.3 and
+  the ktlint `JavaExec` task require no change. A separate codegen milestone (**P1E2: Moshi
+  KAPT → KSP**) must be completed **before** the Kotlin 2.2 jump.
+- **Corrections to P1E0:** the API-36 **minimum** AGP is **8.9.1** (the final target remains
+  AGP 8.10.x); KGP **1.9.20–1.9.25** supports AGP through 8.1.0 (the P1E0 "1.9.10 highest for
+  AGP 7.4" note was wrong); Moshi 1.15.x **KAPT** is a Kotlin 1.9-only bridge and emits a
+  deprecation warning — it is **not** a Kotlin-2.x KAPT path.
+- **Reason:** Probe evidence (Cells 1–3 + final candidate): AGP 7.4.2 rejects KGP < 1.5.20;
+  Safe Args 2.1.0 fails Gradle-7.6 task validation; Navigation 2.5.3's graph demands
+  compileSdk ≥ 31 while 2.3.5 stays within 30; JaCoCo 0.8.4 and Mockito 2.23.0 are
+  JDK-17-incompatible. The combination above ran the canonical gate at 326 tests / 36 suites /
+  0 failures.
+- **Alternatives considered:** Navigation 2.5.3/2.7.x (rejected — needs compileSdk ≥ 31);
+  Kotlin 1.9.10 (superseded by the corrected 1.9.20–1.9.25 range); keeping Moshi 1.15.2 KAPT
+  into Kotlin 2.2 (rejected — unsupported); running the bridge on JDK 11 to avoid the
+  JaCoCo/Mockito bumps (not chosen — the final target is JDK 17 and no JDK 11 toolchain is
+  provisioned).
+- **Trade-offs:** Adds a test-only Mockito bump and small source fixes to P1E1; inserts P1E2
+  (codegen) before the Kotlin 2.2 jump. All targetSdk/behavior work still lands last.
+- **Affected components:** `build.gradle`, `app/build.gradle`, `termux-app/terminal-emulator/
+  build.gradle`, `gradle/wrapper`, `NavigationStabilityGuardTest`, five viewmodels +
+  `FilesystemEditFragment`, P1E1–P1E3.
+
+---
+
+## D026 — Okio 3.x and transitive `core` movement are accepted bridge consequences
+
+- **Date:** 2026-09-15
+- **Status:** Accepted (P1E1-P)
+- **Decision:** The bridge's transitive movement — fragment → 1.2.4, lifecycle → 2.2.0,
+  activity → 1.1.0, `androidx.core:core` → 1.3.0 (while `core-ktx` stays 1.1.0), and Okio
+  1.17.2 → **3.7.0** (from Moshi 1.15.2, shared with the pinned OkHttp 3.14.7) — is accepted as
+  a consequence of the proven versions, not force-corrected. No version is forced; no
+  pre-release is introduced.
+- **Reason:** The probe's canonical gate passed with these selections, including the OkHttp +
+  MockWebServer tests. Forcing versions back for cosmetic alignment would violate the no-force
+  policy and mask real graph state.
+- **Alternatives considered:** Pinning an older Moshi to keep Okio 1.x (rejected — Moshi 1.15.2
+  is required for Kotlin 1.9 codegen); bumping `core-ktx` to 1.3.0 in P1E1 (deferred — record
+  the `core`/`core-ktx` family note and address deliberately if it matters).
+- **Trade-offs:** OkHttp 3.14.7 running against Okio 3.7.0 is a runtime-compatibility item to
+  validate later (JVM tests pass); the Core family is temporarily misaligned again.
+- **Affected components:** `app/build.gradle`, dependency graph, P1E1/parent.
