@@ -54,6 +54,7 @@ class FilesystemEditFragment : Fragment() {
             when (importStatus) {
                 is ImportSuccess -> dialogBuilder.setMessage(R.string.import_success).create().show()
                 is ImportFailure -> dialogBuilder.setMessage(R.string.import_failure).create().show()
+                else -> {}
             }
         }
     }

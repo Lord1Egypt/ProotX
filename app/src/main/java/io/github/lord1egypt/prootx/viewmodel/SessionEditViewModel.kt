@@ -42,7 +42,7 @@ class SessionEditViewModel(private val ulaDatabase: ProotXDatabase) : ViewModel(
 }
 
 class SessionEditViewmodelFactory(private val ulaDatabase: ProotXDatabase) : ViewModelProvider.NewInstanceFactory() {
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
         return SessionEditViewModel(ulaDatabase) as T
     }
