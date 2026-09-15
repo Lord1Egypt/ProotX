@@ -6,6 +6,8 @@ apply plugin: 'kotlin-parcelize'
 
 apply plugin: 'kotlin-kapt'
 
+apply plugin: 'com.google.devtools.ksp'
+
 apply plugin: 'androidx.navigation.safeargs.kotlin'
 
 apply plugin: 'jacoco'
@@ -288,7 +290,7 @@ dependencies {
     ktlint "com.pinterest:ktlint:0.32.0"
     implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
     implementation "com.squareup.moshi:moshi:$moshi_version"
-    kapt "com.squareup.moshi:moshi-kotlin-codegen:$moshi_version"
+    ksp "com.squareup.moshi:moshi-kotlin-codegen:$moshi_version"
     implementation 'org.rauschig:jarchivelib:0.8.0' // v1.0.0 breaks all sdk versions < 26 https://github.com/thrau/jarchivelib/issues/75
     implementation "io.sentry:sentry-android:$sentry_version"
     implementation "org.slf4j:slf4j-nop:$slf4j_version"
