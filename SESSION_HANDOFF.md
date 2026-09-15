@@ -90,6 +90,13 @@ prebuilt rootfs profile remnant; network-dependent unit tests; Play-readiness ga
 dynamic time-based `versionCode`; `LocalBroadcastManager` modernization (deprecated tech,
 deferred).
 
+**CI infrastructure finding:** the closure-documentation push failed remote CI in the
+third-party `android-actions/setup-android@v3` step (`Warning: Failed to find package
+'tools'`) **before any ProotX build step**; the previous run on the same workflow was green.
+This is an upstream runner/SDK change and requires a narrowly scoped CI bootstrap repair
+(migrate off `setup-android@v3`). It does not block P1D closure and is not caused by any
+repository change.
+
 **Deferred physical checks:** the `EditTextPreference` numeric input and all Material widget
 appearance/interaction (BottomNavigationView, TextInputLayout/EditText, FAB, dialogs) must be
 verified on a device at the Golden Candidate gate; no physical acceptance is claimed yet.

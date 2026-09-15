@@ -222,6 +222,17 @@ deferred to the appropriate later phase.
       are consumed directly but supplied transitively; explicit ownership hardening deferred.
     - `androidx.legacy` remains only via `:terminal-term` (runtime) and
       `room-testing`/`espresso-contrib` (androidTest) — legitimate parents, not excluded.
+20. **CI bootstrap infra breakage (new, observed 2026-09-15; not a dependency blocker).**
+    The closure-documentation push failed remote CI in the third-party
+    `android-actions/setup-android@v3` step, *before any ProotX build step*: the action
+    reported "Wrong version in preinstalled sdkmanager" and then
+    `Warning: Failed to find package 'tools'` → `sdkmanager` exit 1. Every prior run on this
+    workflow succeeded (last green run `34741782765`, 2026-09-13), so this is an upstream
+    runner-image / SDK-repository change, independent of repository content. One rerun
+    reproduced it. Repair requires a narrowly scoped CI workflow/bootstrap change (e.g.
+    migrate off `setup-android@v3` to a pinned cmdline-tools bootstrap), which this audit is
+    **not authorized** to make (PART S). Record as CI remediation debt for P1E/CI-follow-up;
+    it does **not** block P1D, whose acceptance rests on the canonical local build and tests.
 
 ## Non-goals for P0
 

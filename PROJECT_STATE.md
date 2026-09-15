@@ -149,7 +149,11 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-**None.** P1C is closed; no active blockers.
+**No dependency blocker.** P1D is closed. One **CI infrastructure** issue is open and
+recorded: the third-party `android-actions/setup-android@v3` bootstrap now fails
+(`Failed to find package 'tools'`) before any ProotX build step (run `34918425938`); every
+prior run was green. This requires a narrowly scoped CI workflow/bootstrap repair and does
+**not** block P1D closure (canonical local build + `326/36` tests are green).
 
 ## Deferred Findings
 
@@ -203,6 +207,9 @@ The canonical list lives in
     AndroidX Test `1.2.0` / Ext-JUnit `1.1.0` / Espresso `3.2.0` / UiAutomator `2.2.0` /
     Orchestrator `1.2.0`.
 - **P1D closure blockers found:** none.
+- **New (non-dependency) finding:** remote CI bootstrap breakage in
+  `android-actions/setup-android@v3` (`Failed to find package 'tools'`) — upstream runner/SDK
+  change; CI remediation debt (see roadmap finding 20).
 - **Correction:** Sentry and Billing are **ACTIVE** production dependencies (SentryLogger /
   Sentry; BillingManager / BillingClient / Purchase) — they are **not** unused and were left
   untouched.

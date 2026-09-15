@@ -336,3 +336,9 @@
   resource change.
 - **P1D is CLOSED / PASS.** Next milestone: **P1E — SDK 36 / Manifest Compatibility
   (NOT STARTED)**.
+- **Remote CI note:** the closure-documentation push (run `34918425938`, commit `7479089`)
+  failed in the third-party `android-actions/setup-android@v3` bootstrap step
+  (`Warning: Failed to find package 'tools'`), **before any ProotX build step**; the prior
+  run on this workflow was green (`34741782765`). One rerun reproduced it. This is an
+  upstream runner/SDK-repository change, not a repository regression, and is recorded as CI
+  remediation debt (an authorized workflow/bootstrap fix is out of scope for this audit).
