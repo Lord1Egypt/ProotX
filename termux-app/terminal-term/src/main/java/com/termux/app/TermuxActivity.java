@@ -19,6 +19,7 @@ import android.graphics.Typeface;
 import android.media.AudioAttributes;
 import android.media.SoundPool;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
@@ -291,7 +292,11 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
         serviceIntent.setAction(TermuxService.ACTION_EXECUTE);
 
         // Start the service and make it run regardless of who is bound to it:
-        startService(serviceIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
         doBindService(serviceIntent);
 
         checkForFontAndColors();

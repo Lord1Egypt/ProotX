@@ -72,10 +72,6 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
         findNavController(R.id.nav_host_fragment)
     }
 
-    private val notificationManager by lazy {
-        NotificationConstructor(this)
-    }
-
     private val userFeedbackPrompter by lazy {
         UserFeedbackPrompter(this, findViewById(R.id.layout_user_prompt_insert))
     }
@@ -157,7 +153,6 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
-        notificationManager.createServiceNotificationChannel() // Android O requirement
 
         setNavStartDestination()
         setProgressDialogNavListeners()
@@ -357,7 +352,11 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
         val serviceIntent = Intent(this, ServerService::class.java)
                 .putExtra("type", "start")
                 .putExtra("session", session)
-        startService(serviceIntent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent)
+        } else {
+            startService(serviceIntent)
+        }
         if (autoStarted) {
             Handler(Looper.getMainLooper()).postDelayed({
                 finish()

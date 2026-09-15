@@ -8,6 +8,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.content.res.Resources;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
@@ -159,7 +160,21 @@ public final class TermuxService extends Service implements SessionChangedCallba
         supportPath = filesPath + "/support/";
         prefixPath = filesPath + "/usr";
         homePath = filesPath + "/home";
-        startForeground(NOTIFICATION_ID, buildNotification());
+        createNotificationChannel();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, buildNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST);
+        } else {
+            startForeground(NOTIFICATION_ID, buildNotification());
+        }
+    }
+
+    /** Creates the shared "ProotX" notification channel so this service owns its own prerequisite. */
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, getString(R.string.application_name), NotificationManager.IMPORTANCE_LOW);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 
     /** Update the shown foreground service notification after making any changes that affect it. */

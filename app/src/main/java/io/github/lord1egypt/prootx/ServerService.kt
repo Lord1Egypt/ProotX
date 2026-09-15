@@ -3,7 +3,9 @@ package io.github.lord1egypt.prootx
 import android.app.Service
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.net.Uri
+import android.os.Build
 import android.os.IBinder
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import kotlinx.coroutines.* // ktlint-disable no-wildcard-imports
@@ -44,6 +46,7 @@ class ServerService : Service(), CoroutineScope {
 
     override fun onCreate() {
         broadcaster = LocalBroadcastManager.getInstance(this)
+        notificationManager.createServiceNotificationChannel()
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -56,6 +59,7 @@ class ServerService : Service(), CoroutineScope {
         when (intent?.getStringExtra("type")) {
             "start" -> {
                 val session: Session = intent.getParcelableExtra("session")!!
+                promoteToForeground()
                 this.launch { startSession(session) }
             }
             "stopApp" -> {
@@ -119,8 +123,24 @@ class ServerService : Service(), CoroutineScope {
         updateSession(session)
     }
 
+    // Promotes the service to the foreground synchronously, before any asynchronous
+    // session-start work is scheduled, so the Android 8+ startForegroundService() deadline
+    // is always met. The manifest declares the specialUse foreground service type; the
+    // runtime pass-through constant keeps the manifest as the single source of truth.
+    private fun promoteToForeground() {
+        val notification = notificationManager.buildPersistentServiceNotification()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(
+                NotificationConstructor.serviceNotificationId,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST
+            )
+        } else {
+            startForeground(NotificationConstructor.serviceNotificationId, notification)
+        }
+    }
+
     private suspend fun startSession(session: Session) {
-        startForeground(NotificationConstructor.serviceNotificationId, notificationManager.buildPersistentServiceNotification())
         session.pid = localServerManager.startServer(session)
 
         while (!localServerManager.isServerRunning(session)) {
