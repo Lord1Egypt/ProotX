@@ -18,7 +18,7 @@ jobs:
     env:
       ANDROID_PLATFORM: 'android-30'
       ANDROID_PLATFORM_LEGACY: 'android-29'
-      ANDROID_BUILD_TOOLS: '30.0.2'
+      ANDROID_BUILD_TOOLS: '30.0.3'
       ANDROID_NDK_VERSION: '21.4.7075529'
 
     steps:
@@ -26,19 +26,17 @@ jobs:
         uses: actions/checkout@v4
 
       # ------------------------------------------------------------------
-      # Stage 1 — Android SDK/NDK bootstrap under a modern JVM.
-      #
-      # Android command-line tools (sdkmanager) require a modern Java
-      # runtime, so the SDK is provisioned before the legacy JDK is
-      # activated.
+      # ProotX build toolchain: Gradle 7.6.4 / AGP 7.4.2 / Kotlin 1.9.25.
+      # The Gradle build now runs on JDK 17, so a single modern JDK is used
+      # for both the Android SDK/NDK bootstrap and the Gradle build.
       # ------------------------------------------------------------------
-      - name: Set up JDK 17 (Android SDK tooling)
+      - name: Set up JDK 17 (Android SDK tooling + Gradle build)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Show active Java (SDK bootstrap stage)
+      - name: Show active Java
         run: java -version
 
       - name: Set up Android SDK
@@ -64,31 +62,16 @@ jobs:
           ls "$SDK_ROOT/build-tools"
           ls "$SDK_ROOT/ndk"
 
-      # ------------------------------------------------------------------
-      # Stage 2 — ProotX bridge build under JDK 8.
-      #
-      # The ProotX build (Gradle 6.7.1 / AGP 4.2.2 / Kotlin 1.4.32) runs on
-      # JDK 8. Do not change the build toolchain here.
-      # ------------------------------------------------------------------
-      - name: Set up JDK 8 (legacy Gradle build)
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '8'
-
       - name: Configure local.properties
         run: |
           SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
           echo "sdk.dir=$SDK_ROOT" > local.properties
           echo "ndk.dir=$SDK_ROOT/ndk/$ANDROID_NDK_VERSION" >> local.properties
 
-      - name: Show active Java (build stage)
-        run: java -version
-
       - name: Show Gradle version
         run: ./gradlew --version
 
-      - name: Build and test (legacy toolchain)
+      - name: Build and test
         run: ./gradlew clean assembleDebug testDebugUnitTest --no-daemon
 
       - name: Report unit test results
