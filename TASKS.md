@@ -207,11 +207,14 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         arm64-v8a/x86_64 `libtermux.so` `PT_LOAD 0x4000`; CI pins `ndk;29.0.14206865`, drops
         `ndk.dir`, adds scoped 16 KB native guard; `NdkR29ToolchainGuardTest`; local gates + JaCoCo
         PASS; remote run `35049015538`; 42 suites / 360 tests)
-  - [ ] **P1F2 — Support toolchain / provenance modernization** — READY TO START
-        (regenerate the full support ELF alignment table from binaries — P1F-P erratum; pin base
-        image digest, termux-packages and PRoot commits; resolve the unavailable PRoot source
-        `Lord1Egypt/proot@merge-it`)
-  - [ ] **P1F3 — Rebuild + publish 16 KB support bundles** — NOT STARTED
+  - [x] **P1F2 — Support toolchain / provenance modernization** — CLOSED / PASS
+        (support `feature/p1f-support-modernization` implementation
+        `3e5c51eb497ea713fd31c3d22d123526283c1d94`, support CI `35057757988` SUCCESS; reproducible
+        builder pinned to builder digest + termux-packages `0ffca06c…` + checksum-verified
+        `termux/proot v5.1.107.92`; dual-lane runtime — frozen legacy normal slots for host API
+        21–28, modern `.a10` slots rebuilt at API 24 / NDK r29 for host API 29+; 16 KB aligned,
+        `process_vm = yes`; two independent clean builds byte-identical; no release published)
+  - [ ] **P1F3 — Rebuild + publish 16 KB support bundles + resolve legacy 64-bit 4 KB debt** — READY TO START
   - [ ] **P1F4 — Pin ProotX to the new support release + full APK/AAB 16 KB verification** — NOT STARTED
   - [ ] **P1F5 — 16 KB emulator/static acceptance gate** — NOT STARTED
 - [ ] **P1G — Modernization regression candidate and physical acceptance** — NOT STARTED

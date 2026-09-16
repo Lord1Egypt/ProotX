@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-16 (P1F1 in-tree NDK r29 migration — CLOSED / PASS; P1F IN PROGRESS; P1F-P CLOSED / PARTIAL_BRIDGE)
+Last updated: 2026-09-16 (P1F2 support toolchain / provenance modernization — CLOSED / PASS; P1F IN PROGRESS; P1F3 READY TO START)
 
 ## Project Identity
 
@@ -58,32 +58,37 @@ Last updated: 2026-09-16 (P1F1 in-tree NDK r29 migration — CLOSED / PASS; P1F 
 | P1F — Modern NDK / 16 KB Page-Size Compatibility | **IN PROGRESS** |
 | P1F-P — NDK / 16 KB Compatibility Probe | **CLOSED / PARTIAL_BRIDGE** |
 | P1F1 — In-Tree NDK r29 Migration + CI Pin Modernization | **CLOSED / PASS** |
+| P1F2 — Support Toolchain / Provenance Modernization | **CLOSED / PASS** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1F1 — In-Tree NDK r29 Migration + CI Pin Modernization: CLOSED / PASS. P1F is IN PROGRESS.**
-Implementation commit `8103b835a670638c177a7adc6d7baea19680cd33` raises the in-tree NDK pin
-`21.4.7075529 → 29.0.14206865` for `:app` and `:terminal-emulator` with **no source, `Android.mk`,
-linker, or ABI change**. The two 64-bit `libtermux.so` outputs now carry `PT_LOAD` alignment
-`0x4000` (arm64-v8a and x86_64), satisfying the Android 15+ 16 KB requirement for the in-tree
-library. CI installs `ndk;29.0.14206865`, stops writing the deprecated `ndk.dir` (Gradle
-`ndkVersion` is authoritative), and adds a scoped guard that fails if the packaged 64-bit
-`libtermux.so` has a `PT_LOAD` alignment below `0x4000`. `compileSdk`/`targetSdk`/`minSdk` remain
-36/36/21. The `ProotX-Assets-Support` v1.0.0 payload is unchanged and still ships 4 KB-only x86_64
-ELFs, so **full application 16 KB compatibility is NOT claimed** (`DECISIONS.md` D034). Local
-canonical evidence **42 suites / 360 tests / 0 failures / 0 errors / 0 skipped** (+1 guard suite);
-remote CI run `35049015538` passed with the same summary, the new 16 KB native guard, androidTest
-APK, and both artifact uploads. **P1F-P is CLOSED / PARTIAL_BRIDGE.** Next: **P1F2 — SUPPORT
-TOOLCHAIN / PROVENANCE MODERNIZATION — READY TO START** (P1G physical acceptance remains after
-P1F).
+**P1F2 — Support Toolchain / Provenance Modernization: CLOSED / PASS. P1F is IN PROGRESS.**
+The unreproducible historical support builder (`ubuntu:latest`, the now-unavailable
+`Lord1Egypt/proot@merge-it` fork, floating `android-5`, blind `sed`) was replaced in
+`ProotX-Assets-Support` on branch `feature/p1f-support-modernization` (implementation commit
+`3e5c51eb497ea713fd31c3d22d123526283c1d94`; support CI run `35057757988` — SUCCESS). The support
+runtime is now **split**: host API 21–28 keep the **frozen legacy** normal slots, while host API 29+
+use the **modern** `.a10` slots rebuilt from pinned source at **API 24 with NDK r29**
+(`termux/proot v5.1.107.92`, commit `7266fb3e…`, archive `29385d1d…`; `termux-packages`
+`0ffca06c…`; builder `ghcr.io/termux/package-builder@sha256:374fedda…`). The modern
+arm64-v8a/x86_64 slots are 16 KB aligned (`0x4000`) and define `HAVE_PROCESS_VM`
+(`process_vm = yes`). Two independent clean local builds produced **byte-identical** modern
+binaries and **byte-identical** candidate archives; deterministic packaging uses
+`SOURCE_DATE_EPOCH=1787437959`. ProotX `minSdk` remains **21** and `ProotXFiles` selection is
+unchanged (`DECISIONS.md` D035). **No support release was published — ProotX still downloads
+`v1.0.0`.** P1F1 (in-tree NDK r29, `8103b83`) remains CLOSED / PASS. **Whole-app 16 KB compatibility
+is still NOT achieved**: 4 KB 64-bit legacy normal-slot ELFs (`proot`, `libtalloc.so.2`,
+`proot_meta`, `proot_meta_leveldb`) remain shipped via `jniLibs`/`nativeLibraryDir`. Next: **P1F3 —
+SUPPORT BUNDLE 16 KB REBUILD / PUBLICATION — READY TO START** (P1G physical acceptance after P1F).
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
+| Accepted P1F2 support implementation | `3e5c51eb497ea713fd31c3d22d123526283c1d94` (support repo `feature/p1f-support-modernization`) | reproducible support builder (pinned builder image digest + `termux-packages` commit + checksum-verified `termux/proot v5.1.107.92`), dual-lane legacy/modern model, deterministic archives, support CI; no release published |
 | Accepted P1F1 implementation | `8103b835a670638c177a7adc6d7baea19680cd33` | in-tree NDK pin 21.4.7075529 → 29.0.14206865 (:app + :terminal-emulator); CI pins `ndk;29.0.14206865`, drops `ndk.dir`, adds scoped 16 KB native guard; no source/linker/packaging change |
 | Accepted P1E9 implementation | `41cc7a8c629da364903de0ae71ab524541c7ef76` | app targetSdk 34 → 36; real edge-to-edge with per-owner insets; platform `OnBackInvokedCallback` for Termux on API 33+; authorized activity-ktx 1.11.0 bridge (minSdk 21 preserved); no opt-outs |
 | Accepted P1E8 implementation | `cff25f3f1dffa1a91d78a55915dd50513b694af4` | `POST_NOTIFICATIONS` + contextual one-time request; resumed-lifecycle FGS gate; Termux `RECEIVER_NOT_EXPORTED`; terminal-term compileSdk 36 |
@@ -240,16 +245,17 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-**P1F does not have a build blocker, but it is not complete.** P1F1 (in-tree) is CLOSED / PASS and
-remote CI is green (run `35049015538`). The remaining P1F work is cross-repository: the
-`ProotX-Assets-Support` v1.0.0 bundle still ships 4 KB-only ELFs for **x86_64** (and the arm64
-`loader32` 32-bit helper), and the support builder's PRoot source (`Lord1Egypt/proot@merge-it`) is
-**currently unavailable (404)**, so the bundle cannot be reproduced as documented. **Full
-application 16 KB compatibility is NOT claimed** until P1F2/P1F3/P1F4 complete. The local JaCoCo
-regression gate passes from the clean/report-only state (JaCoCo tooling caveat above). Lint remains
-pre-existing legacy debt (13 errors / 134 warnings / 3 hints: `Range` ×3, `UseRequireInsteadOfGet`
-×10). Physical validation of edge-to-edge, predictive back, IME, VNC geometry, and 16 KB runtime
-behavior on real/16 KB-emulated devices remains **P1G** and is not claimed here.
+**No build blocker.** P1F2 (support toolchain/provenance) is CLOSED / PASS and support CI is green
+(run `35057757988`). Remaining P1F work is the explicit **whole-app 16 KB packaging debt**: 4 KB
+64-bit **legacy normal-slot** ELFs (`proot`, `libtalloc.so.2`, `proot_meta`,
+`proot_meta_leveldb`, and other vendored 64-bit binaries) are still shipped through
+`jniLibs`/`nativeLibraryDir`, which may block final whole-APK / Play 16 KB compliance. A later
+P1F3/P1F4 strategy (rebuild legacy 64-bit with 16 KB alignment, move them outside native-library
+packaging, or an approved support-floor change) must be chosen and proven before P1F closes.
+`proot_meta`/`proot_meta_leveldb` remain unknown-provenance frozen inputs. The modern `.a10` slot
+runtime equivalence (ashmem/memfd) and all insets/back/IME/VNC behavior are **P1G** physical-validation
+items. The local JaCoCo gate passes from the clean/report-only state; lint remains pre-existing
+legacy debt (13 errors / 134 warnings / 3 hints).
 
 ## Deferred Findings
 
@@ -387,17 +393,24 @@ The canonical list lives in
   `PT_LOAD` alignment `0x4000` for arm64-v8a and x86_64, and a scoped CI guard fails if that
   regresses. No source, `Android.mk`, linker, ABI, packaging, or `extractNativeLibs` change
   (`DECISIONS.md` D034).
-- **Deferred to P1F2/P1F3 (P1F-P erratum):** the P1F-P probe report contained an internal
-  inconsistency — it stated blanket "all arm32 ELFs at `0x1000`" while also classifying
-  `armeabi-v7a busybox_static` as 16K-compatible. **P1F2 must regenerate the complete support ELF
-  alignment table directly from the binaries** (all four ABIs, every `PT_LOAD`) before making any
-  support-remediation decision. The support bundle's x86_64 ELFs and the arm64 `loader32` 32-bit
-  helper remain 4 KB-only; the historical PRoot fork `Lord1Egypt/proot@merge-it` is currently
-  unavailable (404), so the bundle is not reproducible as documented (`ubuntu:latest` + floating
-  branches). Google Play's applicable requirement: apps targeting **Android 15 / API 35+** must
-  support **16 KB page sizes on 64-bit devices**; current Android documentation gives
-  **February 1, 2027** as the update-enforcement date. **Full application 16 KB compatibility is
-  not claimed.**
+- **Resolved in P1F2:** the support toolchain is now source-traceable and reproducible. The
+  complete support ELF table was regenerated from the v1.0.0 binaries (108 files: 68 ELF, 40
+  non-ELF; 17 16K-compatible / 51 4K-only), resolving the P1F-P arm32 erratum
+  (`armeabi-v7a busybox_static` is `0x10000` and is the **only** arm32 ELF that is 16K-compatible).
+  The unreproducible historical builder was removed and replaced by pinned inputs
+  (builder `ghcr.io/termux/package-builder@sha256:374fedda…`, `termux-packages` `0ffca06c…`,
+  checksum-verified `termux/proot v5.1.107.92`), a `provenance/sources.lock.json` source lock,
+  `docs/PROVENANCE.md`, `docs/HISTORICAL_BUILDER.md`, `THIRD_PARTY_NOTICES.md`, deterministic
+  archives, and support CI. The **dual-lane** model keeps `minSdk 21`: frozen legacy normal slots
+  for host API 21–28 and a source-rebuilt modern `.a10` lane (API 24 / NDK r29, 16 KB aligned,
+  `process_vm = yes`) for host API 29+, with `ProotXFiles` selection unchanged (`DECISIONS.md`
+  D035). Two independent clean builds produced byte-identical modern binaries and byte-identical
+  candidate archives. **Still deferred:** the 4 KB 64-bit legacy normal-slot ELFs and the
+  unknown-provenance `proot_meta`/`proot_meta_leveldb` remain shipped through
+  `jniLibs`/`nativeLibraryDir`; a P1F3/P1F4 strategy must resolve this before P1F closes. Google
+  Play's applicable requirement: apps targeting **Android 15 / API 35+** must support **16 KB page
+  sizes on 64-bit devices**; current Android documentation gives **February 1, 2027** as the
+  update-enforcement date. **Full application 16 KB compatibility is not claimed.**
 - **Deferred after P1E9 (non-blocking):** the Activity 1.11.0 bridge moved transitive selections
   (core/core-ktx 1.13.0, lifecycle 2.6.2, savedstate 1.2.1, coroutines 1.7.3, new
   `core-viewtree`/`tracing`/`profileinstaller`) and `androidx.core` injects the benign signature
@@ -431,9 +444,11 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1F2 — SUPPORT TOOLCHAIN / PROVENANCE MODERNIZATION — READY TO START.** It owns the
-`ProotX-Assets-Support` reproducibility work (regenerate the full support ELF alignment table, pin
-the base image/toolchain, resolve or replace the unavailable PRoot source, and pin exact commits)
-and must not begin without explicit authorization. **Full application 16 KB compatibility must not
-be claimed** until P1F3/P1F4 complete and **P1G** physical/16 KB-emulator acceptance passes. ProotX
-must **not** be called a Golden Candidate, release candidate, or store-ready final.
+**P1F3 — SUPPORT BUNDLE 16 KB REBUILD / PUBLICATION — READY TO START.** It owns publishing a new
+support release from the reproducible builder (release version selection, asset upload, checksums,
+SBOM/provenance) and, critically, resolving the **4 KB 64-bit legacy normal-slot packaging debt**
+(rebuild legacy 64-bit with 16 KB alignment, move legacy binaries outside native-library packaging,
+or an approved support-floor change). It must not begin without explicit authorization. **Full
+application 16 KB compatibility must not be claimed** until P1F3/P1F4 complete and **P1G**
+physical/16 KB-emulator acceptance passes. ProotX must **not** be called a Golden Candidate, release
+candidate, or store-ready final.

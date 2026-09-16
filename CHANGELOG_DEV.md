@@ -964,3 +964,50 @@
   update-enforcement date. Durable decision: `DECISIONS.md` D034.
 - **P1F-P CLOSED / PARTIAL_BRIDGE. P1F1 CLOSED / PASS. P1F IN PROGRESS. P1F2 SUPPORT TOOLCHAIN /
   PROVENANCE MODERNIZATION READY TO START. P1G PHYSICAL DEVICE ACCEPTANCE NOT STARTED.**
+
+## P1F2 — Support Toolchain / Provenance Modernization (2026-09-16) — PASS
+
+- Removed the unreproducible historical `ProotX-Assets-Support` builder (`buildArch.sh`,
+  `docker/*` `FROM ubuntu:latest`, `input/main.sh`): it cloned the now-unavailable
+  `Lord1Egypt/proot@merge-it` fork, a floating `termux-packages@android-5` branch, and mutated the
+  tree with blind `sed`. The historical process is documented in
+  `docs/HISTORICAL_BUILDER.md`.
+- Added a reproducible builder (`build-support.sh`) pinned to builder image
+  `ghcr.io/termux/package-builder@sha256:374fedda8d2ce7a8ab499735d39329301c4f2f18ea4411b3cf7c93d4668768ab`,
+  `termux-packages` commit `0ffca06c59752c6d52c646980d956b961064e1fc`, checksum-verified
+  `termux/proot v5.1.107.92` (commit `7266fb3e…`, archive `29385d1d…`), API 24, NDK r29, with
+  fail-fast legacy checksum verification, deterministic archives, and a 16 KB gate.
+- Added `provenance/sources.lock.json` (schema-versioned; `applicationMinSdk 21`, legacy host range
+  21–28, modern host range 29+, modern build API 24) and `provenance/legacy-v1.0.0.files.sha256`
+  (108 frozen per-file checksums). Added `docs/PROVENANCE.md`, `THIRD_PARTY_NOTICES.md`, and support
+  CI (`.github/workflows/support.yml`).
+- **Regenerated the authoritative legacy ELF table from binaries:** 108 files (28/26/26/28),
+  68 ELF, 40 non-ELF; 17 16K-compatible, 51 4K-only. Resolved the P1F-P erratum:
+  `armeabi-v7a busybox_static` is `0x10000` and is the **only** arm32 ELF that is 16K-compatible;
+  everything else arm32/x86/x86_64 is `0x1000`.
+- **Modern lane (`.a10` slots), API 24 / NDK r29:** built for all four ABIs. `proot.a10` and
+  `loader.a10` are `0x4000` on arm64-v8a and x86_64 (16 KB); `loader32` present where applicable;
+  `libtalloc.so.2.a10` `0x4000`; new modern dependency `libandroid-shmem.so` added. The build
+  defines `HAVE_PROCESS_VM` (`build.h`) → PRoot reports `process_vm = yes`; `getifaddrs` resolves at
+  API 24. Full runtime contract (`-r/-b/-v/-0/-H/-l/-L/-p/--sysvipc`, `PROOT_TMP_DIR`,
+  `PROOT_LOADER`, `PROOT_LOADER_32`) is satisfied.
+- **Reproducibility:** two independent clean builds (separate cache/output dirs) produced
+  **byte-identical** modern binaries (18 artifacts across 4 ABIs) and **byte-identical** candidate
+  archives (`SOURCE_DATE_EPOCH=1787437959`, the `termux/proot` tag-commit timestamp).
+- **Dual-lane decision (`DECISIONS.md` D035):** ProotX keeps `minSdk 21`; host API 21–28 keep the
+  frozen legacy normal slots; host API 29+ use the source-rebuilt modern `.a10` slots. `ProotXFiles`
+  selection is unchanged and `.a10` is retained as a legacy filename for the modern slot.
+- **No release was published.** `ProotX-Assets-Support` `main` is unchanged (`0fa736a`); v1.0.0 and
+  its assets are untouched; ProotX still downloads `v1.0.0`. Support implementation commit
+  `3e5c51eb497ea713fd31c3d22d123526283c1d94` on `feature/p1f-support-modernization`; support CI run
+  `35057757988` **SUCCESS** (lock/stage gates, legacy digest verification, modern arm64+x86_64 source
+  build, 16 KB slot gate). No ProotX production file changed.
+- **Explicit remaining debt (not hidden):** 4 KB 64-bit legacy normal-slot ELFs (`proot`,
+  `libtalloc.so.2`, `proot_meta`, `proot_meta_leveldb`, and other vendored 64-bit binaries) are
+  still shipped through `jniLibs`/`nativeLibraryDir`; `proot_meta`/`proot_meta_leveldb` remain
+  unknown-provenance frozen inputs. **Whole-app 16 KB compatibility is NOT achieved**; P1F3 must
+  resolve the legacy packaging debt before P1F closes. Google Play's applicable requirement: apps
+  targeting **Android 15 / API 35+** must support **16 KB page sizes on 64-bit devices**;
+  enforcement date **February 1, 2027** per current documentation.
+- **P1F2 CLOSED / PASS. P1F IN PROGRESS. P1F3 SUPPORT BUNDLE 16 KB REBUILD / PUBLICATION READY TO
+  START. P1G PHYSICAL DEVICE ACCEPTANCE NOT STARTED.**

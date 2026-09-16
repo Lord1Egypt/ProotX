@@ -768,3 +768,40 @@
   compatibility must not be claimed until P1F3/P1F4 and P1G.
 - **Affected components:** `app/build.gradle`, `termux-app/terminal-emulator/build.gradle`,
   `.github/workflows/build.yml`, `NdkR29ToolchainGuardTest`, P1F1/P1F2/P1F3/P1F4, P1G.
+
+---
+
+## D035 — Split support-runtime lanes: frozen legacy (host API 21–28) + reproducible modern (host API 29+)
+
+- **Date:** 2026-09-16
+- **Status:** Accepted (P1F2, CLOSED / PASS)
+- **Decision:** ProotX keeps application `minSdk 21` through a **split support-runtime model**
+  selected by the existing `ProotXFiles` logic (unchanged): host Android **API 21–28** use the
+  frozen **legacy** normal slots (`proot`, `loader`, `loader32`, `libtalloc.so.2`); host Android
+  **API 29+** use the **modern** `.a10` slots (`proot.a10`, `loader.a10`, `loader32.a10`,
+  `libtalloc.so.2.a10`, plus the new `libandroid-shmem.so`), which are **source-rebuilt at API 24
+  with NDK r29**. `.a10` is a **legacy filename denoting the modern host runtime slot**, not API 10.
+  The support build is now reproducible via a pinned builder image digest, a pinned `termux-packages`
+  commit, a checksum-verified `termux/proot v5.1.107.92` source, deterministic packaging, and a
+  `SOURCE_DATE_EPOCH` (the PRoot tag-commit timestamp `1787437959`). The historical builder
+  (`ubuntu:latest`, floating `merge-it` fork — now unavailable —, floating `android-5`, blind `sed`)
+  is removed and documented. No release/asset is published by P1F2; ProotX remains on support
+  `v1.0.0`.
+- **Reason:** The P1F2 probe proved modern `termux/proot v5.1.107.92` cannot be built at API 21 —
+  `HAVE_PROCESS_VM` is absent (`process_vm_readv`/`writev` are API 23+) and `getifaddrs` is API 24+
+  — while ProotX must keep `minSdk 21`. A modern-lane API-24 build is fully reproducible, defines
+  `HAVE_PROCESS_VM` (`process_vm = yes`), satisfies the complete ProotX CLI/loader contract, and is
+  selected only on API 29+ hosts, so `minSdk` and current runtime selection are unchanged.
+- **Alternatives considered:** patching the PRoot feature probe / `syscall/enter.c` or raising the
+  API to 21-compat (forbidden by the technical lead); a custom PRoot fork (not authorized); raising
+  `minSdk` (not authorized); rebuilding legacy API-21 binaries (source unavailable).
+- **Trade-offs:** This is **not** a claim of whole-app 16 KB compliance. Some **4 KB 64-bit legacy
+  normal-slot** ELFs (`proot`, `libtalloc.so.2`, `proot_meta`, `proot_meta_leveldb`, vendored
+  binaries) are still shipped through `jniLibs`/`nativeLibraryDir`; a later P1F3/P1F4 strategy
+  (rebuild legacy 64-bit with 16 KB alignment, move them outside native-library packaging, or an
+  approved support-floor change) must be chosen before P1F closes. `proot_meta`/`proot_meta_leveldb`
+  remain **unknown-provenance** frozen compatibility inputs. Modern-lane runtime equivalence of the
+  `.a10` slot (ashmem/memfd) is a P1G physical-validation item.
+- **Affected components:** `ProotX-Assets-Support` (`build-support.sh`, `provenance/`,
+  `docs/PROVENANCE.md`, `docs/HISTORICAL_BUILDER.md`, `THIRD_PARTY_NOTICES.md`, support CI,
+  branch `feature/p1f-support-modernization`), P1F2/P1F3/P1F4/P1G.

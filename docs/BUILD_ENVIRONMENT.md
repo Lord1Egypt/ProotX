@@ -232,3 +232,23 @@ artifacts. P1E9 local validation also proved the API-36 SDK platform, the androi
 four ABIs, 16/16 native payloads, targetSdk 36 in the merged manifest/APK, the absence of all
 opt-outs, and the separate JaCoCo report regression gate. **P1E is CLOSED / PASS.** See
 `PROJECT_STATE.md`.
+
+## Support-bundle toolchain (P1F2)
+
+The `ProotX-Assets-Support` runtime is built by `build-support.sh` (branch
+`feature/p1f-support-modernization`), pinned in `provenance/sources.lock.json`:
+
+| Component | Pin |
+|---|---|
+| Builder image | `ghcr.io/termux/package-builder@sha256:374fedda8d2ce7a8ab499735d39329301c4f2f18ea4411b3cf7c93d4668768ab` |
+| termux-packages | `0ffca06c59752c6d52c646980d956b961064e1fc` |
+| PRoot | `termux/proot` `v5.1.107.92` (`7266fb3e…`, archive `29385d1d…`) |
+| NDK / build API | r29 / **API 24** |
+| `SOURCE_DATE_EPOCH` | `1787437959` |
+
+Lanes: host API 21–28 use frozen legacy normal slots; host API 29+ use the source-rebuilt modern
+`.a10` slots. ProotX `minSdk` stays 21 and `ProotXFiles` selection is unchanged. The modern lane
+requires Docker with `/dev/fuse`, `CAP_SYS_ADMIN`, `seccomp=unconfined`, and `apparmor=unconfined`
+(for termux's `fuse-overlayfs` standalone toolchain). Whole-app 16 KB compatibility is **not**
+achieved; 4 KB 64-bit legacy normal-slot ELFs remain. See `docs/PROVENANCE.md` in the support repo
+and `DECISIONS.md` D035.

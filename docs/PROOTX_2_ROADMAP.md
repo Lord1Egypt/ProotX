@@ -72,8 +72,13 @@
 >     (in-tree NDK 21.4.7075529 → 29.0.14206865; 64-bit `libtermux.so` `PT_LOAD 0x4000`; CI pins
 >     `ndk;29.0.14206865` and drops `ndk.dir`; scoped 16 KB native guard; implementation `8103b83`;
 >     remote CI `35049015538`; 42 suites / 360 tests)
->   - **P1F2 — Support Toolchain / Provenance Modernization:** READY TO START
->   - **P1F3 — Rebuild + Publish 16 KB Support Bundles:** NOT STARTED
+>   - **P1F2 — Support Toolchain / Provenance Modernization:** CLOSED / PASS
+>     (unreproducible historical builder replaced; pinned builder digest + `termux-packages`
+>     `0ffca06c` + checksum-verified `termux/proot v5.1.107.92`; dual-lane runtime — frozen legacy
+>     normal slots for host API 21–28, modern `.a10` slots rebuilt at API 24 / NDK r29 for host API
+>     29+; 16 KB aligned and `process_vm = yes`; two clean builds byte-identical; no release
+>     published; support implementation `3e5c51e`, support CI `35057757988`)
+>   - **P1F3 — Rebuild + Publish 16 KB Support Bundles + Resolve Legacy 64-bit 4 KB Debt:** READY TO START
 >   - **P1F4 — Pin ProotX to the New Support Release + Full APK/AAB 16 KB Verification:** NOT STARTED
 >   - **P1F5 — 16 KB Emulator / Static Acceptance Gate:** NOT STARTED
 > - **P1G — Physical-Device Acceptance:** NOT STARTED (after P1F)
@@ -366,6 +371,18 @@ deferred to the appropriate later phase.
     Google Play's applicable requirement: apps targeting **Android 15 / API 35+** must support
     **16 KB page sizes on 64-bit devices**; current Android documentation gives **February 1, 2027**
     as the update-enforcement date. **Full application 16 KB compatibility is not claimed.**
+29. **P1F2 support toolchain/provenance — RESOLVED, legacy 64-bit 4 KB debt still open.** The
+    `ProotX-Assets-Support` builder is now reproducible and source-traceable (`DECISIONS.md` D035):
+    pinned builder image digest, `termux-packages` commit, and checksum-verified
+    `termux/proot v5.1.107.92`; the historical `ubuntu:latest`/floating-fork/blind-`sed` pipeline is
+    removed. The runtime is split: frozen legacy normal slots (host API 21–28) and a source-rebuilt
+    modern `.a10` lane at API 24 / NDK r29 (host API 29+, 16 KB aligned, `process_vm = yes`), with
+    `ProotXFiles` selection unchanged and `minSdk` still 21. Two independent clean builds produced
+    byte-identical modern binaries and candidate archives. **Still blocking final P1F closure:**
+    4 KB 64-bit **legacy normal-slot** ELFs (`proot`, `libtalloc.so.2`, `proot_meta`,
+    `proot_meta_leveldb`, vendored 64-bit) remain shipped through `jniLibs`/`nativeLibraryDir`, and
+    `proot_meta`/`proot_meta_leveldb` remain unknown-provenance frozen inputs. No support release was
+    published; ProotX remains on `v1.0.0`. P1F3 must resolve the legacy packaging debt.
 
 ## Non-goals for P0
 
