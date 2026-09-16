@@ -119,7 +119,7 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
   - [x] `packages: ''` on `setup-android`; explicit `platform-tools` in pinned `sdkmanager` step
   - [x] Remote run `34919847167` (commit `4f3c812`) green: bootstrap, build, `326/36` tests,
         androidTest APK, both artifacts
-- [~] **P1E — SDK 36 / manifest compatibility** — IN PROGRESS
+- [x] **P1E — SDK 36 / manifest compatibility** — CLOSED / PASS (P1E0–P1E9 complete; targetSdk 36)
   - Plan: `docs/P1E_ANDROID16_MIGRATION_PLAN.md`
   - [x] **P1E0 — Android 16 toolchain + platform readiness audit** — PASS
         (target: AGP 8.10 / Gradle 8.11.1 / Kotlin 2.2.x / JDK 17 / Build Tools 35;
@@ -188,12 +188,19 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         values; `TargetSdk34CompatibilityGuardTest` added and the P1E7 guard updated; disposable
         targetSdk 33 checkpoint passed; local gates + JaCoCo PASS; remote run `35037714144`;
         40 suites / 348 tests)
-  - [ ] P1E9 — targetSdk 35/36 platform behavior + final SDK 36 regression — NOT STARTED / READY TO START
-        (owns targetSdk 35 then 36, edge-to-edge, predictive back, large-screen
-        orientation/resizability behavior, final SDK-36 behavior regression)
-- [ ] **P1F — Modern native/NDK and 16 KB page readiness**
+  - [x] **P1E9 — targetSdk 35/36 platform behavior + final SDK 36 regression** — CLOSED / PASS
+        (app targetSdk 34 → 36 after a clean target-35 checkpoint; `MainActivity` `enableEdgeToEdge()`
+        + per-owner `WindowInsetsCompat` (toolbar top, bottom nav bottom, root left/right cutout)
+        without cumulative padding; `TermuxActivity` platform `OnBackInvokedCallback` on API 33+
+        with legacy `onBackPressed` fallback; authorized `androidx.activity:activity-ktx:1.11.0`
+        bridge (minSdk 21 preserved, `onNewIntent` non-null); no edge-to-edge/predictive-back
+        opt-out, no orientation lock, no large-screen opt-out; `TargetSdk34CompatibilityGuardTest`
+        renamed/advanced to `TargetSdk36CompatibilityGuardTest`; new
+        `TargetSdk36PlatformBehaviorGuardTest`; local gates + JaCoCo PASS; remote run `35043129415`;
+        41 suites / 355 tests)
+- [ ] **P1F — Modern native/NDK and 16 KB page readiness** — NOT STARTED / READY TO START
   - [ ] Update NDK / native toolchain; verify 16 KB page-size compatibility
-- [ ] **P1G — Modernization regression candidate and physical acceptance**
+- [ ] **P1G — Modernization regression candidate and physical acceptance** — NOT STARTED
   - [ ] Produce a modernization candidate build
   - [ ] Physical-device acceptance (separate from source/test acceptance)
 

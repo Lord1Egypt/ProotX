@@ -819,3 +819,80 @@
   current terminal SDK levels are terminal-term **36/29/21**, terminal-view/emulator **29/29/21**.
   Durable decision recorded as `DECISIONS.md` D032.
 - **P1E8 CLOSED / PASS. P1E IN PROGRESS. P1E9 TARGETSDK 35/36 PLATFORM BEHAVIOR READY TO START.**
+
+## P1E9 — targetSdk 35/36 Platform Behavior (2026-09-16) — PASS
+
+- Moved the app `targetSdk` **34 → 35** as an intermediate checkpoint, ran
+  `:app:processDebugMainManifest`, `:app:compileDebugKotlin`, `:app:compileDebugJavaWithJavac`,
+  and `:app:assembleDebug` (all passed; no target-35-only blocker), then moved to the final
+  **targetSdk 36** (`compileSdk 36`, `minSdk 21`).
+- **Edge-to-edge (Android 15):** `MainActivity` calls `enableEdgeToEdge()` before `setContentView`,
+  then `applyEdgeToEdgeInsets()`. The toolbar owns the top system-bar/cutout inset via
+  `updatePadding(top = …)`, the `BottomNavigationView` owns the bottom one via
+  `updatePadding(bottom = …)`, and the root ConstraintLayout owns left/right cutout/navigation-bar
+  safety via `setPadding(…)`. All values are computed from padding captured once, so repeated
+  inset dispatches never accumulate. Status/navigation icons are kept light
+  (`isAppearanceLightStatusBars/NavigationBars = false`) for the dark blue-gray chrome. No
+  `windowOptOutEdgeToEdgeEnforcement`.
+- **Predictive back (Android 16):** added the authorized
+  `androidx.activity:activity-ktx:1.11.0` bridge to `:app` (the last Activity line before
+  `minSdk` rises to 23), wiring `OnBackPressedDispatcher` to the platform
+  `OnBackInvokedDispatcher`; Navigation 2.3.5's callback keeps working and `minSdk` stays 21.
+  `MainActivity.onNewIntent` became non-null (`Intent`) per the newer Activity signature.
+  `TermuxActivity` registers a platform `OnBackInvokedCallback` on API 33+ (nested
+  `BackCallback` class, `OnBackInvokedDispatcher.PRIORITY_DEFAULT`) sharing `handleBackPressed()`
+  with the retained legacy `onBackPressed()` fallback; drawer-open closes, otherwise finish.
+  No predictive-back opt-out; `TermuxActivity` is not converted to AppCompat.
+- **Adaptive/large screen:** no `screenOrientation` lock, no aspect-ratio restriction
+  (`minAspectRatio`/`maxAspectRatio`), no Android 16 large-screen/resizability opt-out.
+  `TermuxActivity` keeps `resizeableActivity="true"` and `configChanges` unchanged.
+- **Termux edge-to-edge:** kept the existing `fitsSystemWindows="true"` root (which applies system
+  window insets as padding) and the terminal-black theme; the legacy `statusBarColor` /
+  `windowTranslucentStatus` / `windowTranslucentNavigation` attributes are retained as inert under
+  enforced edge-to-edge but harmless for pre-35 devices. No terminal rendering change.
+- **DeviceDimensions:** classified as intentional **physical-display geometry** for the external
+  VNC/X client (`defaultDisplay.getRealMetrics()` + cutout subtraction); unchanged.
+- **Dependency movement (authorized bridge):** activity/activity-ktx 1.1.0 → **1.11.0**,
+  core/core-ktx 1.1.0/1.3.0 → **1.13.0**, lifecycle 2.2.0 → **2.6.2**, savedstate 1.0.0 → **1.2.1**,
+  coroutines 1.3.9 → **1.7.3**, plus new runtime transitives `core-viewtree`, `tracing`,
+  `profileinstaller`; `androidx.core` injects the benign signature
+  `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. Navigation 2.3.5, AppCompat 1.1.0, Material 1.1.0,
+  Room 2.1.0, Fragment 1.2.4, and the AndroidX Test stack are unchanged; `minSdk` stays 21.
+- **Bounded target-35/36 audit clean:** no dataSync/mediaProcessing FGS timeout (specialUse), no
+  boot receiver, no SYSTEM_ALERT_WINDOW, no audio-focus request, no obsolete-TLS requirement, no
+  nested-intent redirection, no dynamic DEX/JAR loading, no exact alarms, no mutable/unspecified
+  PendingIntents, no orientation restrictions. `MainActivity`'s system `DownloadManager` receiver
+  keeps the flag-less registration.
+- **Guards:** renamed/advanced `TargetSdk34CompatibilityGuardTest` →
+  `TargetSdk36CompatibilityGuardTest` (durable P1E8 invariants kept; targetSdk now 36) and added
+  `TargetSdk36PlatformBehaviorGuardTest` (no edge-to-edge/back opt-out, per-owner insets, no
+  cumulative padding, Activity 1.11.0 pinned, Termux `OnBackInvokedDispatcher` + legacy fallback,
+  no orientation/large-screen opt-out, P1E7/P1E8 invariants remain).
+- Local gates passed: `:app:processDebugMainManifest`, Kotlin/Java/terminal-term Java compile,
+  KSP2 Moshi, KAPT Room, Safe Args, Parcelize, ViewBinding, BuildConfig,
+  `:app:assembleDebugAndroidTest`, `:app:ktlint`, `:app:downloadAssets`, and
+  `:app:jacocoCoverageReportForCi` (executed from the clean/report-only state; non-empty
+  788,336-byte XML + HTML). `:app:lintDebug` is unchanged at 13 errors / 134 warnings / 3 hints
+  (pre-existing `Range` ×3 + `UseRequireInsteadOfGet` ×10); no P1E9-specific blocker.
+- Canonical `clean assembleDebug testDebugUnitTest` = **41 suites / 355 tests / 0 failures / 0
+  errors / 0 skipped** (+1 guard suite, +7 tests).
+- Final debug APK 20,382,217 bytes, SHA-256
+  `39086a7e2939cc44f332f49588e843ba667cebd3cadcf0bc06a1e902a07bac74`, package
+  `io.github.lord1egypt.prootx`, versionName 1.0.0, SDK 36/36/21, four ABIs, 16/16 required
+  payloads; permissions ACCESS_NETWORK_STATE, INTERNET, BILLING, CHANGE_WIFI_STATE,
+  FOREGROUND_SERVICE, FOREGROUND_SERVICE_SPECIAL_USE, POST_NOTIFICATIONS, WAKE_LOCK, VIBRATE
+  (+ AndroidX-injected signature `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`). androidTest APK
+  1,893,595 bytes, SHA-256
+  `64c26dc5c6e5e63e856b83bd64f9a9d0eb89174007ae7b420a4dd9add32a58cb`, package
+  `io.github.lord1egypt.prootx.test`.
+- Remote CI run `35043129415` at implementation
+  `41cc7a8c629da364903de0ae71ab524541c7ef76`: **SUCCESS**; JDK 17, Gradle 8.11.1, API 36/API 29,
+  Build Tools 35.0.0, NDK 21.4.7075529, canonical build, **41 suites / 355 tests / 0 failures /
+  0 errors / 0 skipped**, androidTest build, and both artifact uploads passed.
+- **Intentional platform-compatibility change:** app targets 36; Android 15+ runs true edge-to-edge
+  with correct system-bar/cutout insets; Android 15/16 predictive back is handled by the platform
+  dispatcher. No feature/visual redesign, no SSH/session-lifecycle/data-model change, no orientation
+  lock, no large-screen opt-out. Physical validation remains P1G. Durable decision
+  `DECISIONS.md` D033.
+- **P1E9 CLOSED / PASS. P1E CLOSED / PASS. P1F MODERN NDK / 16 KB PAGE-SIZE COMPATIBILITY READY TO
+  START. P1G PHYSICAL DEVICE ACCEPTANCE NOT STARTED.**

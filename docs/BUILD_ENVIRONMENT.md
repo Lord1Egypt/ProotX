@@ -1,7 +1,7 @@
 # ProotX Build Environment
 
-> Current state: **P1E8 toolchain** (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20, JDK 17,
-> app compileSdk 36 / targetSdk 34).
+> Current state: **P1E9 toolchain** (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20, JDK 17,
+> app compileSdk 36 / targetSdk 36).
 
 ## Summary
 
@@ -21,10 +21,11 @@ The ProotX application currently builds with:
 | Mockito (test-only) | **4.11.0** |
 | gradle-download-task | **5.0.0** |
 | JDK for the Gradle build | **17** |
-| `compileSdk` / `targetSdk` (app) | 36 / 34 |
+| `compileSdk` / `targetSdk` (app) | 36 / 36 |
 | `minSdk` | 21 |
 | `:terminal-term` `compileSdk` / `targetSdk` / `minSdk` | 36 / 29 / 21 |
 | `:terminal-view` / `:terminal-emulator` `compileSdk` / `targetSdk` / `minSdk` | 29 / 29 / 21 |
+| AndroidX Activity (P1E9 bridge) | **1.11.0** (`activity-ktx`, `:app` only) |
 | Android NDK | 21.4.7075529 (explicit `ndkVersion`) |
 | Android build-tools | **35.0.0** |
 
@@ -39,7 +40,10 @@ removed the obsolete legacy broad-storage permission dependency. **P1E7** made t
 foreground services structurally compatible with the Android 12–16 FGS rules without changing
 SDK levels. **P1E8** raised the app targetSdk **30 → 34**, added `POST_NOTIFICATIONS` + the
 contextual one-time request, hardened the target-31+ FGS start, and raised `:terminal-term`
-compileSdk **29 → 36** (targetSdk stays 29).
+compileSdk **29 → 36** (targetSdk stays 29). **P1E9** raised the app targetSdk **34 → 36**
+(P1E CLOSED / PASS), enabled real edge-to-edge with per-owner `WindowInsetsCompat`, migrated
+predictive back to the platform dispatcher, and added the `androidx.activity:activity-ktx:1.11.0`
+bridge while keeping `minSdk 21`.
 
 ## JDK requirement
 
@@ -182,7 +186,7 @@ work; and promotion uses `ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST` on API 2
 
 ## targetSdk 34 runtime state (P1E8)
 
-The app targets **34** (`compileSdk 36`, `minSdk 21`) and declares
+The app targeted **34** (`compileSdk 36`, `minSdk 21`) and declared
 `android.permission.POST_NOTIFICATIONS`. The permission is requested **contextually at the first
 real session start** through one shared application-private prefs flag
 (`notification_permission`/`prompt_completed`); current grant state always comes from
@@ -197,11 +201,26 @@ with `targetSdk 29`; `:terminal-view`/`:terminal-emulator` remain 29/29/21. The 
 lacks `android:exported` on its invoker activities, so a test-only `app/src/androidTest/AndroidManifest.xml`
 overlay supplies them for the target-31+ merger. See `DECISIONS.md` D032.
 
+## targetSdk 36 platform state (P1E9)
+
+The app's final target is **36** (`compileSdk 36`, `minSdk 21`). `MainActivity` calls
+`enableEdgeToEdge()` and applies real `WindowInsetsCompat` per owner (toolbar top, bottom
+navigation bottom, root left/right cutout/navigation safety) from captured initial padding, with
+light system-bar icons for the dark chrome. Predictive back uses the AndroidX Navigation dispatcher
+bridged to the platform `OnBackInvokedDispatcher` by `androidx.activity:activity-ktx:1.11.0`; the
+`TermuxActivity` terminal registers a platform `OnBackInvokedCallback` on API 33+ with the legacy
+`onBackPressed` fallback. There is no edge-to-edge or predictive-back opt-out, no orientation lock,
+and no large-screen/resizability opt-out. `TermuxActivity` keeps `fitsSystemWindows="true"` and
+`resizeableActivity="true"`; `DeviceDimensions` keeps physical-display geometry for the external
+VNC/X client. `:terminal-term` remains `36/29/21`; `:terminal-view`/`:terminal-emulator` remain
+`29/29/21`. See `DECISIONS.md` D033.
+
 ## Baseline result (reference)
 
 The frozen baseline at tag `v1.0.0-baseline` measured **313 tests / 24 suites / 0 failures**.
-The P1E8 toolchain measures **348 tests / 40 suites / 0 failures / 0 errors / 0 skipped**.
-Remote CI run `35037714144` passed at `cff25f3` and uploaded the debug and androidTest APK
-artifacts. P1E8 local validation also proved the API-36 SDK platform, the androidTest APK build,
-four ABIs, 16/16 native payloads, the `POST_NOTIFICATIONS` declaration in the APK, targetSdk 34,
-and the separate JaCoCo report regression gate. See `PROJECT_STATE.md`.
+The P1E9 toolchain measures **355 tests / 41 suites / 0 failures / 0 errors / 0 skipped**.
+Remote CI run `35043129415` passed at `41cc7a8` and uploaded the debug and androidTest APK
+artifacts. P1E9 local validation also proved the API-36 SDK platform, the androidTest APK build,
+four ABIs, 16/16 native payloads, targetSdk 36 in the merged manifest/APK, the absence of all
+opt-outs, and the separate JaCoCo report regression gate. **P1E is CLOSED / PASS.** See
+`PROJECT_STATE.md`.

@@ -1,13 +1,13 @@
 # ProotX — P1E Android 16 (SDK 36) Migration Plan
 
-> **Status:** P1E8 implementation CLOSED / PASS; P1E remains IN PROGRESS. This document is the
+> **Status:** P1E9 implementation CLOSED / PASS; **P1E is CLOSED / PASS**. This document is the
 > approved migration design and implementation record. Current state lives in
 > `PROJECT_STATE.md`. Do not execute a later step without explicit authorization.
 
-Current accepted implementation: `cff25f3f1dffa1a91d78a55915dd50513b694af4`, remote CI
-`35037714144` green, 40 suites / 348 tests / 0 failures / 0 errors / 0 skipped. Frozen
-application baseline remains unchanged. Next milestone: **P1E9 — TARGETSDK 35/36 PLATFORM
-BEHAVIOR — NOT STARTED / READY TO START**.
+Current accepted implementation: `41cc7a8c629da364903de0ae71ab524541c7ef76`, remote CI
+`35043129415` green, 41 suites / 355 tests / 0 failures / 0 errors / 0 skipped. Frozen
+application baseline remains unchanged. Next milestone: **P1F — MODERN NDK / 16 KB PAGE-SIZE
+COMPATIBILITY — NOT STARTED / READY TO START** (P1G physical acceptance after P1F).
 
 ---
 
@@ -17,7 +17,7 @@ BEHAVIOR — NOT STARTED / READY TO START**.
 
 | Module | compileSdk | targetSdk | minSdk |
 |---|---|---|---|
-| `:app` | 36 | 34 | 21 |
+| `:app` | 36 | 36 | 21 |
 | `:terminal-term` | 36 | 29 | 21 |
 | `:terminal-view` | 29 | 29 | 21 |
 | `:terminal-emulator` | 29 | 29 | 21 |
@@ -432,7 +432,7 @@ should be validated on a device; no UI redesign is authorized in P1E.
 | **P1E6** | Storage/permission runtime: remove/repair `PermissionHandler` gate + storage permissions + terminal request | Runtime permission | **CLOSED / PASS**; app/session/SAF flows work without storage perms; 329 tests green; disposable targetSdk 33 probe passed then reverted |
 | **P1E7** | FGS structural compatibility: `foregroundServiceType="specialUse"` + `FOREGROUND_SERVICE_SPECIAL_USE` + subtype property for both services; service-owned channels; initial launch via `startForegroundService`; immediate `ServerService` promotion; `FOREGROUND_SERVICE_TYPE_MANIFEST` on API 29+. **`POST_NOTIFICATIONS` intentionally deferred** (see §10.1) | FGS/notification | **CLOSED / PASS**; build + 337 tests green; disposable targetSdk 34 probe passed then reverted; FGS declarations validated in merged manifest + APK |
 | **P1E8** | targetSdk **33/34** runtime: app targetSdk 30 → 34; `POST_NOTIFICATIONS` declaration + contextual one-time runtime request (denial never blocks the session); targetSdk 31+ deferred/resumed FGS start with narrow `ForegroundServiceStartNotAllowedException` handling; `TermuxActivity` custom receiver `RECEIVER_NOT_EXPORTED`; `:terminal-term` compileSdk 29 → 36 (targetSdk 29) | Target behavior | **CLOSED / PASS**; target-33 checkpoint passed; build + 348 tests green; disposable target-34 declarations validated in merged manifest + APK |
-| **P1E9** | targetSdk **35/36** behavior: edge-to-edge, predictive back (`OnBackPressedCallback`), large-screen orientation/resizability; final SDK 36 regression build; Golden Candidate prep | Regression/behavior | Full local+remote green; P1G physical acceptance queued |
+| **P1E9** | targetSdk **35/36** behavior: app targetSdk 34 → 36 after a target-35 checkpoint; real edge-to-edge with per-owner `WindowInsetsCompat`; Android 15/16 predictive back (Activity 1.11.0 bridge for MainActivity, platform `OnBackInvokedCallback` for TermuxActivity); no edge-to-edge/back/orientation/large-screen opt-outs | Regression/behavior | **CLOSED / PASS**; build + 355 tests green; no opt-outs in merged manifest; P1G physical acceptance queued |
 
 ### 15.1 Exact P1E1 implementation (proven by P1E1-P)
 
@@ -880,5 +880,52 @@ Accepted implementation: `cff25f3f1dffa1a91d78a55915dd50513b694af4`; remote CI r
   application-owned component issues). No dependency, Room/schema, storage-path, SSH, or UI change.
   Durable decision: `DECISIONS.md` D032.
 
-**Next:** P1E9 — TARGETSDK 35/36 PLATFORM BEHAVIOR — **NOT STARTED / READY TO START**. Do not
-start without explicit authorization.
+## 27. P1E9 targetSdk 35/36 platform behavior result — CLOSED / PASS
+
+Accepted implementation: `41cc7a8c629da364903de0ae71ab524541c7ef76`; remote CI run
+`35043129415` — SUCCESS.
+
+- App targetSdk **34 → 36** after a clean target-35 checkpoint (`processDebugMainManifest`,
+  Kotlin/Java compile, `assembleDebug`; target-35-only blocker: none). Final matrix `:app`
+  **36/36/21**; `:terminal-term` **36/29/21**; `:terminal-view`/`:terminal-emulator` **29/29/21**.
+- **Edge-to-edge (Android 15):** `MainActivity` calls `enableEdgeToEdge()` and applies real
+  `WindowInsetsCompat` per owner — toolbar owns the top system-bar/cutout inset, the
+  `BottomNavigationView` owns the bottom one, the root owns left/right cutout/navigation-bar
+  safety — computed from captured initial padding so dispatches never accumulate. Status/navigation
+  icons stay light for the dark blue-gray chrome. No `windowOptOutEdgeToEdgeEnforcement`.
+- **Predictive back (Android 16):** the authorized `androidx.activity:activity-ktx:1.11.0` bridge
+  wires `MainActivity`'s `OnBackPressedDispatcher` to the platform `OnBackInvokedDispatcher` while
+  `minSdk` stays 21 (`onNewIntent` became non-null). `TermuxActivity` registers a platform
+  `OnBackInvokedCallback` on API 33+ (drawer open → close, otherwise finish) and retains the legacy
+  `onBackPressed` fallback for API < 33 / non-predictive-back. No `enableOnBackInvokedCallback`
+  opt-out; `TermuxActivity` is not converted to AppCompat.
+- **Adaptive/large screen:** no `screenOrientation` lock, no aspect-ratio restriction, no Android 16
+  large-screen/resizability opt-out; `TermuxActivity` keeps `resizeableActivity="true"` and
+  `fitsSystemWindows="true"` (legacy translucent/status-bar theme attributes retained as inert
+  under enforced edge-to-edge). `DeviceDimensions` keeps physical-display geometry for the external
+  VNC/X client (classification A).
+- Bounded target-35/36 audit clean: no dataSync/mediaProcessing FGS timeout (specialUse), no boot
+  receiver, no SYSTEM_ALERT_WINDOW, no audio-focus request, no TLS-1.0/1.1 requirement, no
+  nested-intent redirection, no dynamic DEX/JAR loading, no exact alarms, no orientation lock.
+- Durable decision: `DECISIONS.md` D033. Transitive movement from the Activity bridge recorded:
+  core/core-ktx 1.13.0, lifecycle 2.6.2, savedstate 1.2.1, coroutines 1.7.3, plus the injected
+  signature `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. Navigation 2.3.5 / AppCompat 1.1.0 /
+  Material 1.1.0 / Room 2.1.0 unchanged.
+- Guards: `TargetSdk34CompatibilityGuardTest` renamed/advanced to
+  `TargetSdk36CompatibilityGuardTest`; new `TargetSdk36PlatformBehaviorGuardTest`. Canonical
+  `clean assembleDebug testDebugUnitTest` = **41 suites / 355 tests / 0 failures / 0 errors /
+  0 skipped**; local JaCoCo report executed (non-empty 788,336-byte XML + HTML).
+- Debug APK 20,382,217 bytes, SHA-256
+  `39086a7e2939cc44f332f49588e843ba667cebd3cadcf0bc06a1e902a07bac74`, package
+  `io.github.lord1egypt.prootx`, versionName 1.0.0, SDK 36/36/21, four ABIs, 16/16 required
+  payloads; permissions ACCESS_NETWORK_STATE, INTERNET, BILLING, CHANGE_WIFI_STATE,
+  FOREGROUND_SERVICE, FOREGROUND_SERVICE_SPECIAL_USE, POST_NOTIFICATIONS, WAKE_LOCK, VIBRATE
+  (+ the AndroidX-injected signature `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`). androidTest APK
+  1,893,595 bytes, SHA-256
+  `64c26dc5c6e5e63e856b83bd64f9a9d0eb89174007ae7b420a4dd9add32a58cb`, package
+  `io.github.lord1egypt.prootx.test`.
+- No Room/schema, storage-path, SSH, notification-policy, FGS-type/ID, or data-model change. No
+  orientation lock, no large-screen opt-out, no edge-to-edge/back opt-out. **P1E is CLOSED / PASS.**
+
+**Next:** P1F — MODERN NDK / 16 KB PAGE-SIZE COMPATIBILITY — **NOT STARTED / READY TO START**.
+Do not start without explicit authorization. P1G physical acceptance remains after P1F.

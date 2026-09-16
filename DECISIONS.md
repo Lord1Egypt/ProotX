@@ -683,3 +683,53 @@
   `termux-app/terminal-term/build.gradle`, `TermuxActivity.java`,
   `app/src/androidTest/AndroidManifest.xml`, `ForegroundServiceCompatibilityGuardTest`,
   `TargetSdk34CompatibilityGuardTest`, P1E8/P1E9.
+
+---
+
+## D033 — Final targetSdk 36; real edge-to-edge and predictive back (no opt-outs); Activity 1.11.0 bridge
+
+- **Date:** 2026-09-16
+- **Status:** Accepted (P1E9, CLOSED / PASS)
+- **Decision:** The app's final `targetSdk` is **36** (`compileSdk 36`, `minSdk 21`). ProotX adapts
+  to Android 15/16 rather than opting out:
+  - **Edge-to-edge:** `MainActivity` calls `enableEdgeToEdge()` and applies real
+    `WindowInsetsCompat` per owner — the toolbar owns the top system-bar/cutout inset, the
+    `BottomNavigationView` owns the bottom one, and the root owns left/right cutout/navigation-bar
+    safety. Original padding is captured once and combined with the current inset so repeated
+    dispatches never accumulate. Status/navigation icons stay light for the dark blue-gray chrome.
+    No `windowOptOutEdgeToEdgeEnforcement`.
+  - **Predictive back:** `MainActivity` keeps the AndroidX Navigation dispatcher path; a new
+    `androidx.activity:activity-ktx:1.11.0` bridge (the last line before Activity raises minSdk to
+    23) wires `OnBackPressedDispatcher` to the platform `OnBackInvokedDispatcher` while `minSdk`
+    stays 21. `TermuxActivity` registers a platform `OnBackInvokedCallback` on API 33+ (drawer open
+    → close; otherwise finish) and keeps its legacy `onBackPressed` fallback for API < 33 /
+    non-predictive-back. No `android:enableOnBackInvokedCallback="false"` and no opt-out.
+  - **Adaptive / large screen:** no `screenOrientation` lock, no aspect-ratio restriction, no
+    Android 16 large-screen/resizability opt-out; `TermuxActivity` stays
+    `resizeableActivity="true"`. ProotX accepts Android 16's adaptive behavior.
+  - **Termux edge-to-edge:** kept the existing `fitsSystemWindows="true"` root and the
+    terminal-black theme; the legacy `statusBarColor`/translucent attributes are retained (inert
+    under enforced edge-to-edge but harmless and preserved for pre-35 devices). `TermuxActivity`
+    is not converted to an AppCompat activity.
+  - `DeviceDimensions` retains physical `defaultDisplay.getRealMetrics()` geometry: it feeds the
+    external VNC/X client resolution, which is intentionally physical-display geometry.
+- **Reason:** Android 15 enforces edge-to-edge for target 35+ and Android 16 removes the practical
+  opt-out; predictive back becomes the default dispatch path. Adapting is the correct final
+  architecture. The Activity 1.11.0 bridge is the bounded minimum that keeps `minSdk 21` and does
+  not require a Navigation/AppCompat/Material/Room upgrade.
+- **Alternatives considered:** `windowOptOutEdgeToEdgeEnforcement` or
+  `enableOnBackInvokedCallback="false"` (rejected — escape hatches, not the product direction);
+  fixed-dp padding (rejected — wrong on cutouts/landscape); converting `TermuxActivity` to
+  AppCompat (rejected — unnecessary architecture change); Activity 1.12+/1.13+ (rejected — raises
+  minSdk to 23); upgrading Navigation/AppCompat (rejected — not required).
+- **Trade-offs:** The authorized Activity bridge moves transitive selections: activity/activity-ktx
+  **1.1.0 → 1.11.0**, core/core-ktx **1.1.0/1.3.0 → 1.13.0**, lifecycle **2.2.0 → 2.6.2**,
+  savedstate **1.0.0 → 1.2.1**, coroutines **1.3.9 → 1.7.3**, plus new runtime transitives
+  `core-viewtree`, `tracing`, `profileinstaller`. `androidx.core:core:1.13.0` also injects the
+  benign signature-level `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` into the merged manifest.
+  Navigation 2.3.5, AppCompat 1.1.0, Material 1.1.0, Room 2.1.0, Fragment 1.2.4, and the test
+  stack are unchanged. `MainActivity.onNewIntent` became non-null (`Intent`). Final APK grows
+  because of the newer AndroidX. Physical validation of insets/back/IME on devices remains P1G.
+- **Affected components:** `app/build.gradle`, `MainActivity.kt`,
+  `termux-app/terminal-term/src/main/java/com/termux/app/TermuxActivity.java`,
+  `TargetSdk36CompatibilityGuardTest`, `TargetSdk36PlatformBehaviorGuardTest`, P1E9/P1F/P1G.

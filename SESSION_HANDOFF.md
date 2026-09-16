@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-16 (P1E8 targetSdk 34 runtime compatibility: CLOSED / PASS — P1E IN PROGRESS)
+Last updated: 2026-09-16 (P1E9 Android 15/16 platform behavior: CLOSED / PASS — P1E CLOSED / PASS)
 
 ## Current Objective
 
@@ -13,30 +13,27 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1E8 — targetSdk 33/34 Runtime Compatibility**: **CLOSED / PASS** at implementation SHA
-`cff25f3f1dffa1a91d78a55915dd50513b694af4`. The app's persistent `targetSdk` is **34**
-(`compileSdk 36`, `minSdk 21`). `POST_NOTIFICATIONS` is declared and requested contextually at the
-first real session start through one shared application-private prefs flag
-(`notification_permission`/`prompt_completed`); current grant state always comes from
-`checkSelfPermission`, denial never blocks the Linux session, and an explicit denial suppresses
-later automatic prompts. The initial `ServerService` launch is deferred until the activity is
-resumed and catches only `ForegroundServiceStartNotAllowedException`, restoring the pending session
-and retrying on the next resume. `TermuxActivity` (direct `ssh://` entry) uses the same one-time
-policy, and its app-internal `reload_style` receiver uses the direct
-`Context.RECEIVER_NOT_EXPORTED` constant on API 33+ with the legacy two-argument path retained.
-`:terminal-term` raises **only** its `compileSdk` to **36** (`targetSdk 29`/`minSdk 21`);
-`:terminal-view`/`:terminal-emulator` stay **29/29/21**. A test-only
-`app/src/androidTest/AndroidManifest.xml` supplies the `android:exported` values that
-`androidx.test:core:1.2.0` omits (required by the target-31+ merger). Notification channel
-ID/IDs/actions, FGS types, PendingIntents, SSH, session lifecycle, Room schema, and UI are
-unchanged. Local canonical evidence **40 suites / 348 tests / 0 failures / 0 errors / 0 skipped**;
-remote CI run `35037714144` passed the canonical clean build, androidTest build, and both artifact
-uploads.
+**P1E9 — targetSdk 35/36 Platform Behavior**: **CLOSED / PASS** at implementation SHA
+`41cc7a8c629da364903de0ae71ab524541c7ef76`. The app's final `targetSdk` is **36** (`compileSdk 36`,
+`minSdk 21`) after a clean target-35 checkpoint. ProotX **adapts** rather than opting out:
+`MainActivity` enables edge-to-edge and applies real `WindowInsetsCompat` per owner (toolbar top,
+bottom navigation bottom, root left/right cutout/navigation safety) without accumulating padding,
+with light system-bar icons for the dark chrome; `TermuxActivity` registers a platform
+`OnBackInvokedCallback` on API 33+ (drawer open → close, otherwise finish) with the legacy
+`onBackPressed` fallback retained. The authorized `androidx.activity:activity-ktx:1.11.0` bridge
+keeps `minSdk 21` and wires `OnBackPressedDispatcher` to the platform dispatcher; Navigation 2.3.5,
+AppCompat 1.1.0, Material 1.1.0, and Room 2.1.0 are unchanged (bridge transitives: core/core-ktx
+1.13.0, lifecycle 2.6.2, savedstate 1.2.1, coroutines 1.7.3 — `DECISIONS.md` D033). There is no
+edge-to-edge opt-out, no predictive-back opt-out, no orientation lock, and no large-screen opt-out;
+`TermuxActivity` keeps `fitsSystemWindows="true"` and stays `resizeableActivity="true"`. Local
+canonical evidence **41 suites / 355 tests / 0 failures / 0 errors / 0 skipped**; remote CI run
+`35043129415` passed the canonical clean build, androidTest build, and both artifact uploads.
 
 ## Current Milestone
 
-**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS. P1E8 is closed; **P1E9 — TARGETSDK 35/36
-PLATFORM BEHAVIOR** is **NOT STARTED / READY TO START**.
+**P1E — SDK 36 / Manifest Compatibility**: **CLOSED / PASS**. All of P1E (P1E0–P1E9) is complete at
+targetSdk 36. Next: **P1F — MODERN NDK / 16 KB PAGE-SIZE COMPATIBILITY — NOT STARTED / READY TO
+START** (P1G physical acceptance remains after P1F).
 
 ## What Was Completed
 
@@ -92,23 +89,34 @@ PLATFORM BEHAVIOR** is **NOT STARTED / READY TO START**.
   its `compileSdk` 29 → 36. Added a test-only `app/src/androidTest/AndroidManifest.xml` for the
   `androidx.test:core:1.2.0` exported values and `TargetSdk34CompatibilityGuardTest`; updated
   `ForegroundServiceCompatibilityGuardTest` in place.
+- P1E9 raised the app `targetSdk` **34 → 36** (after a clean target-35 checkpoint). `MainActivity`
+  calls `enableEdgeToEdge()` and applies real `WindowInsetsCompat` per owner (toolbar top, bottom
+  navigation bottom, root left/right cutout/navigation safety) from captured initial padding so it
+  never accumulates, keeping light icons for the dark chrome. `TermuxActivity` registers a platform
+  `OnBackInvokedCallback` on API 33+ (sharing `handleBackPressed()` with the retained legacy
+  `onBackPressed`). Added the authorized `androidx.activity:activity-ktx:1.11.0` bridge (minSdk
+  stays 21) with the Activity 1.11.0 non-null `onNewIntent` adjustment. Renamed/advanced
+  `TargetSdk34CompatibilityGuardTest` → `TargetSdk36CompatibilityGuardTest` and added
+  `TargetSdk36PlatformBehaviorGuardTest`.
 
 ## What Was Intentionally NOT Changed
 
-- minSdk (21), `:terminal-view`/`:terminal-emulator` SDKs (29/29/21), NDK 21.4, resources,
-  dependency versions, Room schema 1–7, migrations, core runtime data model, and UI.
-- No targetSdk 35/36 raise, no terminal targetSdk raise, no receiver magic flag / reflection, no
-  exported `reload_style` receiver, no flags on the `DownloadManager` system receiver, no storage
-  permission restoration, no session blocking on notification denial, no startup notification
-  request, no custom rationale UI, no edge-to-edge or predictive-back work (P1E9). Room stays on
-  KAPT; Moshi stays on KSP2. The unreachable legacy permission-continuation ViewModel code is
-  deferred, not deleted.
+- minSdk (21), `:terminal-view`/`:terminal-emulator` SDKs (29/29/21), `:terminal-term` targetSdk 29,
+  NDK 21.4, native payload, Room schema 1–7, migrations, core runtime data model, SSH semantics,
+  notification policy, FGS types/IDs/actions, and the visual design.
+- No edge-to-edge or predictive-back opt-out, no orientation lock, no aspect-ratio restriction, no
+  large-screen/resizability opt-out, no terminal redesign, no main-navigation redesign, no
+  Navigation/AppCompat/Material/Room/AndroidX-Test upgrade (only the authorized Activity bridge and
+  its transitives). Room stays on KAPT; Moshi stays on KSP2. `TermuxActivity` is not converted to
+  AppCompat. The unreachable legacy permission-continuation ViewModel code is deferred, not
+  deleted.
 
 ## Current Repository State
 
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
+| Accepted P1E9 implementation | `41cc7a8c629da364903de0ae71ab524541c7ef76` |
 | Accepted P1E8 implementation | `cff25f3f1dffa1a91d78a55915dd50513b694af4` |
 | Accepted P1E7 implementation | `0e70b7e1e3f398eb6fdb92730542cae0da6f1975` |
 | Accepted P1E6 implementation | `2202d6bda33512d3312827bf2bd6dc17f47dbae9` |
@@ -123,7 +131,7 @@ PLATFORM BEHAVIOR** is **NOT STARTED / READY TO START**.
 
 Commit `94abf5fa520255bb10d087a6be3ba2bc70b0e127`, package
 `io.github.lord1egypt.prootx`, version `1.0.0`. Baseline tests **313 / 24 suites**; current
-tests **348 / 40 suites** (guard/contract tests).
+tests **355 / 41 suites** (guard/contract tests).
 
 ## Current Toolchain
 
@@ -131,9 +139,10 @@ Gradle **8.11.1** · AGP **8.10.1** · Kotlin/KGP and stdlib **2.2.20** (jvmTarg
 Moshi **1.15.2** via **KSP2 2.2.20-2.0.4** · Room **2.1.0** via KAPT ·
 Navigation **2.3.5** · Preference **1.1.0** · Material **1.1.0** ·
 SwipeRefreshLayout **1.0.0** / LocalBroadcastManager **1.0.0** (direct) · Arch Core testing
-**2.1.0** (test-only) · Core KTX **1.1.0** (transitive `core` 1.3.0) · Lifecycle **2.2.0** ·
-JaCoCo **0.8.8** · Mockito **4.11.0** (test-only) · gradle-download-task **5.0.0** · plugin
-**`kotlin-parcelize`** · JDK **17** (build) · compileSdk **36** · targetSdk **34** ·
+**2.1.0** (test-only) · Activity **1.11.0** (P1E9 bridge; resolves core/core-ktx **1.13.0**,
+lifecycle **2.6.2**, savedstate **1.2.1**, coroutines **1.7.3**) · JaCoCo **0.8.8** · Mockito
+**4.11.0** (test-only) · gradle-download-task **5.0.0** · plugin
+**`kotlin-parcelize`** · JDK **17** (build) · compileSdk **36** · targetSdk **36** ·
 minSdk **21** · terminal-term **36/29/21** · terminal-view/emulator **29/29/21** · NDK
 **21.4.7075529** · build-tools **35.0.0**.
 Repositories: `google()`,
@@ -173,14 +182,25 @@ flag-less registration is correct for a system-only broadcast); and the test-onl
 `androidx.test:core:1.2.0` exported-value overlay should be revisited when `androidx.test` is
 eventually upgraded.
 
+**P1E9 RESOLVED the platform-target deferrals:** the app targets 36, runs true edge-to-edge with
+per-owner `WindowInsetsCompat`, and supports Android 15/16 predictive back (MainActivity via the
+Activity 1.11.0 bridge; TermuxActivity via a platform `OnBackInvokedCallback`). **Deferred after
+P1E9 (non-blocking):** the authorized Activity bridge moved core/core-ktx to 1.13.0, lifecycle to
+2.6.2, savedstate to 1.2.1, and coroutines to 1.7.3, and `androidx.core` injects the benign
+signature `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`; a future dependency-alignment milestone can
+rationalize the newer family. Physical validation of insets/back/IME/VNC geometry is **P1G**; NDK /
+16 KB work is **P1F**. Plus the still-open P1E8 items (terminal `specialUse` overlay consolidation,
+`UnspecifiedRegisterReceiverFlag` suppression, androidx.test overlay).
+
 **CI infrastructure finding — RESOLVED in CI-R1:** the closure-documentation push had failed
 remote CI in `android-actions/setup-android@v3` (`Warning: Failed to find package 'tools'`)
 before any ProotX build step (upstream SDK package retirement). Fixed with `packages: ''` plus
 explicit `platform-tools`; remote run `34919847167` is green.
 
-**Deferred physical checks:** the `EditTextPreference` numeric input and all Material widget
-appearance/interaction (BottomNavigationView, TextInputLayout/EditText, FAB, dialogs) must be
-verified on a device at the Golden Candidate gate; no physical acceptance is claimed yet.
+**Deferred physical checks:** the `EditTextPreference` numeric input, all Material widget
+appearance/interaction (BottomNavigationView, TextInputLayout/EditText, FAB, dialogs), and the new
+P1E9 edge-to-edge/inset/predictive-back/IME/VNC-geometry behavior must be verified on a device at
+the P1G gate; no physical acceptance is claimed yet.
 
 ## Important Invariants
 
@@ -195,15 +215,15 @@ verified on a device at the Golden Candidate gate; no physical acceptance is cla
 7. Published history is immutable: no force-push, no history rewrite.
 8. One milestone at a time; respect STOP gates.
 9. Established durable decisions: D010, D011, D012/D015, D013/D014, D016, D017, D018, D019,
-   D020, D021, D022, D031, D032.
+   D020, D021, D022, D031, D032, D033.
 
 ## Next Safe Action
 
-**P1E9 — TARGETSDK 35/36 PLATFORM BEHAVIOR — NOT STARTED / READY TO START.** It owns the targetSdk
-35/36 raise, edge-to-edge, predictive back, large-screen orientation/resizability behavior, and the
-final SDK-36 behavior regression. NDK / 16 KB work remains **P1F**; physical acceptance remains
-**P1G**. Sentry and Billing remain active and out of scope. Do not begin without explicit
-authorization.
+**P1F — MODERN NDK / 16 KB PAGE-SIZE COMPATIBILITY — NOT STARTED / READY TO START.** It owns NDK
+modernization and 16 KB page-size readiness and must not begin without explicit authorization.
+Physical acceptance (**P1G**) remains after P1F; ProotX must not be called a Golden Candidate,
+release candidate, or store-ready final until P1G is complete. Sentry and Billing remain active and
+out of scope.
 
 ## Resume Procedure
 

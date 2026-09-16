@@ -24,7 +24,7 @@
 >     - **P1D9 — AndroidX Core KTX 1.1.0 Alignment:** CLOSED / PASS
 >     - **P1D Final Dependency Closure Audit:** CLOSED / PASS (no blocker)
 >   - **CI-R1 — Android SDK Bootstrap Remediation:** CLOSED / PASS
->   - **P1E — SDK 36 / Manifest Compatibility:** IN PROGRESS
+>   - **P1E — SDK 36 / Manifest Compatibility:** CLOSED / PASS
 >     - **P1E0 — Android 16 Toolchain + Platform Readiness Audit:** CLOSED / PASS
 >     - **P1E1-P — Kotlin / AGP Build-Tooling Bridge Compatibility Probe:** CLOSED / BRIDGE_FOUND
 >     - **P1E1 — Kotlin/AndroidX Codegen + Build-Tooling Bridge:** CLOSED / PASS
@@ -59,7 +59,13 @@
 >       entry policy; `Context.RECEIVER_NOT_EXPORTED` on API 33+; `:terminal-term` compileSdk
 >       29 → 36 with targetSdk 29; implementation `cff25f3`; remote CI `35037714144`;
 >       40 suites / 348 tests)
->     - **P1E9 — TARGETSDK 35/36 PLATFORM BEHAVIOR:** READY TO START
+>     - **P1E9 — TARGETSDK 35/36 PLATFORM BEHAVIOR:** CLOSED / PASS
+>       (app targetSdk 34 → 36; real edge-to-edge with per-owner insets; Android 15/16 predictive
+>       back; no edge-to-edge/back/orientation/large-screen opt-outs; Activity 1.11.0 bridge keeps
+>       minSdk 21; implementation `41cc7a8`; remote CI `35043129415`; 41 suites / 355 tests)
+>   - **P1E — SDK 36 / MANIFEST COMPATIBILITY:** CLOSED / PASS (P1E0–P1E9 complete; targetSdk 36)
+> - **P1F — Modern Native/NDK and 16 KB Page Readiness:** NOT STARTED / READY TO START
+> - **P1G — Physical-Device Acceptance:** NOT STARTED (after P1F)
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -325,6 +331,16 @@ deferred to the appropriate later phase.
       overlay; revisit (and drop the overlay + the `UnspecifiedRegisterReceiverFlag` lint
       suppression for the system `DownloadManager` receiver) when `androidx.test` is eventually
       upgraded.
+27. **P1E9 targetSdk 36 platform behavior — RESOLVED (P1E CLOSED / PASS).** The app targets 36 and
+    adapts to Android 15/16 rather than opting out: true edge-to-edge with per-owner
+    `WindowInsetsCompat`, and predictive back via the authorized
+    `androidx.activity:activity-ktx:1.11.0` bridge (`MainActivity`) and a platform
+    `OnBackInvokedCallback` (`TermuxActivity`), keeping `minSdk 21` (`DECISIONS.md` D033). No
+    edge-to-edge/back opt-out, no orientation lock, no large-screen opt-out. Non-blocking follow-up
+    recorded for a later dependency-alignment milestone: the bridge moved core/core-ktx to 1.13.0,
+    lifecycle to 2.6.2, savedstate to 1.2.1, and coroutines to 1.7.3, and `androidx.core` injects
+    the benign signature `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. Physical validation of
+    edge-to-edge, predictive back, IME, and VNC geometry is **P1G**; NDK / 16 KB work is **P1F**.
 
 ## Non-goals for P0
 
