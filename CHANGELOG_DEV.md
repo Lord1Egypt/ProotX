@@ -896,3 +896,71 @@
   `DECISIONS.md` D033.
 - **P1E9 CLOSED / PASS. P1E CLOSED / PASS. P1F MODERN NDK / 16 KB PAGE-SIZE COMPATIBILITY READY TO
   START. P1G PHYSICAL DEVICE ACCEPTANCE NOT STARTED.**
+
+## P1F-P — NDK / 16 KB Compatibility Probe (2026-09-16) — PARTIAL_BRIDGE
+
+- Read-only probe (no commits/releases/tags). Disposable ProotX worktree at `b469e91`; disposable
+  clone of `ProotX-Assets-Support` at `0fa736a`. Installed NDK r29 into the shared SDK for probing.
+- **Baseline:** canonical `clean assembleDebug testDebugUnitTest` green at **41 suites / 355 tests**;
+  the four support v1.0.0 release zip digests matched the expected values exactly.
+- **APK native payload:** 116 `lib/*.so` entries (30/28/28/30); **72 real ELF** and **44 non-ELF
+  disguised `.so`** (7 shell scripts + `arch`/`stat4`/`stat8`/`uptime` per ABI). Baseline
+  `PT_LOAD` alignment: 16K-compatible **17**, 4K-only **55**. All arm64 64-bit support ELFs are
+  `0x10000`; every armeabi-v7a/x86/x86_64 support ELF and every ABI's `libtermux.so` is `0x1000`.
+- **Packaging:** `extractNativeLibs="true"` (all libs compressed) and the runtime
+  `nativeLibraryDir → filesDir/support` symlink contract; `zipalign -c -P 16` passes but does not
+  exercise uncompressed alignment. The debug AAB reports
+  `uncompressNativeLibraries {enabled: true, alignment: PAGE_ALIGNMENT_16K}` (AGP 8.10.1).
+- **NDK r29 probe:** `:terminal-emulator` builds with **no source change** despite `-Werror`;
+  arm64-v8a and x86_64 `libtermux.so` move `0x1000 → 0x4000`; full r29 app build green at
+  **41 suites / 355 tests**; minSdk stays 21.
+- **Support bundle:** arm64 64-bit ELFs are 16K-compatible, but every x86_64 support ELF (and the
+  arm64 `loader32` 32-bit helper) is 4K-only. **Rebuild is NOT reproducible as documented:**
+  `Lord1Egypt/proot@merge-it` is **unavailable (404)**, `ubuntu:latest` is unpinned, and
+  `termux-packages@android-5` resolves today to `ec812d88…` with no recorded historical SHA.
+  Feasibility: **D**.
+- **Conclusion:** PARTIAL_BRIDGE — the in-tree library is fixable with NDK r29; the support
+  toolchain/provenance and bundles require the reported cross-repository remediation.
+- **Temporary edits:** NDK pins and `local.properties` in the disposable worktree (reverted);
+  NDK r29 installed in the shared SDK; bundletool 1.18.1 and support zips downloaded to `/tmp`.
+  Both disposable trees ended clean. No persistent repository change.
+- **P1F-P CLOSED / PARTIAL_BRIDGE.**
+
+## P1F1 — In-Tree NDK r29 Migration + CI Pin Modernization (2026-09-16) — PASS
+
+- Raised the in-tree NDK pin **21.4.7075529 → 29.0.14206865** in `app/build.gradle` and
+  `termux-app/terminal-emulator/build.gradle`. **No** source, `Android.mk`, linker, ABI,
+  `extractNativeLibs`, or packaging change; no `-Wl,-z,max-page-size=16384` added.
+- `.github/workflows/build.yml`: `ANDROID_NDK_VERSION` → `29.0.14206865`; the deprecated
+  `ndk.dir` is no longer written to `local.properties` (Gradle module `ndkVersion` is the
+  authoritative NDK selector; a stale `ndk.dir` actually broke configuration with r29).
+- Added a scoped CI step **"Verify in-tree 16 KB native alignment (arm64-v8a, x86_64)"** that
+  extracts the packaged `lib/<abi>/libtermux.so` and fails if any `PT_LOAD` alignment is below
+  `0x4000`, deriving `llvm-readelf` from `ANDROID_SDK_ROOT`/`ANDROID_HOME` + `ANDROID_NDK_VERSION`.
+  It deliberately does not inspect the `ProotX-Assets-Support` payloads.
+- Added `NdkR29ToolchainGuardTest` (5 tests) pinning both `ndkVersion` values, the CI NDK version
+  and `ndk;` install, the absence of a written `ndk.dir`, and the presence of the 16 KB CI guard.
+- Local validation: packaged `lib/arm64-v8a/libtermux.so` and `lib/x86_64/libtermux.so` both report
+  `PT_LOAD align=0x4000, 0x4000` with `GNU_RELRO` present (r29 `llvm-readelf`); armeabi-v7a/x86
+  remain `0x1000` (32-bit, out of scope). `zipalign -c -P 16` passes (libs compressed). Debug AAB
+  reports `PAGE_ALIGNMENT_16K`.
+- Canonical `clean assembleDebug testDebugUnitTest` = **42 suites / 360 tests / 0 failures / 0
+  errors / 0 skipped** (+1 guard suite). JaCoCo `jacocoCoverageReportForCi` executed from the
+  clean/report-only state (non-empty 788,336-byte XML + HTML; 225 covered classes).
+- Debug APK 20,375,883 bytes, SHA-256
+  `aff057bff23f123af64307068960aaf2012027aac6d5c1caf9b4c4074c55eb05`; androidTest APK 1,893,595
+  bytes, SHA-256 `64c26dc5c6e5e63e856b83bd64f9a9d0eb89174007ae7b420a4dd9add32a58cb` (unchanged);
+  AAB 18,536,994 bytes, SHA-256
+  `0e55e54f4e6fd7442631e8d9df0172650195c8aadc9ca7d5ec0addab10e524ec`.
+- Remote CI run `35049015538` at implementation
+  `8103b835a670638c177a7adc6d7baea19680cd33`: **SUCCESS**; JDK 17, Gradle 8.11.1, API 36 + API 29,
+  Build Tools 35.0.0, NDK 29.0.14206865, no `ndk.dir`, canonical build, **42 suites / 360 tests /
+  0 failures / 0 errors / 0 skipped**, the new 16 KB native guard PASSED (`0x4000` for arm64-v8a and
+  x86_64), androidTest build, and both artifact uploads.
+- **Scope boundary:** the `ProotX-Assets-Support` v1.0.0 payload is unchanged and still ships
+  4 KB-only x86_64 ELFs, so **full application 16 KB compatibility is NOT claimed**. Google Play's
+  applicable requirement: apps targeting **Android 15 / API 35+** must support **16 KB page sizes
+  on 64-bit devices**; current Android documentation gives **February 1, 2027** as the
+  update-enforcement date. Durable decision: `DECISIONS.md` D034.
+- **P1F-P CLOSED / PARTIAL_BRIDGE. P1F1 CLOSED / PASS. P1F IN PROGRESS. P1F2 SUPPORT TOOLCHAIN /
+  PROVENANCE MODERNIZATION READY TO START. P1G PHYSICAL DEVICE ACCEPTANCE NOT STARTED.**

@@ -733,3 +733,38 @@
 - **Affected components:** `app/build.gradle`, `MainActivity.kt`,
   `termux-app/terminal-term/src/main/java/com/termux/app/TermuxActivity.java`,
   `TargetSdk36CompatibilityGuardTest`, `TargetSdk36PlatformBehaviorGuardTest`, P1E9/P1F/P1G.
+
+---
+
+## D034 — In-tree native toolchain moves to NDK r29; NDK selected by `ndkVersion`; support-bundle 16 KB remains separate
+
+- **Date:** 2026-09-16
+- **Status:** Accepted (P1F1, CLOSED / PASS)
+- **Decision:** The in-tree native toolchain pin for `:app` and `:terminal-emulator` moves from NDK
+  `21.4.7075529` to **NDK r29 `29.0.14206865`**. No source, `Android.mk`, linker, or ABI change is
+  made. CI installs `ndk;29.0.14206865`, keeps the pinned Android platforms/build-tools, and
+  **stops writing the deprecated `ndk.dir`**: the Gradle module `ndkVersion` is the single
+  authoritative NDK selector and `local.properties` carries `sdk.dir` only. CI gains a narrowly
+  scoped guard that extracts the packaged `lib/arm64-v8a/libtermux.so` and
+  `lib/x86_64/libtermux.so` and fails if any `PT_LOAD` alignment is below `0x4000`, deriving the
+  `llvm-readelf` path from `ANDROID_SDK_ROOT`/`ANDROID_HOME` + `ANDROID_NDK_VERSION`.
+- **Reason:** Android 15+ 16 KB page-size support requires native ELF `PT_LOAD` alignment >= 16 KB
+  on 64-bit ABIs. The P1F-P probe proved NDK r29 does this for the in-tree library with no source
+  change (arm64-v8a and x86_64 `libtermux.so`: `0x1000` → `0x4000`) and that AGP 8.10.1 already
+  emits `PAGE_ALIGNMENT_16K` in the AAB. Dropping `ndk.dir` is required in practice: a stale
+  `ndk.dir=21.4...` with `ndkVersion 29.0.14206865` made Gradle configuration fail.
+- **Scope boundary:** P1F1 makes the in-tree 64-bit native library 16 KB compatible and modernizes
+  the NDK/CI selection. It does **not** make the complete application 16 KB compatible: the
+  `ProotX-Assets-Support` v1.0.0 bundle still ships 4 KB-only ELFs for x86_64 (and the arm64
+  `loader32` 32-bit helper), and the historical PRoot source used by the support builder
+  (`Lord1Egypt/proot@merge-it`) is currently unavailable (404). Those are P1F2/P1F3.
+- **Alternatives considered:** keeping NDK 21.4 (rejected — 4 KB-only ELFs); adding
+  `-Wl,-z,max-page-size=16384` to the in-tree build (rejected — unnecessary; r29 already produces
+  `0x4000`); suppressing the `ndk.dir` deprecation warning instead of removing it (rejected — the
+  deprecation is a correctness/ambiguity issue, not just noise); rebuilding the support bundle in
+  P1F1 (rejected — out of scope and source is unavailable).
+- **Trade-offs:** The support-bundle payloads are unchanged and remain a separate blocker; the
+  strip warnings for the intentionally non-ELF pseudo-`.so` files remain (benign). Full 16 KB
+  compatibility must not be claimed until P1F3/P1F4 and P1G.
+- **Affected components:** `app/build.gradle`, `termux-app/terminal-emulator/build.gradle`,
+  `.github/workflows/build.yml`, `NdkR29ToolchainGuardTest`, P1F1/P1F2/P1F3/P1F4, P1G.

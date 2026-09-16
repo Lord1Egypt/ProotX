@@ -64,7 +64,18 @@
 >       back; no edge-to-edge/back/orientation/large-screen opt-outs; Activity 1.11.0 bridge keeps
 >       minSdk 21; implementation `41cc7a8`; remote CI `35043129415`; 41 suites / 355 tests)
 >   - **P1E — SDK 36 / MANIFEST COMPATIBILITY:** CLOSED / PASS (P1E0–P1E9 complete; targetSdk 36)
-> - **P1F — Modern Native/NDK and 16 KB Page Readiness:** NOT STARTED / READY TO START
+> - **P1F — Modern Native/NDK and 16 KB Page Readiness:** IN PROGRESS
+>   - **P1F-P — NDK / 16 KB Compatibility Probe:** CLOSED / PARTIAL_BRIDGE
+>     (AGP 8.10.1 AAB already `PAGE_ALIGNMENT_16K`; NDK r29 fixes the in-tree `libtermux.so` with no
+>     source change; support bundle remains 4 KB-only for x86_64; historical PRoot fork unavailable)
+>   - **P1F1 — In-Tree NDK r29 Migration + CI Pin Modernization:** CLOSED / PASS
+>     (in-tree NDK 21.4.7075529 → 29.0.14206865; 64-bit `libtermux.so` `PT_LOAD 0x4000`; CI pins
+>     `ndk;29.0.14206865` and drops `ndk.dir`; scoped 16 KB native guard; implementation `8103b83`;
+>     remote CI `35049015538`; 42 suites / 360 tests)
+>   - **P1F2 — Support Toolchain / Provenance Modernization:** READY TO START
+>   - **P1F3 — Rebuild + Publish 16 KB Support Bundles:** NOT STARTED
+>   - **P1F4 — Pin ProotX to the New Support Release + Full APK/AAB 16 KB Verification:** NOT STARTED
+>   - **P1F5 — 16 KB Emulator / Static Acceptance Gate:** NOT STARTED
 > - **P1G — Physical-Device Acceptance:** NOT STARTED (after P1F)
 >
 > This roadmap records the agreed architectural direction at a high level only.
@@ -341,6 +352,20 @@ deferred to the appropriate later phase.
     lifecycle to 2.6.2, savedstate to 1.2.1, and coroutines to 1.7.3, and `androidx.core` injects
     the benign signature `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. Physical validation of
     edge-to-edge, predictive back, IME, and VNC geometry is **P1G**; NDK / 16 KB work is **P1F**.
+28. **P1F-P / P1F1 16 KB native work — IN PROGRESS, support bundle still blocking.** The probe
+    (PARTIAL_BRIDGE) confirmed AGP 8.10.1 already emits `PAGE_ALIGNMENT_16K` for the AAB and that
+    NDK r29 fixes the in-tree library; P1F1 migrated the in-tree NDK pin to **29.0.14206865**, moved
+    NDK selection to the Gradle `ndkVersion` (dropping the deprecated `ndk.dir`), and added a scoped
+    CI guard on the packaged 64-bit `libtermux.so` (`DECISIONS.md` D034). Blocking follow-ups:
+    `ProotX-Assets-Support` v1.0.0 still ships 4 KB-only x86_64 ELFs (and the arm64 `loader32` 32-bit
+    helper), the support builder is unpinned (`ubuntu:latest`, floating branches), and its PRoot
+    source `Lord1Egypt/proot@merge-it` is currently **unavailable (404)** — so the bundle is not
+    reproducible as documented. **P1F2 must regenerate the complete support ELF alignment table from
+    binaries first** (the P1F-P report contained an internal inconsistency: a blanket "all arm32
+    `0x1000`" statement versus `armeabi-v7a busybox_static` being classified 16K-compatible).
+    Google Play's applicable requirement: apps targeting **Android 15 / API 35+** must support
+    **16 KB page sizes on 64-bit devices**; current Android documentation gives **February 1, 2027**
+    as the update-enforcement date. **Full application 16 KB compatibility is not claimed.**
 
 ## Non-goals for P0
 

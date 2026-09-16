@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-16 (P1E9 Android 15/16 platform behavior — CLOSED / PASS; P1E CLOSED / PASS; P1F NOT STARTED)
+Last updated: 2026-09-16 (P1F1 in-tree NDK r29 migration — CLOSED / PASS; P1F IN PROGRESS; P1F-P CLOSED / PARTIAL_BRIDGE)
 
 ## Project Identity
 
@@ -55,35 +55,36 @@ Last updated: 2026-09-16 (P1E9 Android 15/16 platform behavior — CLOSED / PASS
 | P1E7 — Foreground Service / Notification Compatibility | **CLOSED / PASS** |
 | P1E8 — targetSdk 33/34 Runtime Compatibility | **CLOSED / PASS** |
 | P1E9 — targetSdk 35/36 Platform Behavior | **CLOSED / PASS** |
+| P1F — Modern NDK / 16 KB Page-Size Compatibility | **IN PROGRESS** |
+| P1F-P — NDK / 16 KB Compatibility Probe | **CLOSED / PARTIAL_BRIDGE** |
+| P1F1 — In-Tree NDK r29 Migration + CI Pin Modernization | **CLOSED / PASS** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1E9 — targetSdk 35/36 Platform Behavior: CLOSED / PASS; P1E is CLOSED / PASS.** Implementation
-commit `41cc7a8c629da364903de0ae71ab524541c7ef76` raises the app's final `targetSdk` **34 → 36**
-(`compileSdk 36`, `minSdk 21`) after a clean target-35 checkpoint. ProotX now **adapts** to
-Android 15/16 instead of opting out: `MainActivity` enables edge-to-edge and applies real
-`WindowInsetsCompat` per owner (toolbar top, bottom navigation bottom, root left/right
-cutout/navigation safety) without accumulating padding, with light system-bar icons for the dark
-chrome; `TermuxActivity` registers a platform `OnBackInvokedCallback` on API 33+ (drawer open →
-close, otherwise finish) with the legacy `onBackPressed` fallback retained. The authorized
-`androidx.activity:activity-ktx:1.11.0` bridge keeps `minSdk 21` and wires
-`OnBackPressedDispatcher` to the platform dispatcher; Navigation 2.3.5, AppCompat 1.1.0,
-Material 1.1.0, and Room 2.1.0 are unchanged. Transitive movement from the bridge: core/core-ktx
-1.13.0, lifecycle 2.6.2, savedstate 1.2.1, coroutines 1.7.3 (recorded in `DECISIONS.md` D033). There
-is **no** edge-to-edge opt-out, **no** predictive-back opt-out, **no** orientation lock, and **no**
-large-screen opt-out; `TermuxActivity` keeps `fitsSystemWindows="true"` and stays
-`resizeableActivity="true"`. Local canonical evidence **41 suites / 355 tests / 0 failures / 0
-errors / 0 skipped**; remote CI run `35043129415` passed with the same summary plus androidTest APK
-and both artifact uploads. Next: **P1F — MODERN NDK / 16 KB PAGE-SIZE COMPATIBILITY — NOT STARTED /
-READY TO START** (P1G physical acceptance remains after P1F).
+**P1F1 — In-Tree NDK r29 Migration + CI Pin Modernization: CLOSED / PASS. P1F is IN PROGRESS.**
+Implementation commit `8103b835a670638c177a7adc6d7baea19680cd33` raises the in-tree NDK pin
+`21.4.7075529 → 29.0.14206865` for `:app` and `:terminal-emulator` with **no source, `Android.mk`,
+linker, or ABI change**. The two 64-bit `libtermux.so` outputs now carry `PT_LOAD` alignment
+`0x4000` (arm64-v8a and x86_64), satisfying the Android 15+ 16 KB requirement for the in-tree
+library. CI installs `ndk;29.0.14206865`, stops writing the deprecated `ndk.dir` (Gradle
+`ndkVersion` is authoritative), and adds a scoped guard that fails if the packaged 64-bit
+`libtermux.so` has a `PT_LOAD` alignment below `0x4000`. `compileSdk`/`targetSdk`/`minSdk` remain
+36/36/21. The `ProotX-Assets-Support` v1.0.0 payload is unchanged and still ships 4 KB-only x86_64
+ELFs, so **full application 16 KB compatibility is NOT claimed** (`DECISIONS.md` D034). Local
+canonical evidence **42 suites / 360 tests / 0 failures / 0 errors / 0 skipped** (+1 guard suite);
+remote CI run `35049015538` passed with the same summary, the new 16 KB native guard, androidTest
+APK, and both artifact uploads. **P1F-P is CLOSED / PARTIAL_BRIDGE.** Next: **P1F2 — SUPPORT
+TOOLCHAIN / PROVENANCE MODERNIZATION — READY TO START** (P1G physical acceptance remains after
+P1F).
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
+| Accepted P1F1 implementation | `8103b835a670638c177a7adc6d7baea19680cd33` | in-tree NDK pin 21.4.7075529 → 29.0.14206865 (:app + :terminal-emulator); CI pins `ndk;29.0.14206865`, drops `ndk.dir`, adds scoped 16 KB native guard; no source/linker/packaging change |
 | Accepted P1E9 implementation | `41cc7a8c629da364903de0ae71ab524541c7ef76` | app targetSdk 34 → 36; real edge-to-edge with per-owner insets; platform `OnBackInvokedCallback` for Termux on API 33+; authorized activity-ktx 1.11.0 bridge (minSdk 21 preserved); no opt-outs |
 | Accepted P1E8 implementation | `cff25f3f1dffa1a91d78a55915dd50513b694af4` | `POST_NOTIFICATIONS` + contextual one-time request; resumed-lifecycle FGS gate; Termux `RECEIVER_NOT_EXPORTED`; terminal-term compileSdk 36 |
 | Accepted P1E7 implementation | `0e70b7e1e3f398eb6fdb92730542cae0da6f1975` | specialUse FGS type/permission + subtype properties, service-owned channels, `startForegroundService`, immediate promotion, `FOREGROUND_SERVICE_TYPE_MANIFEST`; targetSdk remained 30 |
@@ -108,7 +109,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | Package | `io.github.lord1egypt.prootx` |
 | Source origin | Last self-contained public UserLAnd **v2.8.3** codebase (GPLv3) |
 | Unit tests (baseline) | **313 tests / 24 suites / 0 failures / 0 errors / 0 skipped** |
-| Unit tests (current) | **355 tests / 41 suites / 0 failures / 0 errors / 0 skipped** |
+| Unit tests (current) | **360 tests / 42 suites / 0 failures / 0 errors / 0 skipped** |
 | Baseline build | `./gradlew clean assembleDebug testDebugUnitTest` → **BUILD SUCCESSFUL** |
 
 ## Current Toolchain
@@ -141,7 +142,7 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 | `minSdk` | 21 |
 | `:terminal-term` `compileSdk` / `targetSdk` / `minSdk` | 36 / 29 / 21 |
 | `:terminal-view` / `:terminal-emulator` `compileSdk` / `targetSdk` / `minSdk` | 29 / 29 / 21 |
-| Android NDK | 21.4.7075529 (explicit `ndkVersion`) |
+| Android NDK | **29.0.14206865 (r29)** — explicit `ndkVersion` in `:app` and `:terminal-emulator`; selected via Gradle (no `ndk.dir`) |
 | Android build-tools | **35.0.0** |
 
 ## UI View Access & Parcelize (P1C)
@@ -157,23 +158,31 @@ The frozen ProotX 1.0.0 baseline (measured in P0; still the accepted application
 
 **CI is passing.** Single-stage **JDK 17** bootstrap and Gradle 8.11.1 build. `google()` +
 `mavenCentral()` only. Pinned packages: `platform-tools`, `platforms;android-36`,
-`platforms;android-29`, `build-tools;35.0.0`, `ndk;21.4.7075529`.
+`platforms;android-29`, `build-tools;35.0.0`, `ndk;29.0.14206865`. `local.properties` carries
+`sdk.dir` only; the NDK is selected by the Gradle module `ndkVersion`.
 
 **CI-R1 note:** `android-actions/setup-android@v3` runs with `packages: ''` (its default
 `tools platform-tools` install broke when the legacy `tools` package was retired);
 `platform-tools` is owned explicitly by the pinned `sdkmanager` step. Triggers unchanged.
 
-Verified remote evidence (P1E9):
+**P1F1 16 KB native guard:** the workflow now extracts the packaged
+`lib/arm64-v8a/libtermux.so` and `lib/x86_64/libtermux.so` and fails if any `PT_LOAD` alignment is
+below `0x4000`, using the NDK `llvm-readelf` derived from `ANDROID_SDK_ROOT`/`ANDROID_HOME` +
+`ANDROID_NDK_VERSION`. It intentionally does **not** inspect the `ProotX-Assets-Support` payloads
+(P1F2/P1F3 scope).
+
+Verified remote evidence (P1F1):
 
 | Field | Value |
 |---|---|
-| Run | `35043129415` (push, commit `41cc7a8`) — **SUCCESS** |
-| Log proof | JDK 17 (`17.0.20.1`); Gradle 8.11.1; API 36 + API 29, Build Tools 35.0.0 and NDK 21.4 installed; canonical clean build and `assembleDebugAndroidTest` passed |
-| Remote test summary | `suites=41 tests=355 failures=0 errors=0 skipped=0` |
-| Artifacts | `prootx-debug-apk` (19,525,598 B artifact) and `prootx-debug-androidTest-apk` uploaded |
-| JaCoCo | Standard CI does not run the report task. Separate local P1E9 proof: `jacocoCoverageReportForCi` executed from the clean/report-only state and produced non-empty XML (788,336 B) plus HTML |
+| Run | `35049015538` (push, commit `8103b83`) — **SUCCESS** |
+| Log proof | JDK 17 (`17.0.20.1`); Gradle 8.11.1; API 36 + API 29, Build Tools 35.0.0, NDK `29.0.14206865` installed; no `ndk.dir` written; canonical clean build and `assembleDebugAndroidTest` passed |
+| 16 KB guard | `Verify in-tree 16 KB native alignment` step PASSED, printing `PT_LOAD align=0x4000` for arm64-v8a and x86_64 (`libtermux.so`) |
+| Remote test summary | `suites=42 tests=360 failures=0 errors=0 skipped=0` |
+| Artifacts | `prootx-debug-apk` (19,519,119 B artifact) and `prootx-debug-androidTest-apk` (1,400,901 B artifact) uploaded |
+| JaCoCo | Standard CI does not run the report task. Separate local P1F1 proof: `jacocoCoverageReportForCi` executed from the clean/report-only state and produced non-empty XML (788,336 B) plus HTML |
 
-Prior remote evidence (P1E8): run `35037714144` — **SUCCESS**, `suites=40 tests=348 failures=0
+Prior remote evidence (P1E9): run `35043129415` — **SUCCESS**, `suites=41 tests=355 failures=0
 errors=0 skipped=0`.
 
 **JaCoCo tooling caveat (pre-existing, non-blocking).** The custom `jacocoCoverageReportForCi`
@@ -231,12 +240,16 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-**None.** P1E9 is closed and **P1E is CLOSED / PASS**; remote CI is green (run `35043129415`). The
-local JaCoCo regression gate passes when the AGP 8 instrumented-class directory is absent (see the
-JaCoCo tooling caveat above); this is pre-existing and non-blocking. Lint remains unchanged
-pre-existing legacy debt (13 errors / 134 warnings / 3 hints: `Range` ×3,
-`UseRequireInsteadOfGet` ×10; no P1E9-specific blocker). Physical validation of edge-to-edge,
-predictive back, IME, and VNC geometry on real devices remains **P1G** and is not claimed here.
+**P1F does not have a build blocker, but it is not complete.** P1F1 (in-tree) is CLOSED / PASS and
+remote CI is green (run `35049015538`). The remaining P1F work is cross-repository: the
+`ProotX-Assets-Support` v1.0.0 bundle still ships 4 KB-only ELFs for **x86_64** (and the arm64
+`loader32` 32-bit helper), and the support builder's PRoot source (`Lord1Egypt/proot@merge-it`) is
+**currently unavailable (404)**, so the bundle cannot be reproduced as documented. **Full
+application 16 KB compatibility is NOT claimed** until P1F2/P1F3/P1F4 complete. The local JaCoCo
+regression gate passes from the clean/report-only state (JaCoCo tooling caveat above). Lint remains
+pre-existing legacy debt (13 errors / 134 warnings / 3 hints: `Range` ×3, `UseRequireInsteadOfGet`
+×10). Physical validation of edge-to-edge, predictive back, IME, VNC geometry, and 16 KB runtime
+behavior on real/16 KB-emulated devices remains **P1G** and is not claimed here.
 
 ## Deferred Findings
 
@@ -368,6 +381,23 @@ The canonical list lives in
   `TargetSdk34CompatibilityGuardTest` was renamed/advanced to **`TargetSdk36CompatibilityGuardTest`**
   (durable P1E8 invariants kept) and a new **`TargetSdk36PlatformBehaviorGuardTest`** covers the
   no-opt-out/insets/back invariants (`DECISIONS.md` D033).
+- **Resolved in P1F1:** the in-tree native toolchain now uses **NDK r29 `29.0.14206865`** for
+  `:app` and `:terminal-emulator`, and CI selects the NDK through the Gradle module `ndkVersion`
+  (the deprecated `ndk.dir` is no longer written). The packaged 64-bit `libtermux.so` carries
+  `PT_LOAD` alignment `0x4000` for arm64-v8a and x86_64, and a scoped CI guard fails if that
+  regresses. No source, `Android.mk`, linker, ABI, packaging, or `extractNativeLibs` change
+  (`DECISIONS.md` D034).
+- **Deferred to P1F2/P1F3 (P1F-P erratum):** the P1F-P probe report contained an internal
+  inconsistency — it stated blanket "all arm32 ELFs at `0x1000`" while also classifying
+  `armeabi-v7a busybox_static` as 16K-compatible. **P1F2 must regenerate the complete support ELF
+  alignment table directly from the binaries** (all four ABIs, every `PT_LOAD`) before making any
+  support-remediation decision. The support bundle's x86_64 ELFs and the arm64 `loader32` 32-bit
+  helper remain 4 KB-only; the historical PRoot fork `Lord1Egypt/proot@merge-it` is currently
+  unavailable (404), so the bundle is not reproducible as documented (`ubuntu:latest` + floating
+  branches). Google Play's applicable requirement: apps targeting **Android 15 / API 35+** must
+  support **16 KB page sizes on 64-bit devices**; current Android documentation gives
+  **February 1, 2027** as the update-enforcement date. **Full application 16 KB compatibility is
+  not claimed.**
 - **Deferred after P1E9 (non-blocking):** the Activity 1.11.0 bridge moved transitive selections
   (core/core-ktx 1.13.0, lifecycle 2.6.2, savedstate 1.2.1, coroutines 1.7.3, new
   `core-viewtree`/`tracing`/`profileinstaller`) and `androidx.core` injects the benign signature
@@ -401,7 +431,9 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1F — MODERN NDK / 16 KB PAGE-SIZE COMPATIBILITY — NOT STARTED / READY TO START.** It owns NDK
-modernization and 16 KB page-size readiness; it must not start without explicit authorization.
-Physical-device acceptance (**P1G**) remains after P1F. ProotX must **not** be called a Golden
-Candidate, release candidate, or store-ready final until P1G physical acceptance is complete.
+**P1F2 — SUPPORT TOOLCHAIN / PROVENANCE MODERNIZATION — READY TO START.** It owns the
+`ProotX-Assets-Support` reproducibility work (regenerate the full support ELF alignment table, pin
+the base image/toolchain, resolve or replace the unavailable PRoot source, and pin exact commits)
+and must not begin without explicit authorization. **Full application 16 KB compatibility must not
+be claimed** until P1F3/P1F4 complete and **P1G** physical/16 KB-emulator acceptance passes. ProotX
+must **not** be called a Golden Candidate, release candidate, or store-ready final.

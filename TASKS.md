@@ -198,8 +198,22 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         renamed/advanced to `TargetSdk36CompatibilityGuardTest`; new
         `TargetSdk36PlatformBehaviorGuardTest`; local gates + JaCoCo PASS; remote run `35043129415`;
         41 suites / 355 tests)
-- [ ] **P1F — Modern native/NDK and 16 KB page readiness** — NOT STARTED / READY TO START
-  - [ ] Update NDK / native toolchain; verify 16 KB page-size compatibility
+- [~] **P1F — Modern native/NDK and 16 KB page readiness** — IN PROGRESS
+  - [x] **P1F-P — NDK / 16 KB compatibility probe** — CLOSED / PARTIAL_BRIDGE
+        (AGP 8.10.1 AAB already `PAGE_ALIGNMENT_16K`; NDK r29 fixes in-tree `libtermux.so` with no
+        source change; support bundle 4 KB-only for x86_64; PRoot source fork unavailable)
+  - [x] **P1F1 — In-tree NDK r29 migration + CI pin modernization** — CLOSED / PASS
+        (in-tree NDK 21.4.7075529 → 29.0.14206865 for `:app` + `:terminal-emulator`;
+        arm64-v8a/x86_64 `libtermux.so` `PT_LOAD 0x4000`; CI pins `ndk;29.0.14206865`, drops
+        `ndk.dir`, adds scoped 16 KB native guard; `NdkR29ToolchainGuardTest`; local gates + JaCoCo
+        PASS; remote run `35049015538`; 42 suites / 360 tests)
+  - [ ] **P1F2 — Support toolchain / provenance modernization** — READY TO START
+        (regenerate the full support ELF alignment table from binaries — P1F-P erratum; pin base
+        image digest, termux-packages and PRoot commits; resolve the unavailable PRoot source
+        `Lord1Egypt/proot@merge-it`)
+  - [ ] **P1F3 — Rebuild + publish 16 KB support bundles** — NOT STARTED
+  - [ ] **P1F4 — Pin ProotX to the new support release + full APK/AAB 16 KB verification** — NOT STARTED
+  - [ ] **P1F5 — 16 KB emulator/static acceptance gate** — NOT STARTED
 - [ ] **P1G — Modernization regression candidate and physical acceptance** — NOT STARTED
   - [ ] Produce a modernization candidate build
   - [ ] Physical-device acceptance (separate from source/test acceptance)

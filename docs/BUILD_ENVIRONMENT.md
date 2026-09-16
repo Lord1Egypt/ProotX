@@ -26,7 +26,7 @@ The ProotX application currently builds with:
 | `:terminal-term` `compileSdk` / `targetSdk` / `minSdk` | 36 / 29 / 21 |
 | `:terminal-view` / `:terminal-emulator` `compileSdk` / `targetSdk` / `minSdk` | 29 / 29 / 21 |
 | AndroidX Activity (P1E9 bridge) | **1.11.0** (`activity-ktx`, `:app` only) |
-| Android NDK | 21.4.7075529 (explicit `ndkVersion`) |
+| Android NDK | **29.0.14206865 (r29)**, explicit `ndkVersion` in `:app` and `:terminal-emulator` |
 | Android build-tools | **35.0.0** |
 
 History: P0/P1A used Gradle 5.1.1 / AGP 3.4.3. P1B migrated to Gradle 6.7.1 / AGP 4.2.2.
@@ -43,7 +43,10 @@ contextual one-time request, hardened the target-31+ FGS start, and raised `:ter
 compileSdk **29 → 36** (targetSdk stays 29). **P1E9** raised the app targetSdk **34 → 36**
 (P1E CLOSED / PASS), enabled real edge-to-edge with per-owner `WindowInsetsCompat`, migrated
 predictive back to the platform dispatcher, and added the `androidx.activity:activity-ktx:1.11.0`
-bridge while keeping `minSdk 21`.
+bridge while keeping `minSdk 21`. **P1F1** raised the in-tree NDK pin from 21.4.7075529 to
+**29.0.14206865** for `:app` and `:terminal-emulator` (no source/linker/packaging change) so the
+64-bit `libtermux.so` is 16 KB aligned, and moved NDK selection entirely to the Gradle
+`ndkVersion` (CI no longer writes `ndk.dir`).
 
 ## JDK requirement
 
@@ -67,7 +70,7 @@ Install exactly these (nothing more):
 | `platforms;android-36` | `app` module `compileSdk` is 36 |
 | `platforms;android-29` | `:terminal-view` and `:terminal-emulator` use `compileSdk` 29 (still required); `:terminal-term` now uses 36 |
 | `build-tools;35.0.0` | AGP 8.10 build tools — pinned so CI is deterministic |
-| `ndk;21.4.7075529` | native toolchain for the terminal emulator JNI (`ndkBuild`) |
+| `ndk;29.0.14206865` | native toolchain for the terminal emulator JNI (`ndkBuild`) |
 
 `build-tools` is pinned to AGP 8.10's proven version (`35.0.0`). Pinning keeps CI independent
 of runner defaults.
@@ -88,7 +91,7 @@ P1D1 and replaced with direct AndroidX Espresso usage.
 
 ```bash
 export ANDROID_SDK_ROOT=/path/to/android-sdk      # SDK with the packages above
-export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/21.4.7075529"
+export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/29.0.14206865"
 export JAVA_HOME=/path/to/jdk17                   # JDK 17 for Gradle
 
 ./gradlew clean assembleDebug testDebugUnitTest --no-daemon
@@ -99,12 +102,11 @@ Notes:
 - `app/src/main/jniLibs/` (the PRoot/Busybox support bundle) is produced automatically by
   the `downloadAssets` Gradle task from the `ProotX-Assets-Support` release; it is not
   committed.
-- `local.properties` is **gitignored** and must not be committed. Point it at the SDK/NDK
-  if you are not using environment variables:
+- `local.properties` is **gitignored** and must not be committed. Point it at the SDK location;
+  the NDK is selected by the Gradle module `ndkVersion`, so do **not** add a deprecated `ndk.dir`:
 
   ```properties
   sdk.dir=/path/to/android-sdk
-  ndk.dir=/path/to/android-sdk/ndk/21.4.7075529
   ```
 
 - Do **not** vendor a JDK or Android SDK into this repository.
@@ -122,7 +124,13 @@ unit-test summary.
 `tools` package is no longer published and caused `Failed to find package 'tools'`. The SDK
 packages/`platform-tools` are instead owned explicitly by the pinned `sdkmanager` step
 (`platform-tools`, `platforms;android-36`, `platforms;android-29`, `build-tools;35.0.0`,
-`ndk;21.4.7075529`). The action major version and all pins are otherwise unchanged.
+`ndk;29.0.14206865`). The action major version and all pins are otherwise unchanged.
+
+**NDK selection (P1F1):** the Gradle module `ndkVersion` (`29.0.14206865`) is the authoritative NDK
+selector; CI writes only `sdk.dir` to `local.properties` (a deprecated `ndk.dir` is no longer
+written, and a stale one breaks configuration under r29). CI also runs a scoped step that fails if
+the packaged 64-bit `libtermux.so` (`arm64-v8a`, `x86_64`) has a `PT_LOAD` alignment below `0x4000`.
+The `ProotX-Assets-Support` payloads are **not** covered by that step (P1F2/P1F3).
 
 **Download task (P1E1):** `de.undercouch:gradle-download-task` is **5.0.0** — the 3.4.3 task
 type fails Gradle 7.6 task-property validation when `:app:downloadAssets` runs on a clean
