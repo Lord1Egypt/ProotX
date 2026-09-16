@@ -252,3 +252,15 @@ requires Docker with `/dev/fuse`, `CAP_SYS_ADMIN`, `seccomp=unconfined`, and `ap
 (for termux's `fuse-overlayfs` standalone toolchain). Whole-app 16 KB compatibility is **not**
 achieved; 4 KB 64-bit legacy normal-slot ELFs remain. See `docs/PROVENANCE.md` in the support repo
 and `DECISIONS.md` D035.
+
+## Support release v1.1.0 (P1F3)
+
+The support runtime release **`v1.1.0`** is published from the P1F2 toolchain (annotated tag
+`ff55608c…` → commit `acc28ab…`; release `RE_kwDOUXjkQM4XOeTw`, 2026-09-16T05:59:57Z). Archives:
+`arm64-v8a` `7f279264…`, `armeabi-v7a` `f7b935f6…`, `x86` `25a53c33…`, `x86_64` `f6248107…`, plus
+`SHA256SUMS`, `v1.1.0-provenance.json`, `v1.1.0.spdx.json`. Release CI is split into untrusted
+validation (`support-validate.yml`), a privileged build limited to repository-owned refs
+(`support.yml`), and a tag-triggered `support-release.yml` whose `contents: write` publish job does
+no rebuild; all release actions are pinned by full commit SHA. **ProotX still downloads `v1.0.0`**;
+whole-app 16 KB compatibility is **not** achieved (13 x86_64 legacy normal-slot 4 KB ELFs remain).
+See `DECISIONS.md` D036 and the support repo `docs/PROVENANCE.md`.

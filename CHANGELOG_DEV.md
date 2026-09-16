@@ -1011,3 +1011,41 @@
   enforcement date **February 1, 2027** per current documentation.
 - **P1F2 CLOSED / PASS. P1F IN PROGRESS. P1F3 SUPPORT BUNDLE 16 KB REBUILD / PUBLICATION READY TO
   START. P1G PHYSICAL DEVICE ACCEPTANCE NOT STARTED.**
+
+## P1F3 — Support Bundle Publication v1.1.0 (2026-09-16) — PASS
+
+- Published the first provenance-backed support release **`v1.1.0`** from the accepted P1F2
+  toolchain. Annotated tag `v1.1.0` (object `ff55608c0e9490dfd3a6dc392717c19a1916d636`) → support
+  commit `acc28abcd0756cca66782145099ef54ed4cbc46c`; support `main` fast-forwarded `0fa736a…` →
+  `acc28ab…` (no merge, no rebase, no force). Release `RE_kwDOUXjkQM4XOeTw` published
+  2026-09-16T05:59:57Z.
+- Release assets and SHA-256: `arm64-v8a-assets.zip` `7f2792643123350b8e4177141ab1bbcb7262296dbcff9380311c9835c79cc7c4`
+  (3,046,849 B), `armeabi-v7a-assets.zip` `f7b935f6e027064d4da7ad2d67eede53353faecd423d3d4bd04491e5d4bba5ea`
+  (2,977,522 B), `x86-assets.zip` `25a53c331a5f911198eebb067f4510debe768bc427b06395af771a9e3d9d3cd4`
+  (3,057,599 B), `x86_64-assets.zip` `f6248107febfc413ce66884417a7109424c8690d0c40a226f0fb9ece5071109b`
+  (3,286,839 B), `SHA256SUMS` `6bc6e546…`, `v1.1.0-provenance.json` `a823d867…`,
+  `v1.1.0.spdx.json` `2bc7a632…`.
+- **Release-CI security hardening:** split CI so the privileged pinned builder can never run from an
+  untrusted `pull_request`. `support-validate.yml` (PR/push static checks; `contents: read`),
+  `support.yml` (privileged modern build only on repository-owned branches and `workflow_dispatch`;
+  `contents: read`), `support-release.yml` (tag-triggered: read-only build job + separate
+  `contents: write` publish job that performs **no rebuild**). All release actions pinned by full
+  commit SHA: `actions/checkout@11d5960…` (v4.4.0), `actions/upload-artifact@ea165f8d…` (v4.6.2),
+  `actions/download-artifact@d3f86a10…` (v4.3.0).
+- **Two-clean-build release proof:** both CI and local runs built all four ABIs twice from separate
+  caches/outputs; every archive was byte-identical. The modern 64-bit lane is 16 KB aligned and
+  keeps `process_vm = yes`.
+- Added `scripts/release_metadata.py` (regenerates the release manifest, `SHA256SUMS`, and an SPDX
+  2.3 component inventory from the actual archives) and `provenance/releases/v1.1.0.json`
+  (`wholeApp16KCompatible: false`). Release notes in
+  `docs/RELEASE_NOTES_v1.1.0.md`.
+- **Post-publication verification:** every published asset was re-downloaded and its SHA-256 matched
+  the accepted digest; `sha256sum -c SHA256SUMS` passed; all four ZIPs extracted; `v1.0.0` remains
+  untouched. GitHub immutable releases are not enabled on the repository, so the recorded policy is
+  that published tags/assets are never mutated or replaced (corrections require `v1.1.1`+).
+- **Explicit remaining debt (not hidden):** 13 x86_64 legacy normal-slot ELFs remain 4 KB aligned
+  and are still shipped through `jniLibs`/`nativeLibraryDir`; `proot_meta`/`proot_meta_leveldb`
+  remain unknown-provenance frozen inputs. **Whole-app 16 KB compatibility is NOT achieved.**
+  ProotX still downloads `v1.0.0`; no ProotX production file changed. P1F4 owns the packaging
+  isolation and the switch to `v1.1.0`. Durable decision `DECISIONS.md` D036.
+- **P1F3 CLOSED / PASS. P1F IN PROGRESS. P1F4 READY TO START. P1G NOT STARTED.**

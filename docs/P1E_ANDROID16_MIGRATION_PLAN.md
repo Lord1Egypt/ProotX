@@ -8,9 +8,9 @@ Current accepted implementation: `8103b835a670638c177a7adc6d7baea19680cd33`, rem
 `35049015538` green, 42 suites / 360 tests / 0 failures / 0 errors / 0 skipped. Frozen
 application baseline remains unchanged. **This P1E plan is complete (P1E CLOSED / PASS).** The
 current program phase is **P1F — MODERN NDK / 16 KB PAGE-SIZE COMPATIBILITY: IN PROGRESS**; P1F-P is
-CLOSED / PARTIAL_BRIDGE, P1F1 (in-tree NDK r29) is CLOSED / PASS, and P1F2 (support
-toolchain/provenance) is CLOSED / PASS, with P1F3 (support bundle 16 KB rebuild / publication)
-READY TO START. See `PROJECT_STATE.md` and `DECISIONS.md` D034/D035 for the 16 KB scope boundary
+CLOSED / PARTIAL_BRIDGE, P1F1 (in-tree NDK r29) is CLOSED / PASS, P1F2 (support
+toolchain/provenance) is CLOSED / PASS, and P1F3 (support bundle publication `v1.1.0`) is
+CLOSED / PASS, with P1F4 (support packaging / whole-app 16 KB integration) READY TO START. See `PROJECT_STATE.md` and `DECISIONS.md` D034/D035/D036 for the 16 KB scope boundary
 (full application 16 KB compatibility is not yet claimed). P1G physical acceptance remains after
 P1F.
 
@@ -932,5 +932,5 @@ Accepted implementation: `41cc7a8c629da364903de0ae71ab524541c7ef76`; remote CI r
 - No Room/schema, storage-path, SSH, notification-policy, FGS-type/ID, or data-model change. No
   orientation lock, no large-screen opt-out, no edge-to-edge/back opt-out. **P1E is CLOSED / PASS.**
 
-**Next:** P1F3 — SUPPORT BUNDLE 16 KB REBUILD / PUBLICATION — **READY TO START**. Do not start
+**Next:** P1F4 — SUPPORT PACKAGING / WHOLE-APP 16 KB INTEGRATION — **READY TO START**. Do not start
 without explicit authorization. P1G physical acceptance remains after P1F.

@@ -805,3 +805,38 @@
 - **Affected components:** `ProotX-Assets-Support` (`build-support.sh`, `provenance/`,
   `docs/PROVENANCE.md`, `docs/HISTORICAL_BUILDER.md`, `THIRD_PARTY_NOTICES.md`, support CI,
   branch `feature/p1f-support-modernization`), P1F2/P1F3/P1F4/P1G.
+
+---
+
+## D036 — v1.1.0 support release published; trusted release CI split; published tags/assets are immutable
+
+- **Date:** 2026-09-16
+- **Status:** Accepted (P1F3, CLOSED / PASS)
+- **Decision:** The first provenance-backed support release, **`v1.1.0`**, is published from the
+  P1F2 toolchain. Annotated tag `v1.1.0` (object `ff55608c0e9490dfd3a6dc392717c19a1916d636`) points
+  at support commit `acc28abcd0756cca66782145099ef54ed4cbc46c` (support `main`, fast-forwarded from
+  `0fa736a`). Release `RE_kwDOUXjkQM4XOeTw` (published 2026-09-16T05:59:57Z) carries the four
+  `*-assets.zip`, `SHA256SUMS`, `v1.1.0-provenance.json`, and `v1.1.0.spdx.json`. The release CI is
+  split for safety: untrusted PR validation (`support-validate.yml`) and the privileged modern
+  builder (`support.yml`) run with `contents: read` and the builder never runs on `pull_request`; the
+  tag-triggered `support-release.yml` separates a read-only build job (two independent clean
+  four-ABI builds, reproducibility comparison, 16 KB gate, manifest/SHA256SUMS/SBOM) from a
+  `contents: write` publish job that performs **no rebuild**. All release actions are pinned by full
+  commit SHA. Published tags and assets are never mutated or replaced; corrections require
+  `v1.1.1` or later. `v1.0.0` remains untouched.
+- **Reason:** The accepted P1F2 builder is reproducible (two clean builds produced byte-identical
+  four-ABI archives), so publishing an immutable, provenance-backed release is safe. Splitting the
+  privileged build from untrusted PR events and from the write-token publish step prevents arbitrary
+  PR code from running in a privileged container or receiving write credentials.
+- **Alternatives considered:** keeping the single workflow with a `pull_request` trigger and a
+  privileged builder (rejected — untrusted code execution); reusing one job with `contents: write`
+  for both build and publish (rejected — exposes write token to the privileged build); replacing
+  v1.0.0 (rejected — v1.0.0 is the historical frozen baseline).
+- **Trade-offs:** The release build repeats the four-ABI build twice inside CI (time cost) to prove
+  reproducibility at release time. Whole-app 16 KB compatibility is **still not achieved**: 13
+  x86_64 legacy normal-slot ELFs remain 4 KB aligned and are still shipped through
+  `jniLibs`/`nativeLibraryDir`; `proot_meta`/`proot_meta_leveldb` remain unknown-provenance frozen
+  inputs. P1F4 owns packaging isolation and the ProotX switch to `v1.1.0`.
+- **Affected components:** `ProotX-Assets-Support` (`.github/workflows/support-validate.yml`,
+  `support.yml`, `support-release.yml`, `scripts/release_metadata.py`,
+  `provenance/releases/v1.1.0.json`, `docs/RELEASE_NOTES_v1.1.0.md`), P1F3/P1F4/P1G.

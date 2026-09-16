@@ -78,8 +78,12 @@
 >     normal slots for host API 21–28, modern `.a10` slots rebuilt at API 24 / NDK r29 for host API
 >     29+; 16 KB aligned and `process_vm = yes`; two clean builds byte-identical; no release
 >     published; support implementation `3e5c51e`, support CI `35057757988`)
->   - **P1F3 — Rebuild + Publish 16 KB Support Bundles + Resolve Legacy 64-bit 4 KB Debt:** READY TO START
->   - **P1F4 — Pin ProotX to the New Support Release + Full APK/AAB 16 KB Verification:** NOT STARTED
+>   - **P1F3 — Support Bundle Publication `v1.1.0`:** CLOSED / PASS
+>     (provenance-backed release published; support `main` fast-forwarded to `acc28ab`; annotated
+>     tag `ff55608`; release `RE_kwDOUXjkQM4XOeTw`; two clean four-ABI builds byte-identical; split
+>     release CI with SHA-pinned actions; post-download hashes verified; whole-app 16 KB not
+>     claimed)
+>   - **P1F4 — Support Packaging / Whole-App 16 KB Integration:** READY TO START
 >   - **P1F5 — 16 KB Emulator / Static Acceptance Gate:** NOT STARTED
 > - **P1G — Physical-Device Acceptance:** NOT STARTED (after P1F)
 >
@@ -383,6 +387,15 @@ deferred to the appropriate later phase.
     `proot_meta_leveldb`, vendored 64-bit) remain shipped through `jniLibs`/`nativeLibraryDir`, and
     `proot_meta`/`proot_meta_leveldb` remain unknown-provenance frozen inputs. No support release was
     published; ProotX remains on `v1.0.0`. P1F3 must resolve the legacy packaging debt.
+30. **P1F3 support bundle publication — RESOLVED; legacy 4 KB debt still open.** Support release
+    `v1.1.0` is published (annotated tag `ff55608c…` → commit `acc28abcd…`; release
+    `RE_kwDOUXjkQM4XOeTw`; assets `arm64-v8a 7f279264…`, `armeabi-v7a f7b935f6…`, `x86 25a53c33…`,
+    `x86_64 f6248107…` + `SHA256SUMS` + provenance manifest + SPDX SBOM). Two independent clean
+    four-ABI builds were byte-identical; release CI is split (untrusted validation / privileged
+    build / write-token publish with no rebuild) with SHA-pinned actions (`DECISIONS.md` D036).
+    `v1.0.0` remains untouched and ProotX still downloads it. **Still open (P1F4):** 13 x86_64
+    legacy normal-slot 4 KB ELFs and the unknown-provenance `proot_meta`/`proot_meta_leveldb` are
+    still shipped through `jniLibs`/`nativeLibraryDir`; whole-app 16 KB compatibility is not claimed.
 
 ## Non-goals for P0
 

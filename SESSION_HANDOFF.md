@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-16 (P1F2 support toolchain / provenance modernization: CLOSED / PASS — P1F IN PROGRESS; P1F3 READY TO START)
+Last updated: 2026-09-16 (P1F3 support bundle publication: CLOSED / PASS — P1F IN PROGRESS; P1F4 READY TO START)
 
 ## Current Objective
 
@@ -13,27 +13,26 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1F2 — Support Toolchain / Provenance Modernization**: **CLOSED / PASS** at support implementation
-SHA `a363e82b63ccc30ca678aba7dbb96c87d2879c08` on `ProotX-Assets-Support` branch
-`feature/p1f-support-modernization`; support CI run `35057757988` — SUCCESS. The unreproducible
-historical builder (`ubuntu:latest`, the now-unavailable `Lord1Egypt/proot@merge-it` fork, floating
-`android-5`, blind `sed`) was removed and replaced by a pinned, deterministic builder. The support
-runtime is now **dual-lane**: host API 21–28 keep the frozen legacy normal slots; host API 29+ use
-the modern `.a10` slots rebuilt at **API 24 with NDK r29** from `termux/proot v5.1.107.92`
-(`7266fb3e…`, archive `29385d1d…`), `termux-packages` `0ffca06c…`, builder
-`ghcr.io/termux/package-builder@sha256:374fedda…`. The modern arm64-v8a/x86_64 slots are 16 KB
-aligned (`0x4000`) and define `HAVE_PROCESS_VM`. Two independent clean builds produced byte-identical
-modern binaries and byte-identical candidate archives (`SOURCE_DATE_EPOCH=1787437959`). ProotX
-`minSdk` stays **21**; `ProotXFiles` selection is unchanged (`DECISIONS.md` D035). **No release was
-published — ProotX still downloads `v1.0.0`.** **Whole-app 16 KB compatibility is still NOT
-achieved** (4 KB 64-bit legacy normal-slot ELFs remain shipped via `jniLibs`/`nativeLibraryDir`;
-`proot_meta`/`proot_meta_leveldb` remain unknown-provenance frozen inputs).
+**P1F3 — Support Bundle Publication**: **CLOSED / PASS**. The first provenance-backed support
+release **`v1.1.0`** is published. Annotated tag `v1.1.0` (object `ff55608c0e9490dfd3a6dc392717c19a1916d636`)
+points at support commit `acc28abcd0756cca66782145099ef54ed4cbc46c` (support `main`, fast-forwarded
+from `0fa736a141947ccced126cc2f66295d0ceebecc5`). Release `RE_kwDOUXjkQM4XOeTw` (published
+2026-09-16T05:59:57Z) carries `arm64-v8a-assets.zip` `7f279264…`, `armeabi-v7a-assets.zip`
+`f7b935f6…`, `x86-assets.zip` `25a53c33…`, `x86_64-assets.zip` `f6248107…`, `SHA256SUMS`,
+`v1.1.0-provenance.json`, and `v1.1.0.spdx.json`; every asset re-verified after download. Two
+independent clean four-ABI builds were byte-identical. Release CI is split for safety
+(`support-validate.yml` untrusted static checks; `support.yml` privileged build limited to
+repository-owned refs + `workflow_dispatch`; `support-release.yml` read-only build job + separate
+`contents: write` publish job with no rebuild) and all release actions are pinned by full commit
+SHA (`DECISIONS.md` D036). ProotX still downloads `v1.0.0`; `v1.0.0` is untouched; whole-app 16 KB
+compatibility is **not** achieved.
 
 ## Current Milestone
 
 **P1F — Modern NDK / 16 KB Page-Size Compatibility**: **IN PROGRESS**. P1F-P (probe) is
-CLOSED / PARTIAL_BRIDGE, P1F1 (in-tree) is CLOSED / PASS, and P1F2 (support toolchain/provenance)
-is CLOSED / PASS. Next: **P1F3 — SUPPORT BUNDLE 16 KB REBUILD / PUBLICATION — READY TO START**
+CLOSED / PARTIAL_BRIDGE, P1F1 (in-tree) is CLOSED / PASS, P1F2 (support toolchain/provenance) is
+CLOSED / PASS, and P1F3 (support bundle publication `v1.1.0`) is CLOSED / PASS. Next: **P1F4 —
+SUPPORT PACKAGING / WHOLE-APP 16 KB INTEGRATION — READY TO START**
 (P1G physical acceptance remains after P1F).
 
 ## What Was Completed
@@ -123,6 +122,7 @@ is CLOSED / PASS. Next: **P1F3 — SUPPORT BUNDLE 16 KB REBUILD / PUBLICATION �
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
+| Accepted P1F3 support release | `v1.1.0` (tag object `ff55608c…`) → `acc28abcd0756cca66782145099ef54ed4cbc46c`; release `RE_kwDOUXjkQM4XOeTw` |
 | Accepted P1F2 support implementation | `a363e82b63ccc30ca678aba7dbb96c87d2879c08` (support `feature/p1f-support-modernization`) |
 | Accepted P1F1 implementation | `8103b835a670638c177a7adc6d7baea19680cd33` |
 | Accepted P1E9 implementation | `41cc7a8c629da364903de0ae71ab524541c7ef76` |
@@ -237,16 +237,17 @@ the P1G gate; no physical acceptance is claimed yet.
 7. Published history is immutable: no force-push, no history rewrite.
 8. One milestone at a time; respect STOP gates.
 9. Established durable decisions: D010, D011, D012/D015, D013/D014, D016, D017, D018, D019,
-   D020, D021, D022, D031, D032, D033, D034, D035.
+   D020, D021, D022, D031, D032, D033, D034, D035, D036.
 
 ## Next Safe Action
 
-**P1F3 — SUPPORT BUNDLE 16 KB REBUILD / PUBLICATION — READY TO START.** It owns publishing a new
-support release from the reproducible P1F2 builder and resolving the 4 KB 64-bit legacy
-normal-slot packaging debt. It must not begin without explicit authorization. **Full application
-16 KB compatibility must not be claimed** until P1F3/P1F4 complete and **P1G** physical/16 KB-emulator
-acceptance passes; ProotX must not be called a Golden Candidate, release candidate, or store-ready
-final. Sentry and Billing remain active and out of scope.
+**P1F4 — SUPPORT PACKAGING / WHOLE-APP 16 KB INTEGRATION — READY TO START.** It owns switching
+ProotX to support `v1.1.0`, isolating the 4 KB x86_64 legacy normal-slot ELFs from Android 15/16
+native-library packaging while preserving host API 21–28 compatibility, and proving the final
+APK/AAB contains no 4 KB 64-bit ELF. It must not begin without explicit authorization. **Full
+application 16 KB compatibility must not be claimed** until P1F4 completes and **P1G** physical/
+16 KB-emulator acceptance passes; ProotX must not be called a Golden Candidate, release candidate,
+or store-ready final. Sentry and Billing remain active and out of scope.
 
 ## Resume Procedure
 

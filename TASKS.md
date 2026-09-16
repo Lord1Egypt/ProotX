@@ -214,8 +214,14 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         `termux/proot v5.1.107.92`; dual-lane runtime — frozen legacy normal slots for host API
         21–28, modern `.a10` slots rebuilt at API 24 / NDK r29 for host API 29+; 16 KB aligned,
         `process_vm = yes`; two independent clean builds byte-identical; no release published)
-  - [ ] **P1F3 — Rebuild + publish 16 KB support bundles + resolve legacy 64-bit 4 KB debt** — READY TO START
-  - [ ] **P1F4 — Pin ProotX to the new support release + full APK/AAB 16 KB verification** — NOT STARTED
+  - [x] **P1F3 — Support bundle publication `v1.1.0`** — CLOSED / PASS
+        (annotated tag `v1.1.0` object `ff55608c…` → support commit `acc28ab…`; release
+        `RE_kwDOUXjkQM4XOeTw` published 2026-09-16T05:59:57Z with four `*-assets.zip` +
+        `SHA256SUMS` + `v1.1.0-provenance.json` + `v1.1.0.spdx.json`; two independent clean
+        four-ABI builds byte-identical; release CI split into untrusted validation / privileged
+        build / write-token publish with no rebuild, all actions SHA-pinned; post-download hashes
+        verified; v1.0.0 untouched; whole-app 16 KB still not claimed)
+  - [ ] **P1F4 — Support packaging / whole-app 16 KB integration (switch to v1.1.0 + isolate legacy 4 KB ELFs)** — READY TO START
   - [ ] **P1F5 — 16 KB emulator/static acceptance gate** — NOT STARTED
 - [ ] **P1G — Modernization regression candidate and physical acceptance** — NOT STARTED
   - [ ] Produce a modernization candidate build
