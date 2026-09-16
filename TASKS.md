@@ -175,11 +175,22 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         per `D031`; disposable targetSdk 34 probe passed then reverted; new
         `ForegroundServiceCompatibilityGuardTest`; local gates + JaCoCo PASS; remote run
         `35032934977`; 39 suites / 337 tests)
-  - [ ] P1E8 — targetSdk 33/34 behavior migration — NOT STARTED / READY TO START
-        (owns `POST_NOTIFICATIONS` declaration + runtime request + permission UX, targetSdk
-        31+ FGS background-start restrictions, `TermuxActivity` custom receiver
-        `RECEIVER_NOT_EXPORTED`, targetSdk 33/34 behavior)
-  - [ ] P1E9 — targetSdk 35/36 behavior + final SDK 36 regression — NOT STARTED
+  - [x] **P1E8 — targetSdk 33/34 runtime compatibility** — CLOSED / PASS
+        (app targetSdk 30 → 34; `POST_NOTIFICATIONS` declared + requested contextually at first
+        session start via one shared `notification_permission`/`prompt_completed` prefs flag;
+        `checkSelfPermission` is authoritative; denial never blocks the session and an explicit
+        denial stops re-prompting; resumed-lifecycle FGS gate + narrow
+        `ForegroundServiceStartNotAllowedException` handling with pending-session retry;
+        `TermuxActivity` direct `ssh://` entry uses the same one-time policy and starts/binds once;
+        `Context.RECEIVER_NOT_EXPORTED` on API 33+ for the app-internal `reload_style` receiver;
+        `:terminal-term` compileSdk 29 → 36 (targetSdk 29 / minSdk 21), terminal-view/emulator stay
+        29/29/21; test-only androidTest manifest overlay for `androidx.test:core:1.2.0` exported
+        values; `TargetSdk34CompatibilityGuardTest` added and the P1E7 guard updated; disposable
+        targetSdk 33 checkpoint passed; local gates + JaCoCo PASS; remote run `35037714144`;
+        40 suites / 348 tests)
+  - [ ] P1E9 — targetSdk 35/36 platform behavior + final SDK 36 regression — NOT STARTED / READY TO START
+        (owns targetSdk 35 then 36, edge-to-edge, predictive back, large-screen
+        orientation/resizability behavior, final SDK-36 behavior regression)
 - [ ] **P1F — Modern native/NDK and 16 KB page readiness**
   - [ ] Update NDK / native toolchain; verify 16 KB page-size compatibility
 - [ ] **P1G — Modernization regression candidate and physical acceptance**

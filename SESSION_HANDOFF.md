@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-16 (P1E7 foreground service / notification compatibility: CLOSED / PASS — P1E IN PROGRESS)
+Last updated: 2026-09-16 (P1E8 targetSdk 34 runtime compatibility: CLOSED / PASS — P1E IN PROGRESS)
 
 ## Current Objective
 
@@ -13,27 +13,30 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1E7 — Foreground Service / Notification Compatibility**: **CLOSED / PASS** at implementation SHA
-`0e70b7e1e3f398eb6fdb92730542cae0da6f1975`. Both real foreground services are structurally ready for
-the Android 12–16 rules: `ServerService` and `TermuxService` declare
-`android:foregroundServiceType="specialUse"` with a `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` property, the
-app declares `FOREGROUND_SERVICE_SPECIAL_USE` (retaining `FOREGROUND_SERVICE`), each service creates
-its own `"ProotX"` channel (`IMPORTANCE_LOW`), the initial session/terminal launch paths use
-`startForegroundService` on API 26+, `ServerService` promotes to the foreground synchronously before
-asynchronous session work, and promotion uses `ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST` on API
-29+. `TermuxService` is overlaid from the API-36 app manifest so `:terminal-term` stays compileSdk
-29; the overlay merges into exactly one component (`exported=false`). `POST_NOTIFICATIONS` is
-intentionally not declared or requested (deferred to P1E8 with the targetSdk 33/34 raise; see
-`DECISIONS.md` D031). targetSdk remains **30**; terminal modules remain **29/29/21**; notification
-IDs/actions/PendingIntents, SSH, session lifecycle, and UI are unchanged. A disposable targetSdk 34
-probe passed and was reverted. Local canonical evidence **39 suites / 337 tests / 0 failures / 0
-errors / 0 skipped**; remote CI run `35032934977` passed the canonical clean build, androidTest
-build, and both artifact uploads.
+**P1E8 — targetSdk 33/34 Runtime Compatibility**: **CLOSED / PASS** at implementation SHA
+`cff25f3f1dffa1a91d78a55915dd50513b694af4`. The app's persistent `targetSdk` is **34**
+(`compileSdk 36`, `minSdk 21`). `POST_NOTIFICATIONS` is declared and requested contextually at the
+first real session start through one shared application-private prefs flag
+(`notification_permission`/`prompt_completed`); current grant state always comes from
+`checkSelfPermission`, denial never blocks the Linux session, and an explicit denial suppresses
+later automatic prompts. The initial `ServerService` launch is deferred until the activity is
+resumed and catches only `ForegroundServiceStartNotAllowedException`, restoring the pending session
+and retrying on the next resume. `TermuxActivity` (direct `ssh://` entry) uses the same one-time
+policy, and its app-internal `reload_style` receiver uses the direct
+`Context.RECEIVER_NOT_EXPORTED` constant on API 33+ with the legacy two-argument path retained.
+`:terminal-term` raises **only** its `compileSdk` to **36** (`targetSdk 29`/`minSdk 21`);
+`:terminal-view`/`:terminal-emulator` stay **29/29/21**. A test-only
+`app/src/androidTest/AndroidManifest.xml` supplies the `android:exported` values that
+`androidx.test:core:1.2.0` omits (required by the target-31+ merger). Notification channel
+ID/IDs/actions, FGS types, PendingIntents, SSH, session lifecycle, Room schema, and UI are
+unchanged. Local canonical evidence **40 suites / 348 tests / 0 failures / 0 errors / 0 skipped**;
+remote CI run `35037714144` passed the canonical clean build, androidTest build, and both artifact
+uploads.
 
 ## Current Milestone
 
-**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS. P1E7 is closed; **P1E8 — TARGETSDK 33/34
-RUNTIME COMPATIBILITY** is **NOT STARTED / READY TO START**.
+**P1E — SDK 36 / Manifest Compatibility**: IN PROGRESS. P1E8 is closed; **P1E9 — TARGETSDK 35/36
+PLATFORM BEHAVIOR** is **NOT STARTED / READY TO START**.
 
 ## What Was Completed
 
@@ -76,26 +79,37 @@ RUNTIME COMPATIBILITY** is **NOT STARTED / READY TO START**.
   initialization, switched only the initial session/terminal launch paths to
   `startForegroundService` on API 26+, promoted `ServerService` to the foreground synchronously
   before asynchronous session work, and used `ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST` on
-  API 29+ (two-argument `startForeground` below). `POST_NOTIFICATIONS` is intentionally deferred
-  to P1E8. Added `ForegroundServiceCompatibilityGuardTest` (8 tests).
+  API 29+ (two-argument `startForeground` below). `POST_NOTIFICATIONS` was intentionally deferred
+  to P1E8. Added `ForegroundServiceCompatibilityGuardTest`.
+- P1E8 raised the app `targetSdk` **30 → 34** and declared `POST_NOTIFICATIONS`. `MainActivity`
+  requests it contextually at the final session-start boundary, records the one-time prompt in a
+  shared `notification_permission`/`prompt_completed` prefs flag, checks current grant state with
+  `checkSelfPermission`, defers the pending session until the activity is resumed, and catches only
+  `ForegroundServiceStartNotAllowedException` around the launch (retrying on the next resume).
+  `TermuxActivity` implements the same one-time policy for the direct `ssh://` entry before it
+  starts/binds `TermuxService` exactly once, and registers its app-internal `reload_style` receiver
+  with the direct `Context.RECEIVER_NOT_EXPORTED` constant on API 33+. `:terminal-term` raised only
+  its `compileSdk` 29 → 36. Added a test-only `app/src/androidTest/AndroidManifest.xml` for the
+  `androidx.test:core:1.2.0` exported values and `TargetSdk34CompatibilityGuardTest`; updated
+  `ForegroundServiceCompatibilityGuardTest` in place.
 
 ## What Was Intentionally NOT Changed
 
-- targetSdk/minSdk (30/21), terminal SDKs (29/29/21), NDK 21.4, resources, dependency versions,
-  Room schema 1–7, migrations, core runtime data model, and UI.
-- No `POST_NOTIFICATIONS` declaration or runtime request, no targetSdk raise, no receiver-export
-  flag, no background-start state-machine redesign, no edge-to-edge or predictive-back work
-  (those are later P1E milestones). Room stays on KAPT; Moshi stays on KSP2. P1E6's
-  permission-gate removal is the only intentional runtime behavior change so far; P1E7 is a
-  structural compatibility change (launch API/type/channel ownership) with the same user-visible
-  notification IDs, actions, and PendingIntents. The unreachable legacy permission-continuation
-  ViewModel code is deferred, not deleted.
+- minSdk (21), `:terminal-view`/`:terminal-emulator` SDKs (29/29/21), NDK 21.4, resources,
+  dependency versions, Room schema 1–7, migrations, core runtime data model, and UI.
+- No targetSdk 35/36 raise, no terminal targetSdk raise, no receiver magic flag / reflection, no
+  exported `reload_style` receiver, no flags on the `DownloadManager` system receiver, no storage
+  permission restoration, no session blocking on notification denial, no startup notification
+  request, no custom rationale UI, no edge-to-edge or predictive-back work (P1E9). Room stays on
+  KAPT; Moshi stays on KSP2. The unreachable legacy permission-continuation ViewModel code is
+  deferred, not deleted.
 
 ## Current Repository State
 
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
+| Accepted P1E8 implementation | `cff25f3f1dffa1a91d78a55915dd50513b694af4` |
 | Accepted P1E7 implementation | `0e70b7e1e3f398eb6fdb92730542cae0da6f1975` |
 | Accepted P1E6 implementation | `2202d6bda33512d3312827bf2bd6dc17f47dbae9` |
 | Accepted P1E5 implementation | `6e8a0559bc691266d403a216c56ec4377ce0c98b` |
@@ -109,7 +123,7 @@ RUNTIME COMPATIBILITY** is **NOT STARTED / READY TO START**.
 
 Commit `94abf5fa520255bb10d087a6be3ba2bc70b0e127`, package
 `io.github.lord1egypt.prootx`, version `1.0.0`. Baseline tests **313 / 24 suites**; current
-tests **337 / 39 suites** (guard/contract tests).
+tests **348 / 40 suites** (guard/contract tests).
 
 ## Current Toolchain
 
@@ -119,8 +133,9 @@ Navigation **2.3.5** · Preference **1.1.0** · Material **1.1.0** ·
 SwipeRefreshLayout **1.0.0** / LocalBroadcastManager **1.0.0** (direct) · Arch Core testing
 **2.1.0** (test-only) · Core KTX **1.1.0** (transitive `core` 1.3.0) · Lifecycle **2.2.0** ·
 JaCoCo **0.8.8** · Mockito **4.11.0** (test-only) · gradle-download-task **5.0.0** · plugin
-**`kotlin-parcelize`** · JDK **17** (build) · compileSdk **36** · targetSdk **30** ·
-minSdk **21** · terminal SDK **29/29/21** · NDK **21.4.7075529** · build-tools **35.0.0**.
+**`kotlin-parcelize`** · JDK **17** (build) · compileSdk **36** · targetSdk **34** ·
+minSdk **21** · terminal-term **36/29/21** · terminal-view/emulator **29/29/21** · NDK
+**21.4.7075529** · build-tools **35.0.0**.
 Repositories: `google()`,
 `mavenCentral()`.
 
@@ -146,13 +161,17 @@ deferred).
 configuration-time custom tasks; Node/action maintenance warnings; `ndk.dir`; eventual Room
 KAPT migration; and the core/core-ktx family note.
 
-**P1E7 deferred to P1E8:** `POST_NOTIFICATIONS` declaration + runtime request + permission UX
-(intentionally not declared in P1E7 while targetSdk is 30; see `DECISIONS.md` D031); the
-target-31+ FGS background-start policy remediation for `MainActivity.autoStart()`/`onNewIntent()`
-(the `onNewIntent` external-intent-while-backgrounded path is a potential
-`ForegroundServiceStartNotAllowedException` risk; the normal foreground/user-initiated path is
-structurally correct); and the `TermuxActivity` custom `com.termux.app.reload_style` receiver
-`RECEIVER_NOT_EXPORTED` flag.
+**P1E8 RESOLVED the P1E5/P1E7 receiver and notification deferrals:** the terminal
+`com.termux.app.reload_style` receiver now uses `Context.RECEIVER_NOT_EXPORTED` on API 33+ (legacy
+path retained), `POST_NOTIFICATIONS` is declared and requested contextually at first session start,
+and the target-31+ FGS launch is deferred until the activity is resumed with narrow
+`ForegroundServiceStartNotAllowedException` handling. **Deferred after P1E8 (non-blocking):** the
+`specialUse` type for `TermuxService` still lives in the app manifest overlay (now that
+`:terminal-term` compiles at API 36 it may be consolidated later); the system `DownloadManager`
+receiver's `UnspecifiedRegisterReceiverFlag` lint false positive is intentionally suppressed (the
+flag-less registration is correct for a system-only broadcast); and the test-only
+`androidx.test:core:1.2.0` exported-value overlay should be revisited when `androidx.test` is
+eventually upgraded.
 
 **CI infrastructure finding — RESOLVED in CI-R1:** the closure-documentation push had failed
 remote CI in `android-actions/setup-android@v3` (`Warning: Failed to find package 'tools'`)
@@ -176,15 +195,15 @@ verified on a device at the Golden Candidate gate; no physical acceptance is cla
 7. Published history is immutable: no force-push, no history rewrite.
 8. One milestone at a time; respect STOP gates.
 9. Established durable decisions: D010, D011, D012/D015, D013/D014, D016, D017, D018, D019,
-   D020, D021, D022, D031.
+   D020, D021, D022, D031, D032.
 
 ## Next Safe Action
 
-**P1E8 — TARGETSDK 33/34 RUNTIME COMPATIBILITY — NOT STARTED / READY TO START.** It owns the
-`POST_NOTIFICATIONS` declaration + runtime request + permission UX, the targetSdk 33/34 raise,
-the target-31+ FGS background-start restrictions, the `TermuxActivity` custom receiver
-`RECEIVER_NOT_EXPORTED` flag, and targetSdk 33/34 behavior. Sentry and Billing remain active and
-out of scope. Do not begin without explicit authorization.
+**P1E9 — TARGETSDK 35/36 PLATFORM BEHAVIOR — NOT STARTED / READY TO START.** It owns the targetSdk
+35/36 raise, edge-to-edge, predictive back, large-screen orientation/resizability behavior, and the
+final SDK-36 behavior regression. NDK / 16 KB work remains **P1F**; physical acceptance remains
+**P1G**. Sentry and Billing remain active and out of scope. Do not begin without explicit
+authorization.
 
 ## Resume Procedure
 

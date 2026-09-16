@@ -52,7 +52,14 @@
 >       services; service-owned channels; `startForegroundService` + immediate promotion +
 >       `FOREGROUND_SERVICE_TYPE_MANIFEST`; `POST_NOTIFICATIONS` deferred to P1E8; targetSdk
 >       stays 30; implementation `0e70b7e`; remote CI `35032934977`; 39 suites / 337 tests)
->     - **P1E8 — TARGETSDK 33/34 RUNTIME COMPATIBILITY:** READY TO START
+>     - **P1E8 — TARGETSDK 33/34 RUNTIME COMPATIBILITY:** CLOSED / PASS
+>       (app targetSdk 30 → 34; `POST_NOTIFICATIONS` declared + one shared contextual request at
+>       first session start; denial never blocks the session; resumed-lifecycle deferred FGS start
+>       with narrow `ForegroundServiceStartNotAllowedException` handling; Termux `ssh://` direct
+>       entry policy; `Context.RECEIVER_NOT_EXPORTED` on API 33+; `:terminal-term` compileSdk
+>       29 → 36 with targetSdk 29; implementation `cff25f3`; remote CI `35037714144`;
+>       40 suites / 348 tests)
+>     - **P1E9 — TARGETSDK 35/36 PLATFORM BEHAVIOR:** READY TO START
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.
@@ -303,7 +310,21 @@ deferred to the appropriate later phase.
     `onNewIntent` external-intent-while-backgrounded path is a potential
     `ForegroundServiceStartNotAllowedException` risk; the normal foreground/user-initiated path is
     structurally correct now), and the `TermuxActivity` custom `com.termux.app.reload_style`
-    receiver `RECEIVER_NOT_EXPORTED` flag.
+    receiver `RECEIVER_NOT_EXPORTED` flag. **All three landed in P1E8 (see item 26).**
+26. **P1E8 targetSdk 34 runtime changes — RESOLVED, with two small deferred follow-ups.** The app now
+    targets 34 with a contextual one-time `POST_NOTIFICATIONS` request (denial never blocks the
+    session), a resumed-lifecycle FGS start gate with narrow
+    `ForegroundServiceStartNotAllowedException` handling, and a `Context.RECEIVER_NOT_EXPORTED`
+    custom terminal receiver on API 33+; `:terminal-term` compiles at API 36 while its targetSdk
+    stays 29 (`DECISIONS.md` D032). Two non-blocking items remain recorded for later:
+    - the `TermuxService` `specialUse` FGS type is still declared via the app manifest overlay
+      rather than the terminal module's own manifest — revisitable now that the module compiles at
+      API 36;
+    - `androidx.test:core:1.2.0` omits `android:exported` on its `InstrumentationActivityInvoker`
+      activities, so the target-31+ merger needs a test-only `app/src/androidTest/AndroidManifest.xml`
+      overlay; revisit (and drop the overlay + the `UnspecifiedRegisterReceiverFlag` lint
+      suppression for the system `DownloadManager` receiver) when `androidx.test` is eventually
+      upgraded.
 
 ## Non-goals for P0
 

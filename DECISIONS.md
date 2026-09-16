@@ -635,3 +635,51 @@
 - **Affected components:** `app/src/main/AndroidManifest.xml`, `ServerService.kt`,
   `MainActivity.kt`, `TermuxActivity.java`, `TermuxService.java`,
   `ForegroundServiceCompatibilityGuardTest`, P1E7/P1E8.
+
+---
+
+## D032 — targetSdk 34; contextual one-time POST_NOTIFICATIONS; terminal-term compileSdk 36 / targetSdk 29
+
+- **Date:** 2026-09-16
+- **Status:** Accepted (P1E8, CLOSED / PASS)
+- **Decision:** The app's persistent `targetSdk` is **34** (`compileSdk 36`, `minSdk 21`). The app
+  declares `POST_NOTIFICATIONS` and requests it **contextually at the first real session start**
+  (never at ordinary app startup, browsing, or import/export). One shared application-private
+  `SharedPreferences` file `notification_permission` with key `prompt_completed` records only that
+  ProotX has already presented the request and received an explicit result; current grant state is
+  always read from `checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)`. **Denial never
+  blocks the Linux session**: the pending session is continued regardless of the permission
+  outcome, and an explicit denial suppresses later automatic prompts. The initial
+  `ServerService` foreground launch is **deferred until the activity is resumed**
+  (`lifecycle.currentState.isAtLeast(RESUMED)`), and the actual launch catches only
+  `ForegroundServiceStartNotAllowedException`, restoring the pending session and retrying on the
+  next resume. `TermuxActivity` (direct `ssh://` entry) participates in the same one-time policy.
+  `TermuxActivity`'s application-internal `com.termux.app.reload_style` receiver is registered with
+  the direct API-33 `Context.RECEIVER_NOT_EXPORTED` constant on TIRAMISU+ with the legacy
+  two-argument path below. `:terminal-term` raises **only its `compileSdk` to 36**, keeping
+  `targetSdk 29` / `minSdk 21`; `:terminal-view` and `:terminal-emulator` stay **29/29/21**.
+- **Reason:** targetSdk 34 is the P1E8 boundary; it activates the Android 14 FGS type, runtime
+  receiver-export, and permission behavior without pulling in Android 15/16 UI behavior. Requesting
+  `POST_NOTIFICATIONS` in context (and never blocking the session) avoids premature or nagging UX.
+  The lifecycle/exception gate removes the target-31+ `ForegroundServiceStartNotAllowedException`
+  path that the pre-34 target could not trigger. `Context.RECEIVER_NOT_EXPORTED` is the direct API
+  rather than a magic integer or reflection, and the terminal module needs API 33/34 compile access
+  for it. `MainActivity`'s `DownloadManager.ACTION_DOWNLOAD_COMPLETE` receiver listens only to a
+  system broadcast, which Android 14 exempts from the export-flag requirement, so it deliberately
+  keeps the flag-less registration.
+- **Alternatives considered:** Requesting `POST_NOTIFICATIONS` at startup or on every session start
+  (rejected — premature/nagging UX); blocking the session when denied (rejected — notifications are
+  not required for the FGS to run); a numeric/reflection receiver flag (rejected — magic values);
+  `RECEIVER_NOT_EXPORTED` on the DownloadManager system receiver (rejected — incorrect for a
+  system-only broadcast); raising `:terminal-view`/`:terminal-emulator` compileSdk (rejected — not
+  required by compilation); upgrading `androidx.test` to fix the target-31+ test-manifest merge
+  (rejected — dependency upgrade out of scope; a test-only manifest overlay supplies the missing
+  `android:exported` values instead).
+- **Trade-offs:** The androidTest APK now needs the test-only overlay to keep building at target
+  34 with `androidx.test:core:1.2.0`. The lint `UnspecifiedRegisterReceiverFlag` false positive on
+  the system DownloadManager receiver is suppressed with an explicit justification rather than
+  adding an incorrect flag.
+- **Affected components:** `app/build.gradle`, `app/src/main/AndroidManifest.xml`, `MainActivity.kt`,
+  `termux-app/terminal-term/build.gradle`, `TermuxActivity.java`,
+  `app/src/androidTest/AndroidManifest.xml`, `ForegroundServiceCompatibilityGuardTest`,
+  `TargetSdk34CompatibilityGuardTest`, P1E8/P1E9.

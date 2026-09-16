@@ -1,13 +1,13 @@
 # ProotX — P1E Android 16 (SDK 36) Migration Plan
 
-> **Status:** P1E7 implementation CLOSED / PASS; P1E remains IN PROGRESS. This document is the
+> **Status:** P1E8 implementation CLOSED / PASS; P1E remains IN PROGRESS. This document is the
 > approved migration design and implementation record. Current state lives in
 > `PROJECT_STATE.md`. Do not execute a later step without explicit authorization.
 
-Current accepted implementation: `0e70b7e1e3f398eb6fdb92730542cae0da6f1975`, remote CI
-`35032934977` green, 39 suites / 337 tests / 0 failures / 0 errors / 0 skipped. Frozen
-application baseline remains unchanged. Next milestone: **P1E8 — TARGETSDK 33/34 RUNTIME
-COMPATIBILITY — NOT STARTED / READY TO START**.
+Current accepted implementation: `cff25f3f1dffa1a91d78a55915dd50513b694af4`, remote CI
+`35037714144` green, 40 suites / 348 tests / 0 failures / 0 errors / 0 skipped. Frozen
+application baseline remains unchanged. Next milestone: **P1E9 — TARGETSDK 35/36 PLATFORM
+BEHAVIOR — NOT STARTED / READY TO START**.
 
 ---
 
@@ -17,8 +17,8 @@ COMPATIBILITY — NOT STARTED / READY TO START**.
 
 | Module | compileSdk | targetSdk | minSdk |
 |---|---|---|---|
-| `:app` | 36 | 30 | 21 |
-| `:terminal-term` | 29 | 29 | 21 |
+| `:app` | 36 | 34 | 21 |
+| `:terminal-term` | 36 | 29 | 21 |
 | `:terminal-view` | 29 | 29 | 21 |
 | `:terminal-emulator` | 29 | 29 | 21 |
 
@@ -265,7 +265,14 @@ later targetSdk milestones).
   session; this is foreground-driven, but the `onNewIntent` path (external intent while
   backgrounded) is a potential `ForegroundServiceStartNotAllowedException` risk on API 31+.
 - Terminal `TermuxService` is started/`bindService`d from its activity → allowed.
-- P1E6/P1E7 must audit and harden the `autoStart` / `onNewIntent` path.
+- **Implemented in P1E8 (supersedes the earlier P1E6/P1E7 attribution):** the initial
+  `ServerService` foreground launch is deferred until the activity is
+  `Lifecycle.State.RESUMED` (AndroidX Lifecycle already present), the pending `Session` is
+  retained, and `launchForegroundService` catches **only**
+  `ForegroundServiceStartNotAllowedException`, records a diagnostic breadcrumb, restores the
+  pending session, and retries on the next resume. `onCreate → autoStart` and
+  `onNewIntent → autoStart` both flow through this single final gate; the autoStart `finish()`
+  still runs only after a successful launch.
 
 ---
 
@@ -283,6 +290,12 @@ later targetSdk milestones).
   immediate foreground promotion; **P1E8** owns the declaration, the runtime request, and the
   permission UX together with the targetSdk 33/34 raise (see `DECISIONS.md` D031). This
   supersedes the earlier "request it on first session start (P1E7)" wording.
+- **Implemented in P1E8:** the app targets 34, declares `POST_NOTIFICATIONS`, and requests it
+  contextually at the first real session start through one shared application-private
+  `notification_permission` / `prompt_completed` preference; current grant state always comes from
+  `checkSelfPermission`; denial never blocks the session and an explicit denial suppresses later
+  automatic prompts. `TermuxActivity`'s direct `ssh://` entry uses the same policy. See §26
+  (`DECISIONS.md` D032).
 
 ### 10.2 Storage (PART O) — HIGH priority
 - Only app-private/app-scoped storage is used:
@@ -312,9 +325,9 @@ later targetSdk milestones).
 ### 10.4 Dynamic receivers (PART Q)
 | Registration | Broadcast | Kind | API 34+ rule |
 |---|---|---|---|
-| `MainActivity` `downloadBroadcastReceiver` | `DownloadManager.ACTION_DOWNLOAD_COMPLETE` | system | exempt, but add explicit `RECEIVER_NOT_EXPORTED` via `ContextCompat.registerReceiver` for clarity |
+| `MainActivity` `downloadBroadcastReceiver` | `DownloadManager.ACTION_DOWNLOAD_COMPLETE` | system | **CORRECTED (P1E8): keeps the flag-less platform registration.** Android 14 exempts receivers registered only for system broadcasts from the exported/not-exported flag requirement; do **not** add `RECEIVER_NOT_EXPORTED`/`ContextCompat` flags here. The `UnspecifiedRegisterReceiverFlag` lint false positive is intentionally suppressed with justification. |
 | `MainActivity` server-result | `LocalBroadcastManager` | in-process | unaffected |
-| `TermuxActivity` `mBroadcastReceiever` | custom `com.termux.app.reload_style` | **custom** | **target 34+ requires explicit exported flag** → `RECEIVER_NOT_EXPORTED` |
+| `TermuxActivity` `mBroadcastReceiever` | custom `com.termux.app.reload_style` | **custom** | **target 34+ requires explicit exported flag** → `RECEIVER_NOT_EXPORTED` (implemented in P1E8 using the direct `Context.RECEIVER_NOT_EXPORTED` constant on API 33+, legacy path below) |
 
 ---
 
@@ -418,7 +431,7 @@ should be validated on a device; no UI redesign is authorized in P1E.
 | **P1E5** | API 31 manifest/intent: `android:exported` (`MainActivity` `true`; `TermuxActivity` `true`, `ssh://` preserved), PendingIntent `FLAG_IMMUTABLE` (6×), dynamic receiver export flags classified/deferred | Manifest/intent | **CLOSED / PASS**; build + 327 tests green; androidTest build; disposable targetSdk 31 probe passed then reverted |
 | **P1E6** | Storage/permission runtime: remove/repair `PermissionHandler` gate + storage permissions + terminal request | Runtime permission | **CLOSED / PASS**; app/session/SAF flows work without storage perms; 329 tests green; disposable targetSdk 33 probe passed then reverted |
 | **P1E7** | FGS structural compatibility: `foregroundServiceType="specialUse"` + `FOREGROUND_SERVICE_SPECIAL_USE` + subtype property for both services; service-owned channels; initial launch via `startForegroundService`; immediate `ServerService` promotion; `FOREGROUND_SERVICE_TYPE_MANIFEST` on API 29+. **`POST_NOTIFICATIONS` intentionally deferred** (see §10.1) | FGS/notification | **CLOSED / PASS**; build + 337 tests green; disposable targetSdk 34 probe passed then reverted; FGS declarations validated in merged manifest + APK |
-| **P1E8** | targetSdk **33/34** runtime: `POST_NOTIFICATIONS` declaration + runtime request + permission UX; targetSdk 31+ FGS background-start restrictions; `TermuxActivity` custom receiver `RECEIVER_NOT_EXPORTED`; targetSdk 33/34 behavior | Target behavior | Build + tests; notification UX validated |
+| **P1E8** | targetSdk **33/34** runtime: app targetSdk 30 → 34; `POST_NOTIFICATIONS` declaration + contextual one-time runtime request (denial never blocks the session); targetSdk 31+ deferred/resumed FGS start with narrow `ForegroundServiceStartNotAllowedException` handling; `TermuxActivity` custom receiver `RECEIVER_NOT_EXPORTED`; `:terminal-term` compileSdk 29 → 36 (targetSdk 29) | Target behavior | **CLOSED / PASS**; target-33 checkpoint passed; build + 348 tests green; disposable target-34 declarations validated in merged manifest + APK |
 | **P1E9** | targetSdk **35/36** behavior: edge-to-edge, predictive back (`OnBackPressedCallback`), large-screen orientation/resizability; final SDK 36 regression build; Golden Candidate prep | Regression/behavior | Full local+remote green; P1G physical acceptance queued |
 
 ### 15.1 Exact P1E1 implementation (proven by P1E1-P)
@@ -820,7 +833,52 @@ Accepted implementation: `0e70b7e1e3f398eb6fdb92730542cae0da6f1975`; remote CI r
   `5720dd54a6b07a1f8569b5e65e481c80e69a5d8cd1f1f6ac125c0195f474ebcd`, package
   `io.github.lord1egypt.prootx.test`.
 - No Gradle, dependency, SDK-level, Room/schema/migration, `Data.db`, resource, runtime-behavior,
-  or UI change. `targetSdk` remains **30**; terminal modules remain **29/29/21**.
+  or UI change. `targetSdk` remained **30**; terminal modules remained **29/29/21** at P1E7.
 
-**Next:** P1E8 — TARGETSDK 33/34 RUNTIME COMPATIBILITY — **NOT STARTED / READY TO START**. Do not
+> **Superseded by §26 (P1E8):** the P1E7-era "`:terminal-term` stays compileSdk 29" and
+> "terminal modules remain 29/29/21" statements are historical. After P1E8 the module matrix is
+> `:app` **36/34/21**, `:terminal-term` **36/29/21**, `:terminal-view`/`:terminal-emulator`
+> **29/29/21**; `POST_NOTIFICATIONS` is declared and requested, and the targetSdk 31+
+> `ForegroundServiceStartNotAllowedException` risk is handled (see §26).
+
+## 26. P1E8 targetSdk 33/34 runtime compatibility result — CLOSED / PASS
+
+Accepted implementation: `cff25f3f1dffa1a91d78a55915dd50513b694af4`; remote CI run
+`35037714144` — SUCCESS.
+
+- App targetSdk **30 → 34** (`compileSdk 36`, `minSdk 21`) after a target-33 checkpoint
+  (`processDebugMainManifest`, Kotlin/Java compile, `assembleDebug` all passed).
+- `POST_NOTIFICATIONS` declared; requested **contextually at the first real session start** via one
+  shared application-private `notification_permission` / `prompt_completed` preference;
+  `checkSelfPermission` is authoritative; denial never blocks the session; an explicit denial
+  suppresses later automatic prompts; a later Settings grant resumes normal behavior. No Room state,
+  no custom rationale UI.
+- Initial `ServerService` launch deferred until the activity is `Lifecycle.State.RESUMED`, with the
+  pending `Session` retained; `launchForegroundService` catches **only**
+  `ForegroundServiceStartNotAllowedException`, records a breadcrumb, restores the pending session,
+  and retries on resume. `onCreate → autoStart` and `onNewIntent → autoStart` use the same gate.
+- `TermuxActivity` (`ssh://` direct entry) uses the same policy before starting/binding
+  `TermuxService` exactly once; its app-internal `reload_style` receiver uses the direct
+  `Context.RECEIVER_NOT_EXPORTED` constant on API 33+ (legacy path retained).
+- `:terminal-term` `compileSdk 29 → 36` (`targetSdk 29`/`minSdk 21`); manifest unchanged.
+  `:terminal-view`/`:terminal-emulator` remain 29/29/21.
+- Test-only `app/src/androidTest/AndroidManifest.xml` supplies the `android:exported` values
+  `androidx.test:core:1.2.0` omits (target-31+ merger). No dependency upgrade.
+- `ForegroundServiceCompatibilityGuardTest` updated in place; `TargetSdk34CompatibilityGuardTest`
+  added. Canonical `clean assembleDebug testDebugUnitTest` = **40 suites / 348 tests / 0 failures /
+  0 errors / 0 skipped**; local JaCoCo report executed (non-empty 788,568-byte XML + HTML).
+- Debug APK 19,916,017 bytes, SHA-256
+  `8f1c05443715b92cbbdceab071f8f1017b027dca60527124b710cfd8346cafe7`, package
+  `io.github.lord1egypt.prootx`, versionName 1.0.0, SDK 36/34/21, four ABIs, 16/16 required
+  payloads; permissions ACCESS_NETWORK_STATE, INTERNET, BILLING, CHANGE_WIFI_STATE,
+  FOREGROUND_SERVICE, FOREGROUND_SERVICE_SPECIAL_USE, POST_NOTIFICATIONS, WAKE_LOCK, VIBRATE.
+  androidTest APK 1,825,701 bytes, SHA-256
+  `ba68481c3cd1b58b5b9374b185b4a2bcfaedc745e19ff83821375ceb55dc1d32`, package
+  `io.github.lord1egypt.prootx.test`.
+- Bounded target-34 audit clean (no dynamic DEX/JAR loading, no exact alarms, no legacy storage
+  permissions, no mutable/unspecified PendingIntents, no un-flagged custom receivers, no implicit
+  application-owned component issues). No dependency, Room/schema, storage-path, SSH, or UI change.
+  Durable decision: `DECISIONS.md` D032.
+
+**Next:** P1E9 — TARGETSDK 35/36 PLATFORM BEHAVIOR — **NOT STARTED / READY TO START**. Do not
 start without explicit authorization.

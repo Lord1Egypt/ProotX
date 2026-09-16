@@ -1,7 +1,7 @@
 # ProotX Build Environment
 
-> Current state: **P1E7 toolchain** (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20, JDK 17,
-> app compileSdk 36 / targetSdk 30).
+> Current state: **P1E8 toolchain** (Gradle 8.11.1 / AGP 8.10.1 / Kotlin 2.2.20, JDK 17,
+> app compileSdk 36 / targetSdk 34).
 
 ## Summary
 
@@ -21,9 +21,10 @@ The ProotX application currently builds with:
 | Mockito (test-only) | **4.11.0** |
 | gradle-download-task | **5.0.0** |
 | JDK for the Gradle build | **17** |
-| `compileSdk` / `targetSdk` (app) | 36 / 30 |
+| `compileSdk` / `targetSdk` (app) | 36 / 34 |
 | `minSdk` | 21 |
-| terminal `compileSdk` / `targetSdk` / `minSdk` | 29 / 29 / 21 |
+| `:terminal-term` `compileSdk` / `targetSdk` / `minSdk` | 36 / 29 / 21 |
+| `:terminal-view` / `:terminal-emulator` `compileSdk` / `targetSdk` / `minSdk` | 29 / 29 / 21 |
 | Android NDK | 21.4.7075529 (explicit `ndkVersion`) |
 | Android build-tools | **35.0.0** |
 
@@ -36,7 +37,9 @@ migrated to Gradle **8.11.1** / AGP **8.10.1** / Kotlin **2.2.20** / KSP
 compileSdk **30 → 36**, keeping targetSdk 30, minSdk 21, and terminal SDKs 29/29/21. **P1E6**
 removed the obsolete legacy broad-storage permission dependency. **P1E7** made the two real
 foreground services structurally compatible with the Android 12–16 FGS rules without changing
-SDK levels.
+SDK levels. **P1E8** raised the app targetSdk **30 → 34**, added `POST_NOTIFICATIONS` + the
+contextual one-time request, hardened the target-31+ FGS start, and raised `:terminal-term`
+compileSdk **29 → 36** (targetSdk stays 29).
 
 ## JDK requirement
 
@@ -58,7 +61,7 @@ Install exactly these (nothing more):
 |---|---|
 | `platform-tools` | adb/platform tools; owned explicitly (setup-android's default install is skipped) |
 | `platforms;android-36` | `app` module `compileSdk` is 36 |
-| `platforms;android-29` | terminal modules (`terminal-view`, `terminal-emulator`, `terminal-term`) use `compileSdk` 29 |
+| `platforms;android-29` | `:terminal-view` and `:terminal-emulator` use `compileSdk` 29 (still required); `:terminal-term` now uses 36 |
 | `build-tools;35.0.0` | AGP 8.10 build tools — pinned so CI is deterministic |
 | `ndk;21.4.7075529` | native toolchain for the terminal emulator JNI (`ndkBuild`) |
 
@@ -126,11 +129,11 @@ checkout (no pre-existing `jniLibs`).
 remains on KAPT** (`kotlin-kapt` applied) — a deliberate mixed-processing build until Room also
 moves to KSP.
 
-**compileSdk (P1E4):** only `:app` compiles against API 36; targetSdk/minSdk remain 30/21 and
-terminal modules remain 29/29/21. API 36 marks `PackageInfo.versionName` nullable, so the
-existing `AppsListFragment.getProotXVersion(): String` invariant is explicit as
-`info.versionName!!`. No targetSdk behavior, dependency, manifest, runtime, or UI change was
-included.
+**compileSdk (P1E4):** only `:app` compiled against API 36; at that milestone targetSdk/minSdk were
+30/21 and terminal modules were 29/29/21 (superseded by P1E8). API 36 marks
+`PackageInfo.versionName` nullable, so the existing `AppsListFragment.getProotXVersion(): String`
+invariant is explicit as `info.versionName!!`. No targetSdk behavior, dependency, manifest,
+runtime, or UI change was included.
 
 **JaCoCo (P1E3-R1):** JaCoCo remains **0.8.8**. Gradle 8 uses `xml.required` and
 `html.required`. AGP 8 writes JVM coverage data to
@@ -152,17 +155,17 @@ No JaCoCo configuration was changed in P1E5; this is recorded for a future build
 The legacy broad-storage dependency is gone: neither the app nor `:terminal-term` declares
 `READ_EXTERNAL_STORAGE`/`WRITE_EXTERNAL_STORAGE`, `PermissionHandler` is deleted, and app/session
 launch plus SAF import/export request no storage permission. No `MANAGE_EXTERNAL_STORAGE` or
-`READ_MEDIA_*` replacement is declared. App `targetSdk` remains **30** and terminal modules
-remain **29/29/21**; a disposable targetSdk 33 probe built cleanly with no storage permissions in
-the merged manifest/APK and was reverted. App-scoped storage paths are unchanged.
+`READ_MEDIA_*` replacement is declared. At that milestone `targetSdk` was **30** and terminal
+modules were **29/29/21**; a disposable targetSdk 33 probe built cleanly with no storage
+permissions in the merged manifest/APK and was reverted. App-scoped storage paths are unchanged.
 
 ## Manifest / intent state (P1E5)
 
 `MainActivity` and `TermuxActivity` declare `android:exported="true"`; `TermuxActivity` retains
 its `ssh://` BROWSABLE deep link. The six application-owned `PendingIntent`s are explicitly
 immutable (the stop-sessions service intent retains
-`FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE`). App `targetSdk` remains **30** and terminal modules
-remain **29/29/21**; a disposable targetSdk 31 manifest/assemble probe proved the Android 12
+`FLAG_UPDATE_CURRENT or FLAG_IMMUTABLE`). At that milestone `targetSdk` was **30** and terminal
+modules were **29/29/21**; a disposable targetSdk 31 manifest/assemble probe proved the Android 12
 exported-component requirement is satisfied and was reverted.
 
 ## Foreground-service state (P1E7)
@@ -171,21 +174,34 @@ The app declares `android.permission.FOREGROUND_SERVICE` and
 `android.permission.FOREGROUND_SERVICE_SPECIAL_USE`. `io.github.lord1egypt.prootx.ServerService`
 and `com.termux.app.TermuxService` are both typed `android:foregroundServiceType="specialUse"`
 with a `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` property; the terminal service is overlaid from the
-API-36 app manifest because `:terminal-term` still compiles against API 29 (its manifest remains
-unchanged), and merges into exactly one `exported=false` component. Each service creates its own
+app manifest and merges into exactly one `exported=false` component. Each service creates its own
 `"ProotX"` channel at `IMPORTANCE_LOW`; the initial session/terminal launches use
 `startForegroundService` on API 26+; `ServerService` promotes synchronously before asynchronous
 work; and promotion uses `ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST` on API 29+ (two-argument
-`startForeground` below). `POST_NOTIFICATIONS` is **not** declared in P1E7 — it is deferred to
-P1E8 with the targetSdk 33/34 raise (`DECISIONS.md` D031). App `targetSdk` remains **30**;
-terminal modules remain **29/29/21**. A disposable targetSdk 34 probe built cleanly with the
-expected merged services/permissions and was reverted.
+`startForeground` below). `POST_NOTIFICATIONS` is now declared (P1E8).
+
+## targetSdk 34 runtime state (P1E8)
+
+The app targets **34** (`compileSdk 36`, `minSdk 21`) and declares
+`android.permission.POST_NOTIFICATIONS`. The permission is requested **contextually at the first
+real session start** through one shared application-private prefs flag
+(`notification_permission`/`prompt_completed`); current grant state always comes from
+`checkSelfPermission`; denial never blocks the Linux session. The initial `ServerService` launch
+is deferred until the activity is `Lifecycle.State.RESUMED` and catches only
+`ForegroundServiceStartNotAllowedException`, retrying on the next resume. `TermuxActivity`'s direct
+`ssh://` entry uses the same policy, and its app-internal `reload_style` receiver uses
+`Context.RECEIVER_NOT_EXPORTED` on API 33+ (legacy path below). `:terminal-term` compiles at API 36
+with `targetSdk 29`; `:terminal-view`/`:terminal-emulator` remain 29/29/21. The system
+`DownloadManager` receiver keeps its flag-less registration (system-broadcast exemption), with the
+`UnspecifiedRegisterReceiverFlag` lint false positive intentionally suppressed. `androidx.test:core:1.2.0`
+lacks `android:exported` on its invoker activities, so a test-only `app/src/androidTest/AndroidManifest.xml`
+overlay supplies them for the target-31+ merger. See `DECISIONS.md` D032.
 
 ## Baseline result (reference)
 
 The frozen baseline at tag `v1.0.0-baseline` measured **313 tests / 24 suites / 0 failures**.
-The P1E7 toolchain measures **337 tests / 39 suites / 0 failures / 0 errors / 0 skipped**.
-Remote CI run `35032934977` passed at `0e70b7e` and uploaded the debug and androidTest APK
-artifacts. P1E7 local validation also proved the API-36 SDK platform, the androidTest APK build,
-four ABIs, 16/16 native payloads, the FGS `specialUse` declarations in the APK, the absence of
-`POST_NOTIFICATIONS`, and the separate JaCoCo report regression gate. See `PROJECT_STATE.md`.
+The P1E8 toolchain measures **348 tests / 40 suites / 0 failures / 0 errors / 0 skipped**.
+Remote CI run `35037714144` passed at `cff25f3` and uploaded the debug and androidTest APK
+artifacts. P1E8 local validation also proved the API-36 SDK platform, the androidTest APK build,
+four ABIs, 16/16 native payloads, the `POST_NOTIFICATIONS` declaration in the APK, targetSdk 34,
+and the separate JaCoCo report regression gate. See `PROJECT_STATE.md`.

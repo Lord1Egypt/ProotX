@@ -731,3 +731,91 @@
   paths are unchanged. `POST_NOTIFICATIONS` sequencing correction recorded in `DECISIONS.md` D031.
 - **P1E7 CLOSED / PASS. P1E IN PROGRESS. P1E8 TARGETSDK 33/34 RUNTIME COMPATIBILITY READY TO
   START.**
+
+## P1E8 — targetSdk 33/34 Runtime Compatibility (2026-09-16) — PASS
+
+- Raised the persistent app `targetSdk` **30 → 34** (`compileSdk 36`, `minSdk 21`) after a
+  target-33 checkpoint (`processDebugMainManifest`, Kotlin/Java compile, `assembleDebug` all
+  passed) isolated the notification work from the target-34 step.
+- Declared `<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />` in
+  `app/src/main/AndroidManifest.xml` alongside the retained `FOREGROUND_SERVICE` and
+  `FOREGROUND_SERVICE_SPECIAL_USE`. No other permission changed; legacy storage permissions remain
+  absent.
+- `MainActivity` requests `POST_NOTIFICATIONS` only at the final session-start boundary
+  (`startSession` → `continuePendingSessionIfPossible`), which is the first real session start.
+  The request is never made at startup, while browsing, or during import/export. A shared
+  application-private `notification_permission` / `prompt_completed` preference records that
+  ProotX presented the request and received an explicit result; the current grant state always
+  comes from `checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)`. An empty `grantResults`
+  (dialog dismissed without a decision) is not recorded as an explicit denial.
+- Denial never blocks the Linux session: `onRequestPermissionsResult` always continues the pending
+  session; a previous explicit denial suppresses later automatic prompts, and a later Settings
+  grant is detected by `checkSelfPermission`. No permission state is stored in Room.
+- Added a resumed-lifecycle gate: the initial `ServerService` launch is deferred until
+  `lifecycle.currentState.isAtLeast(RESUMED)` (AndroidX Lifecycle already present; no new
+  dependency) and the pending `Session` is retained. `launchForegroundService` catches **only**
+  `ForegroundServiceStartNotAllowedException` (API 31+ branch), records a diagnostic breadcrumb via
+  the existing `SentryLogger`, restores the pending session, and retries on the next resume. No
+  broad `Exception` catch, no swallowed session, no busy retry, no WorkManager, no
+  battery-optimization or overlay permission.
+- The existing `onCreate → autoStart` and `onNewIntent → autoStart` paths flow through the same
+  final gate; the delayed autoStart `finish()` still happens only after the launch request
+  succeeds.
+- `TermuxActivity` (direct `ssh://` BROWSABLE entry) implements the same one-time policy before it
+  starts/binds `TermuxService`; a `mServiceStarted` guard plus a static in-flight flag ensure the
+  service is started/bound exactly once and no concurrent request repeats. SSH parsing, session
+  name, `ACTION_EXECUTE`, binding, and terminal behavior are unchanged.
+- Raised **only** `termux-app/terminal-term/build.gradle` `compileSdkVersion 29 → 36`
+  (`targetSdkVersion 29` / `minSdkVersion 21` unchanged; `:terminal-view`/`:terminal-emulator`
+  remain 29/29/21). Compilation only showed pre-existing deprecation notes — no source migration.
+- The app-internal `com.termux.app.reload_style` receiver in `TermuxActivity` is registered with
+  the direct `Context.RECEIVER_NOT_EXPORTED` constant on `Build.VERSION_CODES.TIRAMISU`+ and keeps
+  the legacy two-argument registration below. No magic integer, no reflection, not exported.
+- The `MainActivity` `DownloadManager.ACTION_DOWNLOAD_COMPLETE` receiver keeps its flag-less
+  registration: Android 14 exempts receivers registered only for system broadcasts. The
+  corresponding lint `UnspecifiedRegisterReceiverFlag` false positive is suppressed with an
+  explicit justification (`@SuppressLint`), not by adding an incorrect flag. The in-process
+  `LocalBroadcastManager` registration is unchanged.
+- **Additional required test-only file:** `app/src/androidTest/AndroidManifest.xml` supplies the
+  missing `android:exported` values for `androidx.test:core:1.2.0`'s
+  `InstrumentationActivityInvoker` helper activities, which the target-31+ manifest merger rejects.
+  No dependency upgrade was performed; the overlay is test-only and never shipped.
+- Bounded target-34 audit: dynamic DEX/JAR loading **ZERO**; exact-alarm API **ZERO**; legacy
+  storage permissions **ZERO**; mutable PendingIntents **ZERO** and unspecified-mutability
+  PendingIntents **ZERO** (six immutable); context receivers needing an export flag but lacking
+  one **ZERO**; implicit application-owned component launch issues **ZERO**.
+- Guard coverage: updated `ForegroundServiceCompatibilityGuardTest` in place (durable FGS
+  invariants preserved; `POST_NOTIFICATIONS` now required, terminal-term compileSdk now 36,
+  `mServiceIntent` start/bind assertions) and added `TargetSdk34CompatibilityGuardTest` (11 tests).
+- Local gates passed: `:app:processDebugMainManifest`, Kotlin/Java/terminal-term Java compile,
+  KSP2 Moshi, KAPT Room, Safe Args, Parcelize, ViewBinding, BuildConfig,
+  `:app:assembleDebugAndroidTest`, `:app:ktlint`, `:app:downloadAssets`, and
+  `:app:jacocoCoverageReportForCi` (executed from the clean/report-only state; non-empty
+  788,568-byte XML + HTML). `:app:lintDebug` shows only pre-existing legacy debt (13 errors:
+  `Range` ×3, `UseRequireInsteadOfGet` ×10; 134 warnings; 3 hints) with **no** P1E8-specific
+  blocker.
+- Canonical `clean assembleDebug testDebugUnitTest` = **40 suites / 348 tests / 0 failures / 0
+  errors / 0 skipped** (+1 guard suite, +11 tests).
+- Final debug APK 19,916,017 bytes, SHA-256
+  `8f1c05443715b92cbbdceab071f8f1017b027dca60527124b710cfd8346cafe7`, package
+  `io.github.lord1egypt.prootx`, versionName 1.0.0, SDK 36/34/21, four ABIs, 16/16 required
+  payloads; permissions are exactly ACCESS_NETWORK_STATE, INTERNET, BILLING, CHANGE_WIFI_STATE,
+  FOREGROUND_SERVICE, FOREGROUND_SERVICE_SPECIAL_USE, POST_NOTIFICATIONS, WAKE_LOCK, VIBRATE.
+  androidTest APK 1,825,701 bytes, SHA-256
+  `ba68481c3cd1b58b5b9374b185b4a2bcfaedc745e19ff83821375ceb55dc1d32`, package
+  `io.github.lord1egypt.prootx.test`.
+- Remote CI run `35037714144` at implementation
+  `cff25f3f1dffa1a91d78a55915dd50513b694af4`: **SUCCESS**; JDK 17, Gradle 8.11.1, API 36/API 29,
+  Build Tools 35.0.0, NDK 21.4.7075529, canonical build, **40 suites / 348 tests / 0 failures /
+  0 errors / 0 skipped**, androidTest build, and both artifact uploads passed.
+- **Intentional runtime behavior change:** Android 13+ now asks for notification permission at the
+  first real session start (denial does not block the session); the initial `ServerService` launch
+  is deferred until the activity is resumed; the terminal `reload_style` receiver is app-private on
+  API 33+. No UI redesign (the system permission dialog is platform UI), no SSH/session-lifecycle
+  change, no data-model change.
+- Stale documentation corrected: the `MainActivity` `DownloadManager` system receiver is explicitly
+  documented as keeping the flag-less registration (the earlier "add RECEIVER_NOT_EXPORTED" note
+  was wrong); the autoStart/background FGS hardening is attributed to P1E8 (not P1E6/P1E7); and
+  current terminal SDK levels are terminal-term **36/29/21**, terminal-view/emulator **29/29/21**.
+  Durable decision recorded as `DECISIONS.md` D032.
+- **P1E8 CLOSED / PASS. P1E IN PROGRESS. P1E9 TARGETSDK 35/36 PLATFORM BEHAVIOR READY TO START.**
