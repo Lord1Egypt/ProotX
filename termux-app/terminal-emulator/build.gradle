@@ -3,7 +3,7 @@ apply plugin: 'com.android.library'
 android {
     namespace 'com.termux.terminal'
     compileSdkVersion 29
-    ndkVersion "21.4.7075529"
+    ndkVersion "29.0.14206865"
 
     defaultConfig {
         minSdkVersion 21

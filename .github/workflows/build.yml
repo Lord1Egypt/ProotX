@@ -19,7 +19,7 @@ jobs:
       ANDROID_PLATFORM: 'android-36'
       ANDROID_PLATFORM_LEGACY: 'android-29'
       ANDROID_BUILD_TOOLS: '35.0.0'
-      ANDROID_NDK_VERSION: '21.4.7075529'
+      ANDROID_NDK_VERSION: '29.0.14206865'
 
     steps:
       - name: Checkout
@@ -65,8 +65,9 @@ jobs:
       - name: Configure local.properties
         run: |
           SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          # The Gradle module `ndkVersion` is the authoritative NDK selector; a
+          # deprecated ndk.dir entry is intentionally not written here.
           echo "sdk.dir=$SDK_ROOT" > local.properties
-          echo "ndk.dir=$SDK_ROOT/ndk/$ANDROID_NDK_VERSION" >> local.properties
 
       - name: Show Gradle version
         run: ./gradlew --version
@@ -100,6 +101,46 @@ jobs:
               f"errors={errors} skipped={skipped}"
           )
           PY
+
+      - name: Verify in-tree 16 KB native alignment (arm64-v8a, x86_64)
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          READELF="$SDK_ROOT/ndk/$ANDROID_NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          TMP="$(mktemp -d)"
+          # Only the in-tree terminal-emulator library is owned by P1F1; the
+          # ProotX-Assets-Support payloads are explicitly out of scope here.
+          unzip -o -q "$APK" "lib/arm64-v8a/libtermux.so" "lib/x86_64/libtermux.so" -d "$TMP"
+          fail=0
+          for abi in arm64-v8a x86_64; do
+            so="$TMP/lib/$abi/libtermux.so"
+            echo "== $abi libtermux.so =="
+            if [ ! -f "$so" ]; then
+              echo "MISSING: $so"
+              fail=1
+              continue
+            fi
+            loads=$("$READELF" -lW "$so" | awk '/LOAD/ { print $NF }')
+            if [ -z "$loads" ]; then
+              echo "NO PT_LOAD SEGMENTS FOUND"
+              fail=1
+              continue
+            fi
+            for a in $loads; do
+              echo "  PT_LOAD align=$a"
+              hex="${a#0x}"
+              if [ "$((16#$hex))" -lt 16384 ]; then
+                echo "  FAIL: PT_LOAD alignment below 0x4000"
+                fail=1
+              fi
+            done
+          done
+          if [ "$fail" -ne 0 ]; then
+            echo "In-tree 16 KB native alignment check FAILED"
+            exit 1
+          fi
+          echo "In-tree 16 KB native alignment check PASSED"
 
       - name: Build debug androidTest APK
         run: ./gradlew :app:assembleDebugAndroidTest --no-daemon
