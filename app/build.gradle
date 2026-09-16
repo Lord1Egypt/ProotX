@@ -31,7 +31,7 @@ android {
 
         applicationId "io.github.lord1egypt.prootx"
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 36
         versionCode vcode
         versionName "1.0.0"
         
@@ -267,6 +267,10 @@ dependencies {
     def preference_version = '1.1.0'
     def ktx_version = '1.1.0'
     def billing_version = '3.0.3'
+    // P1E9 platform bridge: ComponentActivity >= 1.6 wires OnBackPressedDispatcher to the
+    // platform OnBackInvokedDispatcher used by Android 15/16 predictive back. 1.11.0 is the
+    // last line before the dependency raises minSdk to 23, so minSdk 21 is preserved.
+    def activity_version = '1.11.0'
 
     implementation project(':terminal-term')
 
@@ -274,6 +278,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinx_coroutines_version"
 
+    implementation "androidx.activity:activity-ktx:$activity_version"
     implementation "androidx.core:core-ktx:$ktx_version"
     implementation "androidx.room:room-runtime:$room_version"
     kapt "androidx.room:room-compiler:$room_version"

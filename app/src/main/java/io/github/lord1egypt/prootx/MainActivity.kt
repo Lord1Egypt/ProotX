@@ -5,6 +5,11 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DownloadManager
 import android.app.ForegroundServiceStartNotAllowedException
+import androidx.activity.enableEdgeToEdge
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -163,9 +168,9 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
                 .get(MainActivityViewModel::class.java)
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent?.type.equals("settings"))
+        if (intent.type == "settings")
             navController.navigate(R.id.settings_fragment)
         else
             autoStart()
@@ -173,9 +178,11 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
+        applyEdgeToEdgeInsets()
 
         setNavStartDestination()
         setProgressDialogNavListeners()
@@ -206,6 +213,43 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
             navController.navigate(R.id.settings_fragment)
         else
             autoStart()
+    }
+
+    // P1E9: Android 15+ enforces edge-to-edge. The toolbar owns the top system-bar/cutout inset
+    // (its background already extends behind the status bar), the BottomNavigationView owns the
+    // bottom one, and the root owns the left/right cutout/navigation-bar safety. Original padding
+    // is captured once so repeated inset dispatches never accumulate.
+    private fun applyEdgeToEdgeInsets() {
+        // Keep light status/navigation icons: the toolbar and bottom navigation use the dark
+        // blue-gray colorPrimary background, so dark icons would be unreadable.
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
+        }
+
+        val root = binding.root
+        val toolbar = binding.toolbar
+        val bottomNav = binding.bottomNavView
+
+        val rootPaddingLeft = root.paddingLeft
+        val rootPaddingRight = root.paddingRight
+        val toolbarPaddingTop = toolbar.paddingTop
+        val bottomNavPaddingBottom = bottomNav.paddingBottom
+
+        ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val cutout = insets.getInsets(WindowInsetsCompat.Type.displayCutout())
+
+            root.setPadding(
+                rootPaddingLeft + maxOf(systemBars.left, cutout.left),
+                root.paddingTop,
+                rootPaddingRight + maxOf(systemBars.right, cutout.right),
+                root.paddingBottom
+            )
+            toolbar.updatePadding(top = toolbarPaddingTop + maxOf(systemBars.top, cutout.top))
+            bottomNav.updatePadding(bottom = bottomNavPaddingBottom + maxOf(systemBars.bottom, cutout.bottom))
+            insets
+        }
     }
 
     private fun setNavStartDestination() {

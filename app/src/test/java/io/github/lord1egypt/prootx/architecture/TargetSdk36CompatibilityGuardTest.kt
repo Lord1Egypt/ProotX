@@ -6,10 +6,10 @@ import org.junit.Test
 import java.io.File
 
 /**
- * P1E8 guard: the accepted targetSdk 34 runtime behavior must not silently regress.
+ * P1E9 guard: the accepted targetSdk 36 runtime behavior must not silently regress.
  *
  * Invariants:
- *  - app SDK matrix is compileSdk 36 / targetSdk 34 / minSdk 21
+ *  - app SDK matrix is compileSdk 36 / targetSdk 36 / minSdk 21
  *  - terminal-term compiles against API 36 while targetSdk stays 29 / minSdk 21
  *  - `POST_NOTIFICATIONS` is declared; no legacy broad-storage permission returns
  *  - `MainActivity` requests the notification permission contextually, keeps a pending session,
@@ -22,7 +22,7 @@ import java.io.File
  * This guard inspects production source/build files only; documentation references are out of
  * scope. Assertions avoid line-number/whitespace coupling.
  */
-class TargetSdk34CompatibilityGuardTest {
+class TargetSdk36CompatibilityGuardTest {
 
     private val appBuild = File("build.gradle")
     private val appManifest = File("src/main/AndroidManifest.xml")
@@ -31,12 +31,12 @@ class TargetSdk34CompatibilityGuardTest {
     private val termuxActivity = File("../termux-app/terminal-term/src/main/java/com/termux/app/TermuxActivity.java")
 
     @Test
-    fun `app SDK matrix is compileSdk 36 targetSdk 34 minSdk 21`() {
+    fun `app SDK matrix is compileSdk 36 targetSdk 36 minSdk 21`() {
         assertTrue("Expected to locate app/build.gradle", appBuild.isFile)
         val text = appBuild.readText()
 
         assertTrue("app compileSdk must be 36", text.contains("compileSdkVersion 36"))
-        assertTrue("app targetSdk must be 34", text.contains("targetSdkVersion 34"))
+        assertTrue("app targetSdk must be 36", text.contains("targetSdkVersion 36"))
         assertTrue("app minSdk must be 21", text.contains("minSdkVersion 21"))
     }
 

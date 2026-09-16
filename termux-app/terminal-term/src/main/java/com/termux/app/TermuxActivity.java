@@ -26,8 +26,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.annotation.StringRes;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
@@ -311,6 +314,12 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
 
         mBellSoundId = mBellSoundPool.load(this, R.raw.bell, 1);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            mBackCallback = new BackCallback(this);
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT, mBackCallback);
+        }
+
         // Start/bind the service exactly once. On API 33+ the first direct launch presents the
         // shared one-time notification-permission request before the foreground service starts;
         // an explicit denial still starts the terminal session.
@@ -324,6 +333,7 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
 
     private Intent mServiceIntent;
     private boolean mServiceStarted = false;
+    private BackCallback mBackCallback;
 
     private SharedPreferences notificationPermissionPreferences() {
         return getSharedPreferences(NOTIFICATION_PERMISSION_PREFS, Context.MODE_PRIVATE);
@@ -626,8 +636,7 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
         getDrawer().closeDrawers();
     }
 
-    @Override
-    public void onBackPressed() {
+    void handleBackPressed() {
         if (getDrawer().isDrawerOpen(Gravity.LEFT)) {
             getDrawer().closeDrawers();
         } else {
@@ -635,9 +644,39 @@ public final class TermuxActivity extends Activity implements ServiceConnection 
         }
     }
 
+    /** Legacy back path: used below API 33 and whenever predictive back is not active. */
+    @Override
+    public void onBackPressed() {
+        handleBackPressed();
+    }
+
+    /**
+     * P1E9: from Android 13 the system dispatches back through the platform
+     * OnBackInvokedDispatcher. Registered on API 33+ so back keeps working under Android 15/16
+     * predictive back, where onBackPressed() is no longer guaranteed to be called. The nested
+     * callback class keeps the API-33 interface out of the API-21 class-loading path.
+     */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private static final class BackCallback implements OnBackInvokedCallback {
+        private final TermuxActivity mActivity;
+
+        BackCallback(TermuxActivity activity) {
+            mActivity = activity;
+        }
+
+        @Override
+        public void onBackInvoked() {
+            mActivity.handleBackPressed();
+        }
+    }
+
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && mBackCallback != null) {
+            getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(mBackCallback);
+            mBackCallback = null;
+        }
         if (mTermService != null) {
             // Do not leave service with references to activity.
             mTermService.mSessionChangeCallback = null;
