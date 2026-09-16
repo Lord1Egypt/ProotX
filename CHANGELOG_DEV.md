@@ -999,7 +999,7 @@
   selection is unchanged and `.a10` is retained as a legacy filename for the modern slot.
 - **No release was published.** `ProotX-Assets-Support` `main` is unchanged (`0fa736a`); v1.0.0 and
   its assets are untouched; ProotX still downloads `v1.0.0`. Support implementation commit
-  `3e5c51eb497ea713fd31c3d22d123526283c1d94` on `feature/p1f-support-modernization`; support CI run
+  `a363e82b63ccc30ca678aba7dbb96c87d2879c08` on `feature/p1f-support-modernization` (HEAD `a363e82…`; initial implementation `3e5c51e…`, follow-up `8aa6886` and `a363e82`); support CI run
   `35057757988` **SUCCESS** (lock/stage gates, legacy digest verification, modern arm64+x86_64 source
   build, 16 KB slot gate). No ProotX production file changed.
 - **Explicit remaining debt (not hidden):** 4 KB 64-bit legacy normal-slot ELFs (`proot`,

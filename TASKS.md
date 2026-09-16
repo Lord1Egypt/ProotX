@@ -209,7 +209,7 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         PASS; remote run `35049015538`; 42 suites / 360 tests)
   - [x] **P1F2 — Support toolchain / provenance modernization** — CLOSED / PASS
         (support `feature/p1f-support-modernization` implementation
-        `3e5c51eb497ea713fd31c3d22d123526283c1d94`, support CI `35057757988` SUCCESS; reproducible
+        `a363e82b63ccc30ca678aba7dbb96c87d2879c08`, support CI `35057757988` SUCCESS; reproducible
         builder pinned to builder digest + termux-packages `0ffca06c…` + checksum-verified
         `termux/proot v5.1.107.92`; dual-lane runtime — frozen legacy normal slots for host API
         21–28, modern `.a10` slots rebuilt at API 24 / NDK r29 for host API 29+; 16 KB aligned,

@@ -68,7 +68,7 @@ Last updated: 2026-09-16 (P1F2 support toolchain / provenance modernization — 
 The unreproducible historical support builder (`ubuntu:latest`, the now-unavailable
 `Lord1Egypt/proot@merge-it` fork, floating `android-5`, blind `sed`) was replaced in
 `ProotX-Assets-Support` on branch `feature/p1f-support-modernization` (implementation commit
-`3e5c51eb497ea713fd31c3d22d123526283c1d94`; support CI run `35057757988` — SUCCESS). The support
+`a363e82b63ccc30ca678aba7dbb96c87d2879c08`; support CI run `35057757988` — SUCCESS). The support
 runtime is now **split**: host API 21–28 keep the **frozen legacy** normal slots, while host API 29+
 use the **modern** `.a10` slots rebuilt from pinned source at **API 24 with NDK r29**
 (`termux/proot v5.1.107.92`, commit `7266fb3e…`, archive `29385d1d…`; `termux-packages`
@@ -88,7 +88,7 @@ SUPPORT BUNDLE 16 KB REBUILD / PUBLICATION — READY TO START** (P1G physical ac
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
-| Accepted P1F2 support implementation | `3e5c51eb497ea713fd31c3d22d123526283c1d94` (support repo `feature/p1f-support-modernization`) | reproducible support builder (pinned builder image digest + `termux-packages` commit + checksum-verified `termux/proot v5.1.107.92`), dual-lane legacy/modern model, deterministic archives, support CI; no release published |
+| Accepted P1F2 support implementation | `a363e82b63ccc30ca678aba7dbb96c87d2879c08` (support repo `feature/p1f-support-modernization`) | reproducible support builder (pinned builder image digest + `termux-packages` commit + checksum-verified `termux/proot v5.1.107.92`), dual-lane legacy/modern model, deterministic archives, support CI; no release published |
 | Accepted P1F1 implementation | `8103b835a670638c177a7adc6d7baea19680cd33` | in-tree NDK pin 21.4.7075529 → 29.0.14206865 (:app + :terminal-emulator); CI pins `ndk;29.0.14206865`, drops `ndk.dir`, adds scoped 16 KB native guard; no source/linker/packaging change |
 | Accepted P1E9 implementation | `41cc7a8c629da364903de0ae71ab524541c7ef76` | app targetSdk 34 → 36; real edge-to-edge with per-owner insets; platform `OnBackInvokedCallback` for Termux on API 33+; authorized activity-ktx 1.11.0 bridge (minSdk 21 preserved); no opt-outs |
 | Accepted P1E8 implementation | `cff25f3f1dffa1a91d78a55915dd50513b694af4` | `POST_NOTIFICATIONS` + contextual one-time request; resumed-lifecycle FGS gate; Termux `RECEIVER_NOT_EXPORTED`; terminal-term compileSdk 36 |

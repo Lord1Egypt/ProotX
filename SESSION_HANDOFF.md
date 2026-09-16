@@ -14,7 +14,7 @@ application runtime/UI behavior invariant during toolchain work.
 ## Last Completed Milestone
 
 **P1F2 — Support Toolchain / Provenance Modernization**: **CLOSED / PASS** at support implementation
-SHA `3e5c51eb497ea713fd31c3d22d123526283c1d94` on `ProotX-Assets-Support` branch
+SHA `a363e82b63ccc30ca678aba7dbb96c87d2879c08` on `ProotX-Assets-Support` branch
 `feature/p1f-support-modernization`; support CI run `35057757988` — SUCCESS. The unreproducible
 historical builder (`ubuntu:latest`, the now-unavailable `Lord1Egypt/proot@merge-it` fork, floating
 `android-5`, blind `sed`) was removed and replaced by a pinned, deterministic builder. The support
@@ -123,7 +123,7 @@ is CLOSED / PASS. Next: **P1F3 — SUPPORT BUNDLE 16 KB REBUILD / PUBLICATION �
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
-| Accepted P1F2 support implementation | `3e5c51eb497ea713fd31c3d22d123526283c1d94` (support `feature/p1f-support-modernization`) |
+| Accepted P1F2 support implementation | `a363e82b63ccc30ca678aba7dbb96c87d2879c08` (support `feature/p1f-support-modernization`) |
 | Accepted P1F1 implementation | `8103b835a670638c177a7adc6d7baea19680cd33` |
 | Accepted P1E9 implementation | `41cc7a8c629da364903de0ae71ab524541c7ef76` |
 | Accepted P1E8 implementation | `cff25f3f1dffa1a91d78a55915dd50513b694af4` |
