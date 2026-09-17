@@ -83,7 +83,19 @@
 >     tag `ff55608`; release `RE_kwDOUXjkQM4XOeTw`; two clean four-ABI builds byte-identical; split
 >     release CI with SHA-pinned actions; post-download hashes verified; whole-app 16 KB not
 >     claimed)
->   - **P1F4 — Support Packaging / Whole-App 16 KB Integration:** READY TO START
+>   - **P1F4-P — Whole-App 16 KB Preflight:** CLOSED / BRIDGE_FOUND
+>     (initially downgraded to `PARTIAL_BRIDGE` after the metadata fixture failed; the R1 probe
+>     recovered the exact 2019 `CypherpunkArmory/proot` meta lineage and the historical
+>     `-DUSERLAND` contract, then proved runtime parity)
+>   - **P1F4A — Complete Dual-Lane Support Release `v1.2.0`:** CLOSED / PASS
+>     (explicit `common/`+`legacy/`+`modern/` schema + `manifest.json` routing + `routing.json`;
+>     legacy frozen payload byte-for-byte; modern source-built NDK r29 API 24 all 64-bit
+>     `PT_LOAD >= 0x4000`; binary-proven 2019 meta sidecars with `-DUSERLAND`; reproducible static
+>     BusyBox 1.38.0; two clean four-ABI builds byte-identical with `SOURCE_DATE_EPOCH`+`TZ=UTC`;
+>     final-release fixtures byte-identical parity; no filesystem migration; support `main`
+>     fast-forwarded to `889cb67`; annotated tag `2b5691c9`; release `RE_kwDOUXjkQM4XTxeE`;
+>     post-download verification passed; `v1.0.0`/`v1.1.0` untouched; whole-app 16 KB not claimed)
+>   - **P1F4B — Support Packaging / Whole-App 16 KB Integration:** READY TO START
 >   - **P1F5 — 16 KB Emulator / Static Acceptance Gate:** NOT STARTED
 > - **P1G — Physical-Device Acceptance:** NOT STARTED (after P1F)
 >
@@ -395,6 +407,19 @@ deferred to the appropriate later phase.
     build / write-token publish with no rebuild) with SHA-pinned actions (`DECISIONS.md` D036).
     `v1.0.0` remains untouched and ProotX still downloads it. **Still open (P1F4):** 13 x86_64
     legacy normal-slot 4 KB ELFs and the unknown-provenance `proot_meta`/`proot_meta_leveldb` are
+    still shipped through `jniLibs`/`nativeLibraryDir`; whole-app 16 KB compatibility is not claimed.
+31. **P1F4A complete dual-lane support release — RESOLVED; legacy packaging still open.** Support
+    release `v1.2.0` is published (annotated tag object `2b5691c9…` → commit `889cb67b…`; release
+    `RE_kwDOUXjkQM4XTxeE`; assets `arm64-v8a 42fd0042…`, `armeabi-v7a 496c5d70…`, `x86 df5e8b3a…`,
+    `x86_64 d3884105…`, plus `routing.json`, `SHA256SUMS`, provenance manifest and SPDX SBOM). Each
+    archive uses an explicit `common/`+`legacy/`+`modern/` schema with `manifest.json`. The legacy
+    lane preserves the frozen v1.1.0/v1.0.0 payload; the modern lane is source-built with NDK r29 at
+    API 24 and all 64-bit ELFs are `PT_LOAD >= 0x4000`. `proot_meta`/`proot_meta_leveldb` are no
+    longer unknown-provenance (binary-proven 2019 lineages with `-DUSERLAND`), and final-release
+    fixtures reproduce the frozen metadata behaviour with byte-identical parity. Two clean four-ABI
+    builds are byte-identical (`SOURCE_DATE_EPOCH`, `TZ=UTC`) and the release CI verified the
+    archives against the committed manifest (`DECISIONS.md` D037). `v1.0.0`/`v1.1.0` are untouched
+    and ProotX still downloads `v1.0.0`. **Still open (P1F4B):** the 13 x86_64 legacy 4 KB ELFs are
     still shipped through `jniLibs`/`nativeLibraryDir`; whole-app 16 KB compatibility is not claimed.
 
 ## Non-goals for P0

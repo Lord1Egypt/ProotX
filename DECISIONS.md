@@ -840,3 +840,50 @@
 - **Affected components:** `ProotX-Assets-Support` (`.github/workflows/support-validate.yml`,
   `support.yml`, `support-release.yml`, `scripts/release_metadata.py`,
   `provenance/releases/v1.1.0.json`, `docs/RELEASE_NOTES_v1.1.0.md`), P1F3/P1F4/P1G.
+
+---
+
+## D037 — Dual support lanes with an explicit common/legacy/modern schema; v1.2.0 support release
+
+- **Date:** 2026-09-17
+- **Status:** Accepted (P1F4A, CLOSED / PASS)
+- **Decision:** The support bundle moves to an **explicit, non-ambiguous dual-lane schema**.
+  Every ABI archive contains `common/` (architecture-neutral non-native scripts/data),
+  `legacy/` (the frozen API 21–28 executable/native payload) and `modern/` (the source-built
+  API 29+ payload), plus a machine-readable `manifest.json` and an explicit routing contract
+  (`routes`, and a release-level `routing.json`). The legacy lane preserves the frozen
+  v1.1.0/v1.0.0 native files byte-for-byte (verified against
+  `provenance/legacy-v1.0.0.files.sha256`); it is intentionally 4 KB aligned and is **not**
+  packaged through Android `nativeLibraryDir`. The modern lane is rebuilt from pinned source
+  with NDK r29 (`29.0.14206865`) at API 24; every modern 64-bit ELF has `PT_LOAD >= 0x4000`.
+  The historical metadata sidecars are built from the **binary-proven 2019
+  `CypherpunkArmory/proot` lineages** (`proot_meta` @ `2a7f6d9…`, `proot_meta_leveldb` @
+  `998dd31…`) with the historical **`-DUSERLAND`** contract; `-DUSERLAND` gates the fake_id0
+  metadata paths and is a required build input, never removed. The modern lane also ships a
+  **reproducibly built static BusyBox 1.38.0** (`busybox_static`, `NEEDED=0`). There is **no
+  filesystem migration**: `.proot_version = _meta` and `.proot_version = _meta_leveldb`
+  semantics are unchanged and existing metadata databases are never rewritten or converted.
+  `minSdk` stays 21 and `ProotXFiles` selection is unchanged. **P1F4B** owns the packaging
+  boundary: legacy files are packaged outside `nativeLibraryDir`; modern files inside it.
+- **Reason:** The v1.0.0/v1.1.0 flat layout let one filename ambiguously represent both lanes
+  (e.g. `.a10` slots) and forced P1F4B to infer routing from filenames. The R1 probe also proved
+  the frozen `proot_meta`/`proot_meta_leveldb` are **not unknown-provenance** but are exact 2019
+  source lineages that require `-DUSERLAND`; rebuilding without it silently drops fake-ownership
+  persistence. An explicit schema plus a routing manifest makes P1F4B deterministic and makes the
+  modern 16 KB requirement enforceable independently of the frozen legacy payload.
+- **Alternatives considered:** keeping the flat layout with `.a10` naming (rejected — ambiguous,
+  and the mission forbids one filename representing both lanes); rebuilding the legacy 4 KB
+  binaries (rejected — source unavailable; P1F4B will package them outside `nativeLibraryDir`);
+  migrating existing `_meta` sessions to a new format (rejected — unnecessary and risky, since R1
+  proved runtime parity); omitting `busybox_static` from the modern lane (rejected — the support
+  scripts require it and it must be 16 KB aligned and reproducible).
+- **Trade-offs:** The committed release manifest records the exact reproducible archive hashes,
+  so the release pipeline verifies the freshly built archives against it. BusyBox embeds its build
+  timestamp, so the build fixes `TZ=UTC`/`LC_ALL=C`/`LANG=C` around `SOURCE_DATE_EPOCH`; two clean
+  independent builds are byte-identical and match the CI artifact. Whole-app 16 KB compatibility
+  is **still not achieved**: the 13 x86_64 legacy ELFs remain 4 KB aligned and ProotX still
+  downloads `v1.0.0` until P1F4B.
+- **Affected components:** `ProotX-Assets-Support` (`build-support.sh`, `scripts/`,
+  `provenance/sources.lock.json`, `provenance/file_sources.json`,
+  `provenance/releases/v1.2.0.json`, `THIRD_PARTY_NOTICES.md`, support CI),
+  P1F4A/P1F4B/P1G.

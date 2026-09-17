@@ -1049,3 +1049,49 @@
   ProotX still downloads `v1.0.0`; no ProotX production file changed. P1F4 owns the packaging
   isolation and the switch to `v1.1.0`. Durable decision `DECISIONS.md` D036.
 - **P1F3 CLOSED / PASS. P1F IN PROGRESS. P1F4 READY TO START. P1G NOT STARTED.**
+
+## P1F4A — Complete Dual-Lane Support Release v1.2.0 (2026-09-17) — PASS
+
+- Published the first **complete explicit dual-lane** support release **`v1.2.0`**. Annotated tag
+  `v1.2.0` (object `2b5691c9aa6b4ee6716a4bbcfd8559d30095d7f6`) points at support commit
+  `889cb67bf8fcb55eb252513d381d00203fe9a8b4` (support `main`, fast-forwarded from `acc28ab…`).
+  Release `RE_kwDOUXjkQM4XTxeE` (published 2026-09-17T21:04:07Z) carries
+  `arm64-v8a-assets.zip` `42fd0042…`, `armeabi-v7a-assets.zip` `496c5d70…`, `x86-assets.zip`
+  `df5e8b3a…`, `x86_64-assets.zip` `d3884105…`, `routing.json`, `SHA256SUMS`,
+  `v1.2.0-provenance.json`, and `v1.2.0.spdx.json`.
+- **Explicit schema:** every ABI archive is now `common/` (architecture-neutral non-native
+  scripts/data) + `legacy/` (frozen API 21–28 executable/native payload) + `modern/` (source-built
+  API 29+ payload) + `manifest.json`, plus a release-level `routing.json`. One filename no longer
+  represents both lanes; P1F4B routes from the manifest, not from `.a10`/`.so` naming.
+- **Legacy lane:** the frozen v1.1.0/v1.0.0 native files are preserved byte-for-byte and verified
+  against `provenance/legacy-v1.0.0.files.sha256`; they stay 4 KB aligned by design and are not
+  packaged through `nativeLibraryDir`.
+- **Modern lane:** rebuilt from pinned source with NDK r29 (`29.0.14206865`) at API 24. Every modern
+  64-bit ELF has `PT_LOAD >= 0x4000`; the dependency closure is computed from actual `NEEDED` edges
+  and build-only files are pruned.
+- **Recovered metadata provenance:** `proot_meta` / `proot_meta_leveldb` are built from the
+  binary-proven 2019 `CypherpunkArmory/proot` lineages (`2a7f6d9…` / `998dd31…`) with the historical
+  `-DUSERLAND` contract. Final-release fixtures reproduce the frozen `.proot-meta-file.` sidecar and
+  `/support/meta_db` behaviour with byte-identical parity (sidecar, leveldb, UID/GID, mode, restart
+  persistence, delete/recreate). **No filesystem migration** for existing `_meta`/`_meta_leveldb`
+  sessions.
+- **Modern static BusyBox:** `busybox_static` is reproducibly built from BusyBox 1.38.0 with the
+  pinned termux patch set; fully static (`NEEDED=0`). A **`TZ=UTC`** fix removed a build-timestamp
+  timezone leak so two clean independent builds and the CI artifact are byte-identical; the
+  unmodified `compressFilesystem.sh`/`extractFilesystem.sh` fixtures pass.
+- **Modern stack:** Dropbear 2026.94, OpenSSL 3.6.3, termux-auth 1.5.0-1, LevelDB 1.23-4, Snappy
+  1.3.0, zlib 1.3.2, PCRE2 10.47, libandroid-selinux, libtalloc 2.4.3, libandroid-shmem 0.7,
+  libc++ (NDK r29), proot 5.1.107.92.
+- **Reproducibility:** `SOURCE_DATE_EPOCH=1787437959`, `TZ=UTC`, `LC_ALL=C`, `LANG=C`; two
+  independent clean four-ABI builds are byte-identical and the release CI verified the freshly built
+  archives against the committed `provenance/releases/v1.2.0.json`.
+- **Post-publication verification:** every published asset re-downloaded and SHA-256 verified;
+  `sha256sum -c SHA256SUMS` passed; all four ZIPs extracted; published provenance equals the
+  committed release manifest; legacy hash equality, modern closure and alignment, and the metadata
+  candidate hashes all verified. `v1.0.0` and `v1.1.0` are untouched.
+- **Explicit remaining debt (not hidden):** the 13 x86_64 legacy ELFs remain 4 KB aligned and are
+  still shipped through `jniLibs`/`nativeLibraryDir`; ProotX still downloads `v1.0.0`. **Whole-app
+  16 KB compatibility is NOT achieved**; P1F4B owns the packaging isolation and the switch to
+  `v1.2.0`. No ProotX production file changed. Durable decision `DECISIONS.md` D037.
+- **P1F4-P CLOSED / BRIDGE_FOUND. P1F4A CLOSED / PASS. P1F IN PROGRESS. P1F4B READY TO START.
+  P1G NOT STARTED.**

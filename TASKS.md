@@ -221,7 +221,20 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         four-ABI builds byte-identical; release CI split into untrusted validation / privileged
         build / write-token publish with no rebuild, all actions SHA-pinned; post-download hashes
         verified; v1.0.0 untouched; whole-app 16 KB still not claimed)
-  - [ ] **P1F4 — Support packaging / whole-app 16 KB integration (switch to v1.1.0 + isolate legacy 4 KB ELFs)** — READY TO START
+  - [x] **P1F4-P — Whole-app 16 KB preflight** — CLOSED / BRIDGE_FOUND
+        (initial assessment temporarily downgraded to PARTIAL_BRIDGE after the metadata fixture
+        failed; the R1 probe recovered the exact 2019 `CypherpunkArmory/proot` meta lineage and the
+        historical `-DUSERLAND` contract, then proved runtime parity)
+  - [x] **P1F4A — Complete dual-lane support release `v1.2.0`** — CLOSED / PASS
+        (annotated tag `v1.2.0` object `2b5691c9…` → support commit `889cb67…`; release
+        `RE_kwDOUXjkQM4XTxeE` published 2026-09-17T21:04:07Z with four `*-assets.zip` in the
+        explicit `common/`+`legacy/`+`modern/` schema + `manifest.json` routing + `routing.json` +
+        `SHA256SUMS` + `v1.2.0-provenance.json` + `v1.2.0.spdx.json`; modern 64-bit lane all
+        `PT_LOAD >= 0x4000`; binary-proven 2019 meta sidecars with `-DUSERLAND`; reproducible static
+        BusyBox 1.38.0; two independent clean four-ABI builds byte-identical (`SOURCE_DATE_EPOCH`,
+        `TZ=UTC`); final-release fixtures byte-identical parity; no filesystem migration;
+        v1.0.0/v1.1.0 untouched; whole-app 16 KB still not claimed)
+  - [ ] **P1F4B — Support packaging / whole-app 16 KB integration (switch to v1.2.0 + isolate legacy 4 KB ELFs)** — READY TO START
   - [ ] **P1F5 — 16 KB emulator/static acceptance gate** — NOT STARTED
 - [ ] **P1G — Modernization regression candidate and physical acceptance** — NOT STARTED
   - [ ] Produce a modernization candidate build
