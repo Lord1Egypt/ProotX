@@ -73,7 +73,45 @@ jobs:
         run: ./gradlew --version
 
       - name: Build and test
-        run: ./gradlew clean assembleDebug testDebugUnitTest --no-daemon
+        run: ./gradlew clean assembleDebug testDebugUnitTest :app:bundleDebug --no-daemon
+
+      - name: Verify pinned support release staging
+        run: |
+          set -euo pipefail
+          ./gradlew :app:prepareProotXSupport --no-daemon
+          MAP="app/build/generated/prootxSupport/assets/support/metadata/support-map.json"
+          test -f "$MAP"
+          python3 - <<'PY'
+          import json, glob, os
+          m = json.load(open("app/build/generated/prootxSupport/assets/support/metadata/support-map.json"))
+          assert m["release"] == "v1.2.0", m["release"]
+          assert m["supportedAbis"] == ["arm64-v8a", "armeabi-v7a", "x86_64", "x86"], m["supportedAbis"]
+          for abi in m["supportedAbis"]:
+              assert m["abis"][abi]["modern"], abi
+              assert m["abis"][abi]["legacy"], abi
+          jni = glob.glob("app/build/generated/prootxSupport/jniLibs/*/*.so")
+          assert jni, "no modern native files staged"
+          print(f"support staging OK: release={m['release']} common={len(m['common'])} "
+                f"modern={len(jni)} abis={m['supportedAbis']}")
+          PY
+
+      - name: Whole-app static 16 KB support packaging gate (APK + AAB)
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          ZIPALIGN="$(find "$SDK_ROOT/build-tools" -name zipalign | sort | tail -1)"
+          echo "zipalign=$ZIPALIGN"
+          curl -fsSL -o /tmp/bundletool.jar \
+            https://github.com/google/bundletool/releases/download/1.18.1/bundletool-all-1.18.1.jar
+          python3 tools/verify_support_packaging.py \
+            --apk app/build/outputs/apk/debug/app-debug.apk \
+            --aab app/build/outputs/bundle/debug/app-debug.aab \
+            --zipalign "$ZIPALIGN" \
+            --bundletool /tmp/bundletool.jar \
+            --java "$JAVA_HOME/bin/java"
+
+      - name: Packaging verifier self-test
+        run: python3 tools/test_verify_support_packaging.py
 
       - name: Report unit test results
         if: always()
@@ -150,6 +188,12 @@ jobs:
         with:
           name: prootx-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Upload debug AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: prootx-debug-aab
+          path: app/build/outputs/bundle/debug/*.aab
 
       - name: Upload debug androidTest APK
         uses: actions/upload-artifact@v4
