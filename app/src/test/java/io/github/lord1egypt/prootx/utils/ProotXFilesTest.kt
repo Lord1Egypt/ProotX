@@ -3,38 +3,55 @@ package io.github.lord1egypt.prootx.utils
 import android.content.Context
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
+import io.github.lord1egypt.prootx.support.FileSupportAssetSource
+import io.github.lord1egypt.prootx.support.Fixtures
+import io.github.lord1egypt.prootx.support.NioSymlinker
+import io.github.lord1egypt.prootx.support.SupportLane
+import io.github.lord1egypt.prootx.support.SupportRuntimeInstaller
 import org.junit.Assert.* // ktlint-disable no-wildcard-imports
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
-import java.nio.file.Files
 
 class ProotXFilesTest {
 
     @get:Rule val tempFolder = TemporaryFolder()
 
     private val mockContext: Context = mock()
-    private val mockSymlinker: Symlinker = mock()
 
     private lateinit var testFilesDir: File
     private lateinit var testScopedDir: File
     private lateinit var testLibDir: File
     private lateinit var testSupportDir: File
-
-    private lateinit var prootxFiles: ProotXFiles
+    private lateinit var assetsDir: File
+    private lateinit var nativeDir: File
 
     @Before
     fun setup() {
         testFilesDir = tempFolder.newFolder("files")
         testScopedDir = tempFolder.newFolder("scoped")
         testLibDir = tempFolder.newFolder("execLib")
+        assetsDir = tempFolder.newFolder("assets")
+        nativeDir = tempFolder.newFolder("native")
         testSupportDir = File(testFilesDir, "support")
 
         whenever(mockContext.filesDir).thenReturn(testFilesDir)
         whenever(mockContext.getExternalFilesDir(null)).thenReturn(testScopedDir)
         whenever(mockContext.getExternalFilesDirs(null)).thenReturn(arrayOf(testFilesDir))
+    }
+
+    private fun prootxFiles(sdk: Int = 29): ProotXFiles {
+        Fixtures.writeAssets(assetsDir, modernNativeDir = nativeDir)
+        val installer = SupportRuntimeInstaller(
+            assetSource = FileSupportAssetSource(assetsDir),
+            nativeLibraryDir = nativeDir,
+            sdkInt = sdk,
+            deviceAbis = listOf(Fixtures.ABI),
+            symlinker = NioSymlinker()
+        )
+        return ProotXFiles(mockContext, testLibDir.path, NioSymlinker(), installer)
     }
 
     @Test
@@ -43,8 +60,7 @@ class ProotXFilesTest {
         val testFile = tempFolder.newFile(testFileName)
         testFile.createNewFile()
 
-        prootxFiles = ProotXFiles(mockContext, testLibDir.path, mockSymlinker)
-        prootxFiles.makePermissionsUsable(tempFolder.root.path, testFileName)
+        prootxFiles().makePermissionsUsable(tempFolder.root.path, testFileName)
 
         var output = ""
         val proc = Runtime.getRuntime().exec("ls -l ${testFile.path}")
@@ -60,7 +76,7 @@ class ProotXFilesTest {
         whenever(mockContext.getExternalFilesDirs(null))
                 .thenReturn(arrayOf(testScopedDir, sdcardDir))
 
-        prootxFiles = ProotXFiles(mockContext, testLibDir.path, mockSymlinker)
+        val prootxFiles = prootxFiles()
 
         val expectedUserDir = File(sdcardDir, "storage")
         assertTrue(expectedUserDir.exists())
@@ -73,7 +89,7 @@ class ProotXFilesTest {
     fun `sdCardUserDir is not created if sdcard does not exist and public fields are null`() {
         whenever(mockContext.getExternalFilesDirs(null)).thenReturn(arrayOf(testFilesDir))
 
-        prootxFiles = ProotXFiles(mockContext, testLibDir.path, mockSymlinker)
+        val prootxFiles = prootxFiles()
 
         assertEquals(null, prootxFiles.sdCardScopedDir)
         assertEquals(null, prootxFiles.sdCardUserDir)
@@ -81,39 +97,27 @@ class ProotXFilesTest {
 
     @Test
     fun `libDir is created from libDirPath constructor parameter`() {
-        prootxFiles = ProotXFiles(mockContext, testLibDir.path, mockSymlinker)
-
-        assertEquals(testLibDir, prootxFiles.libDir)
+        assertEquals(testLibDir, prootxFiles().libDir)
     }
 
     @Test
-    fun `Initialization links every file in the lib directory to support, stripping unnecessary name parts`() {
-        val expectedText1 = "text1"
-        val libFile1 = File(testLibDir, "lib_1.so")
-        libFile1.writeText(expectedText1)
+    fun `initialization installs the modern lane and resolves arch without lib_arch`() {
+        val prootxFiles = prootxFiles(sdk = 29)
 
-        val expectedText2 = "text2"
-        val libFile2 = File(testLibDir, "lib_2.so")
-        libFile2.writeText(expectedText2)
+        assertEquals(SupportLane.MODERN, prootxFiles.installation.lane)
+        assertEquals("arm64", prootxFiles.getArchType())
+        assertTrue(prootxFiles.busybox.exists())
+        assertTrue(prootxFiles.proot.exists())
+        assertFalse(File(testSupportDir, "lib_arch.so").exists())
+        assertTrue(java.nio.file.Files.isSymbolicLink(File(testSupportDir, "proot").toPath()))
+    }
 
-        val expectedSupportFile1 = File(testSupportDir, "1")
-        val expectedSupportFile2 = File(testSupportDir, "2")
+    @Test
+    fun `initialization installs the legacy lane on api 28`() {
+        val prootxFiles = prootxFiles(sdk = 28)
 
-        // Create files for the symlinker mock to verify the calls are done.
-        whenever(mockSymlinker.createSymlink(libFile1.path, expectedSupportFile1.path))
-                .then {
-                    Files.createSymbolicLink(expectedSupportFile1.toPath(), libFile1.toPath())
-                }
-        whenever(mockSymlinker.createSymlink(libFile2.path, expectedSupportFile2.path))
-                .then {
-                    Files.createSymbolicLink(expectedSupportFile2.toPath(), libFile2.toPath())
-                }
-
-        prootxFiles = ProotXFiles(mockContext, testLibDir.path, mockSymlinker)
-
-        assertTrue(expectedSupportFile1.exists())
-        assertTrue(expectedSupportFile2.exists())
-        assertEquals(expectedText1, expectedSupportFile1.readText().trim())
-        assertEquals(expectedText2, expectedSupportFile2.readText().trim())
+        assertEquals(SupportLane.LEGACY, prootxFiles.installation.lane)
+        assertTrue(File(testSupportDir, "proot").isFile)
+        assertFalse(java.nio.file.Files.isSymbolicLink(File(testSupportDir, "proot").toPath()))
     }
 }

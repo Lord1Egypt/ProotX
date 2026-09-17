@@ -44,7 +44,7 @@ class FilesystemManagerTest {
 
     @Test
     fun `Calling extract filesystem uses the appropriate command`() {
-        val command = "/support/common/extractFilesystem.sh"
+        val command = "/support/common/busybox_static sh /support/common/extractFilesystem.sh"
 
         val requiredFilesystemType = "testDist"
         val fakeArchitecture = "testArch"
@@ -81,7 +81,7 @@ class FilesystemManagerTest {
 
     @Test
     fun `extractFilesystem logs errors`() {
-        val command = "/support/common/extractFilesystem.sh"
+        val command = "/support/common/busybox_static sh /support/common/extractFilesystem.sh"
 
         val requiredFilesystemType = "testDist"
         val fakeArchitecture = "testArch"
@@ -111,7 +111,7 @@ class FilesystemManagerTest {
 
     @Test
     fun `compressFilesystem uses correct command and environment`() {
-        val command = "/support/common/compressFilesystem.sh"
+        val command = "/support/common/busybox_static sh /support/common/compressFilesystem.sh"
         val filesystem = Filesystem(id = 0, name = "backup", distributionType = "distType")
         val externalStorageDirectory = tempFolder.root
 
@@ -145,7 +145,7 @@ class FilesystemManagerTest {
 
     @Test
     fun `compressFilesystem logs failures`() {
-        val command = "/support/common/compressFilesystem.sh"
+        val command = "/support/common/busybox_static sh /support/common/compressFilesystem.sh"
         val filesystem = Filesystem(id = 0, name = "backup", distributionType = "distType")
         val externalStorageDirectory = tempFolder.root
 
