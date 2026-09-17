@@ -149,8 +149,11 @@ class BusyboxWrapper(private val prootxFiles: ProotXFiles) {
     }
 
     fun getBusyboxEnv(): HashMap<String, String> {
+        // The modern lane ships a dynamic `busybox` whose `libbusybox.so.1.38.0` lives in the
+        // support dir, so host-side busybox invocations need LD_LIBRARY_PATH too (P1F4B).
         return hashMapOf(
                 "LIB_PATH" to prootxFiles.supportDir.absolutePath,
+                "LD_LIBRARY_PATH" to prootxFiles.supportDir.absolutePath,
                 "ROOT_PATH" to prootxFiles.filesDir.absolutePath
         )
     }
