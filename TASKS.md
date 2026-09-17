@@ -234,8 +234,15 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         BusyBox 1.38.0; two independent clean four-ABI builds byte-identical (`SOURCE_DATE_EPOCH`,
         `TZ=UTC`); final-release fixtures byte-identical parity; no filesystem migration;
         v1.0.0/v1.1.0 untouched; whole-app 16 KB still not claimed)
-  - [ ] **P1F4B — Support packaging / whole-app 16 KB integration (switch to v1.2.0 + isolate legacy 4 KB ELFs)** — READY TO START
-  - [ ] **P1F5 — 16 KB emulator/static acceptance gate** — NOT STARTED
+  - [x] **P1F4B — Support packaging / whole-app static 16 KB integration (switch to v1.2.0 + isolate legacy 4 KB ELFs)** — CLOSED / PASS
+        (`app/support-release.lock.json` pins v1.2.0 + asset SHA-256; deterministic
+        `prepareProotXSupport` generated staging — modern `jniLibs/<abi>/lib_<name>.so`,
+        common/legacy `assets/support/...`, `support-map.json` routing; manifest-driven installer
+        extracts legacy on API 21–28 and links modern from `nativeLibraryDir` on API 29+ (W^X);
+        `.a10` and `lib_arch` removed; APK/AAB lib set all-ELF with no 4 KB 64-bit ELF;
+        `zipalign -c -P 16` PASS; bundletool `PAGE_ALIGNMENT_16K`; 46 suites / 375 tests;
+        implementation `9f14ee3`; feature CI `35281111291`; static acceptance only)
+  - [ ] **P1F5 — 16 KB runtime / emulator acceptance gate (`getconf PAGE_SIZE` = 16384)** — READY TO START
 - [ ] **P1G — Modernization regression candidate and physical acceptance** — NOT STARTED
   - [ ] Produce a modernization candidate build
   - [ ] Physical-device acceptance (separate from source/test acceptance)

@@ -4,7 +4,7 @@
 > `PROJECT_STATE.md`, `TASKS.md`, `DECISIONS.md`, and `docs/PROOTX_2_ROADMAP.md`.
 > Never rely on previous chat transcripts; the repository is the source of truth.
 
-Last updated: 2026-09-17 (P1F4A dual-lane support release v1.2.0: CLOSED / PASS — P1F IN PROGRESS; P1F4B READY TO START)
+Last updated: 2026-09-17 (P1F4B support packaging / whole-app static 16 KB integration: CLOSED / PASS — P1F IN PROGRESS; P1F5 READY TO START)
 
 ## Current Objective
 
@@ -13,32 +13,32 @@ application runtime/UI behavior invariant during toolchain work.
 
 ## Last Completed Milestone
 
-**P1F4A — Complete Dual-Lane Support Release**: **CLOSED / PASS**. Support release **`v1.2.0`** is
-published as the first complete explicit dual-lane bundle. Annotated tag `v1.2.0` (object
-`2b5691c9aa6b4ee6716a4bbcfd8559d30095d7f6`) points at support commit
-`889cb67bf8fcb55eb252513d381d00203fe9a8b4` (support `main`, fast-forwarded from
-`acc28abcd0756cca66782145099ef54ed4cbc46c`). Release `RE_kwDOUXjkQM4XTxeE` (published
-2026-09-17T21:04:07Z) carries `arm64-v8a-assets.zip` `42fd0042…`, `armeabi-v7a-assets.zip`
-`496c5d70…`, `x86-assets.zip` `df5e8b3a…`, `x86_64-assets.zip` `d3884105…`, `routing.json`,
-`SHA256SUMS`, `v1.2.0-provenance.json`, and `v1.2.0.spdx.json`; every asset re-verified after
-download and the published provenance equals the committed release manifest. Each archive uses the
-explicit `common/` + `legacy/` + `modern/` schema with a per-file `manifest.json` and routing
-contract. The legacy lane preserves the frozen v1.1.0/v1.0.0 payload byte-for-byte; the modern lane
-is source-built with NDK r29 at API 24 and every modern 64-bit ELF is `PT_LOAD >= 0x4000`.
-`proot_meta`/`proot_meta_leveldb` are the binary-proven 2019 lineages with `-DUSERLAND`, and the
-final-release fixtures reproduce the frozen metadata behaviour with byte-identical parity. Two
-independent clean four-ABI builds are byte-identical (`SOURCE_DATE_EPOCH=1787437959`, `TZ=UTC`)
-(`DECISIONS.md` D037). `v1.0.0` and `v1.1.0` are untouched; ProotX still downloads `v1.0.0`;
-whole-app 16 KB compatibility is **not** achieved.
+**P1F4B — Support Packaging / Whole-App Static 16 KB Integration**: **CLOSED / PASS**. ProotX now
+consumes support **`v1.2.0`** via `app/support-release.lock.json`. The flat pseudo-`.so` transport
+(`downloadAssets`/`fetchAssets` writing into tracked `src/main/jniLibs`) is removed and replaced by a
+single deterministic `prepareProotXSupport` task that hash-verifies the pinned release, validates
+the published `routing.json` + per-ABI `manifest.json`, and stages generated output under
+`app/build/generated/prootxSupport/`: modern natives → `jniLibs/<abi>/lib_<name>.so`, common/legacy
+→ `assets/support/{common,legacy/<abi>}/`, plus a `support-map.json` runtime routing artifact. A
+manifest-driven installer resolves the lane at runtime — API 21–28 extracts the frozen legacy payload
+from assets into `filesDir/support` (SHA-256 verified), API 29+ links the modern payload from
+`nativeLibraryDir` and never copies executable code into writable storage (Android W^X). The `.a10`
+inference and `lib_arch.so` pseudo-native marker are removed; ABI selection uses
+`Build.SUPPORTED_ABIS`. Static gates pass: APK/AAB `lib/` is all-ELF with no legacy/common file and
+no 4 KB 64-bit ELF, `zipalign -c -P 16` PASS, bundletool `PAGE_ALIGNMENT_16K`. `minSdk` stays 21 and
+all four ABIs are retained. Implementation `9f14ee3`; feature CI `35281111291` SUCCESS
+(46 suites / 375 tests) (`DECISIONS.md` D037). **Static acceptance only** — P1F5 owns the 16 KB
+runtime/emulator acceptance; whole-app runtime 16 KB compatibility is not claimed.
 
 ## Current Milestone
 
 **P1F — Modern NDK / 16 KB Page-Size Compatibility**: **IN PROGRESS**. P1F-P (probe) is
 CLOSED / PARTIAL_BRIDGE, P1F1 (in-tree) is CLOSED / PASS, P1F2 (support toolchain/provenance) is
 CLOSED / PASS, P1F3 (support bundle publication `v1.1.0`) is CLOSED / PASS, P1F4-P (whole-app 16 KB
-preflight) is CLOSED / BRIDGE_FOUND, and P1F4A (complete dual-lane support release `v1.2.0`) is
-CLOSED / PASS. Next: **P1F4B — SUPPORT PACKAGING / WHOLE-APP 16 KB INTEGRATION — READY TO START**
-(P1G physical acceptance remains after P1F).
+preflight) is CLOSED / BRIDGE_FOUND, P1F4A (complete dual-lane support release `v1.2.0`) is
+CLOSED / PASS, and P1F4B (support packaging / whole-app static 16 KB integration) is CLOSED / PASS.
+Next: **P1F5 — 16 KB RUNTIME / EMULATOR ACCEPTANCE — READY TO START** (P1G physical acceptance
+remains after P1F).
 
 ## What Was Completed
 
@@ -127,6 +127,7 @@ CLOSED / PASS. Next: **P1F4B — SUPPORT PACKAGING / WHOLE-APP 16 KB INTEGRATION
 | Ref | SHA |
 |---|---|
 | Active branch | `feature/android-modernization` |
+| Accepted P1F4B implementation | `9f14ee3f78af9f997ee38cc4c72770783dd35fd8` (feature/android-modernization) |
 | Accepted P1F4A support release | `v1.2.0` (tag object `2b5691c9…`) → `889cb67bf8fcb55eb252513d381d00203fe9a8b4`; release `RE_kwDOUXjkQM4XTxeE` |
 | Accepted P1F3 support release | `v1.1.0` (tag object `ff55608c…`) → `acc28abcd0756cca66782145099ef54ed4cbc46c`; release `RE_kwDOUXjkQM4XOeTw` |
 | Accepted P1F2 support implementation | `a363e82b63ccc30ca678aba7dbb96c87d2879c08` (support `feature/p1f-support-modernization`) |
@@ -231,6 +232,16 @@ fixtures proving byte-identical metadata parity. **Deferred to P1F4B:** ProotX s
 `v1.0.0`; the 13 x86_64 legacy 4 KB ELFs still ship through `jniLibs`/`nativeLibraryDir`; whole-app
 16 KB compatibility is not claimed (`DECISIONS.md` D037).
 
+**P1F4B:** ProotX now consumes support `v1.2.0` through `app/support-release.lock.json`. The
+generated-staging pipeline (`prepareProotXSupport`) hash-verifies the pinned release and emits
+`jniLibs/<abi>/lib_<name>.so` (modern), `assets/support/common|legacy/<abi>` (common/legacy), and a
+`support-map.json` routing artifact. A manifest-driven installer extracts the frozen legacy payload
+on API 21–28 and links the modern payload from `nativeLibraryDir` on API 29+ (Android W^X); the
+`.a10` inference and `lib_arch.so` marker are removed. The APK/AAB native set is all-ELF with no 4 KB
+64-bit ELF, `zipalign -P 16` passes and bundletool reports `PAGE_ALIGNMENT_16K`. **Deferred to
+P1F5:** the 16 KB runtime/emulator acceptance (`getconf PAGE_SIZE` = 16384) and real-session
+execution; whole-app runtime 16 KB compatibility is not claimed.
+
 **CI infrastructure finding — RESOLVED in CI-R1:** the closure-documentation push had failed
 remote CI in `android-actions/setup-android@v3` (`Warning: Failed to find package 'tools'`)
 before any ProotX build step (upstream SDK package retirement). Fixed with `packages: ''` plus
@@ -258,15 +269,13 @@ the P1G gate; no physical acceptance is claimed yet.
 
 ## Next Safe Action
 
-**P1F4B — SUPPORT PACKAGING / WHOLE-APP 16 KB INTEGRATION — READY TO START.** It owns switching
-ProotX to support `v1.2.0` and consuming the explicit `common/` + `legacy/` + `modern/` schema and
-routing manifest: keeping the modern API 29+ files as native libraries, packaging the 4 KB x86_64
-legacy ELFs outside `nativeLibraryDir` (bounded legacy extraction/storage path) while preserving
-host API 21–28 compatibility, and proving the final APK/AAB contains no 4 KB 64-bit ELF. It must not
-begin without explicit authorization. **Full application 16 KB compatibility must not be claimed**
-until P1F4B completes and **P1G** physical/16 KB-emulator acceptance passes; ProotX must not be
-called a Golden Candidate, release candidate, or store-ready final. Sentry and Billing remain active
-and out of scope.
+**P1F5 — 16 KB RUNTIME / EMULATOR ACCEPTANCE — READY TO START.** It owns running the integrated
+application on an Android 15/16 **16 KB page-size** environment (`adb shell getconf PAGE_SIZE` must
+return `16384`), exercising real Linux sessions, and proving the modern lane executes correctly from
+`nativeLibraryDir`. It must not begin without explicit authorization. **Full application 16 KB
+compatibility must not be claimed** until P1F5 and **P1G** physical-device acceptance pass; ProotX
+must not be called a Golden Candidate, release candidate, or store-ready final. Sentry and Billing
+remain active and out of scope.
 
 ## Resume Procedure
 

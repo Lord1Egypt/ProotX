@@ -95,8 +95,15 @@
 >     final-release fixtures byte-identical parity; no filesystem migration; support `main`
 >     fast-forwarded to `889cb67`; annotated tag `2b5691c9`; release `RE_kwDOUXjkQM4XTxeE`;
 >     post-download verification passed; `v1.0.0`/`v1.1.0` untouched; whole-app 16 KB not claimed)
->   - **P1F4B — Support Packaging / Whole-App 16 KB Integration:** READY TO START
->   - **P1F5 — 16 KB Emulator / Static Acceptance Gate:** NOT STARTED
+>   - **P1F4B — Support Packaging / Whole-App Static 16 KB Integration:** CLOSED / PASS
+>     (ProotX consumes support `v1.2.0` via `app/support-release.lock.json`; deterministic
+>     `prepareProotXSupport` generated staging — modern `jniLibs/<abi>/lib_<name>.so`, common/legacy
+>     `assets/support/...`, `support-map.json` routing; manifest-driven installer extracts legacy on
+>     API 21–28 and links modern from `nativeLibraryDir` on API 29+ (Android W^X); `.a10` and
+>     `lib_arch` removed; APK/AAB native set all-ELF with no 4 KB 64-bit ELF; `zipalign -c -P 16`
+>     PASS; bundletool `PAGE_ALIGNMENT_16K`; 46 suites / 375 tests; implementation `9f14ee3`;
+>     feature CI `35281111291`; static acceptance only)
+>   - **P1F5 — 16 KB Runtime / Emulator Acceptance Gate:** READY TO START
 > - **P1G — Physical-Device Acceptance:** NOT STARTED (after P1F)
 >
 > This roadmap records the agreed architectural direction at a high level only.
@@ -421,6 +428,18 @@ deferred to the appropriate later phase.
     archives against the committed manifest (`DECISIONS.md` D037). `v1.0.0`/`v1.1.0` are untouched
     and ProotX still downloads `v1.0.0`. **Still open (P1F4B):** the 13 x86_64 legacy 4 KB ELFs are
     still shipped through `jniLibs`/`nativeLibraryDir`; whole-app 16 KB compatibility is not claimed.
+32. **P1F4B support packaging / whole-app static 16 KB integration — RESOLVED; runtime acceptance
+    still open.** ProotX consumes support `v1.2.0` through `app/support-release.lock.json`. The flat
+    pseudo-`.so` transport is replaced by a deterministic `prepareProotXSupport` generated staging
+    (modern `jniLibs/<abi>/lib_<name>.so`, common/legacy `assets/support/...`, `support-map.json`
+    routing), and a manifest-driven installer extracts the frozen legacy payload on API 21–28 and
+    links the modern payload from `nativeLibraryDir` on API 29+ (Android W^X). `.a10` inference and
+    the `lib_arch.so` marker are removed. The APK/AAB native-library set is all-ELF, contains no
+    legacy/common file, and has no 4 KB 64-bit ELF; `zipalign -c -P 16` passes and bundletool reports
+    `PAGE_ALIGNMENT_16K` (`DECISIONS.md` D037). Implementation `9f14ee3`; feature CI `35281111291`.
+    `minSdk` stays 21 and all four ABIs are retained. **Still open (P1F5/P1G):** the 16 KB
+    runtime/emulator acceptance (`getconf PAGE_SIZE` = 16384) and physical-device acceptance;
+    whole-app runtime 16 KB compatibility is not claimed.
 
 ## Non-goals for P0
 

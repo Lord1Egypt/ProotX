@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-17 (P1F4A complete dual-lane support release v1.2.0 — CLOSED / PASS; P1F IN PROGRESS; P1F4B READY TO START)
+Last updated: 2026-09-17 (P1F4B support packaging / whole-app static 16 KB integration — CLOSED / PASS; P1F IN PROGRESS; P1F5 READY TO START)
 
 ## Project Identity
 
@@ -62,43 +62,40 @@ Last updated: 2026-09-17 (P1F4A complete dual-lane support release v1.2.0 — CL
 | P1F3 — Support Bundle Publication (v1.1.0) | **CLOSED / PASS** |
 | P1F4-P — Whole-App 16 KB Preflight | **CLOSED / BRIDGE_FOUND** |
 | P1F4A — Complete Dual-Lane Support Release (v1.2.0) | **CLOSED / PASS** |
-| P1F4B — Support Packaging / Whole-App 16 KB Integration | **READY TO START** |
+| P1F4B — Support Packaging / Whole-App 16 KB Integration | **CLOSED / PASS** |
+| P1F5 — 16 KB Runtime / Emulator Acceptance | **READY TO START** |
 | P1G — Physical Device Acceptance | **NOT STARTED** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1F4A — Complete Dual-Lane Support Release: CLOSED / PASS. P1F is IN PROGRESS.**
-The support bundle **`v1.2.0`** is published as the first complete explicit dual-lane release.
-Annotated tag `v1.2.0` (object `2b5691c9aa6b4ee6716a4bbcfd8559d30095d7f6`) points at support commit
-`889cb67bf8fcb55eb252513d381d00203fe9a8b4` (support `main`, fast-forwarded from `acc28ab`). Release
-`RE_kwDOUXjkQM4XTxeE` (published 2026-09-17T21:04:07Z) carries the four `*-assets.zip`,
-`routing.json`, `SHA256SUMS`, `v1.2.0-provenance.json`, and `v1.2.0.spdx.json`; all published
-SHA-256 values match the accepted build and every asset re-verified after download. Each archive
-now uses an explicit `common/` + `legacy/` + `modern/` schema with a machine-readable
-`manifest.json` and routing contract. The legacy lane preserves the frozen v1.1.0/v1.0.0 native
-payload byte-for-byte (verified against the per-file lock); the modern lane is source-built with
-NDK r29 at API 24 and every modern 64-bit ELF is `PT_LOAD >= 0x4000`. `proot_meta` /
-`proot_meta_leveldb` are built from the **binary-proven 2019 `CypherpunkArmory/proot` lineages**
-with the historical `-DUSERLAND` contract, and the final-release fixtures reproduce the frozen
-`.proot-meta-file` / `/support/meta_db` behaviour with byte-identical parity (sidecar, leveldb,
-UID/GID, mode, restart persistence). `busybox_static` is a reproducibly built, fully static
-BusyBox 1.38.0. There is **no filesystem migration**: `_meta` / `_meta_leveldb` semantics are
-unchanged. Two independent clean four-ABI builds are byte-identical (`SOURCE_DATE_EPOCH=1787437959`,
-`TZ=UTC`) and the release CI verified the freshly built archives against the committed manifest.
-ProotX `minSdk` remains **21**; `ProotXFiles` selection is unchanged; **ProotX still downloads
-`v1.0.0`** (P1F4B owns the switch). `v1.0.0` and `v1.1.0` are untouched. **Whole-app 16 KB
-compatibility is still NOT achieved**: the 13 x86_64 legacy ELFs remain 4 KB aligned and are still
-shipped via `jniLibs`/`nativeLibraryDir`. Published tags/assets are immutable; corrections require
-`v1.2.1`+ (`DECISIONS.md` D037). Next: **P1F4B — SUPPORT PACKAGING / WHOLE-APP 16 KB INTEGRATION —
-READY TO START** (P1G physical acceptance after P1F).
+**P1F4B — Support Packaging / Whole-App Static 16 KB Integration: CLOSED / PASS. P1F is IN PROGRESS.**
+ProotX now consumes support **`v1.2.0`**. The old flat pseudo-`.so` transport (downloadAssets/
+fetchAssets writing into the tracked `src/main/jniLibs`) is removed. A single deterministic
+`prepareProotXSupport` task downloads the pinned release, verifies every asset SHA-256 against
+`app/support-release.lock.json`, validates the published `routing.json` + per-ABI `manifest.json`,
+and stages a generated payload under `app/build/generated/prootxSupport/`: modern natives into
+`jniLibs/<abi>/lib_<name>.so`, common/legacy into `assets/support/{common,legacy/<abi>}/`, and a
+`support-map.json` runtime routing artifact. A manifest-driven installer resolves the lane at
+runtime: API 21–28 extracts the frozen legacy payload from assets into `filesDir/support`
+(integrity-checked); API 29+ links the modern payload from `nativeLibraryDir` and never copies
+executable code into writable storage (Android W^X). The `.a10` filename inference and the
+`lib_arch.so` pseudo-native marker are gone; ABI selection uses `Build.SUPPORTED_ABIS` and the
+routing manifest. The legacy 4 KB x86_64 ELFs are packaged only under `assets/support/legacy/`, so
+the APK/AAB native-library set contains no 4 KB 64-bit ELF. Static gates: APK/AAB `lib/` inventory
+(all ELF, no `lib_arch`, no legacy/common), every 64-bit `PT_LOAD >= 0x4000`,
+`zipalign -c -P 16` PASS, and bundletool `PAGE_ALIGNMENT_16K`. `minSdk` stays **21**, all four ABIs
+are retained, and `android:extractNativeLibs="true"` is kept (`DECISIONS.md` D037). This is
+**static whole-app acceptance only**: P1F5 owns the 16 KB runtime/emulator acceptance and P1G the
+physical-device acceptance. **Whole-app runtime 16 KB compatibility is not yet claimed.**
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
+| Accepted P1F4B implementation | `9f14ee3f78af9f997ee38cc4c72770783dd35fd8` (feature/android-modernization) | pins support v1.2.0 (`app/support-release.lock.json`), deterministic `prepareProotXSupport` generated staging (modern `jniLibs`, common/legacy assets, `support-map.json` routing), manifest-driven installer (legacy extracted on API 21–28, modern linked from `nativeLibraryDir` on API 29+), `.a10`/`lib_arch` removed, APK/AAB static 16 KB gates |
 | Accepted P1F4A support release | support tag `v1.2.0` (object `2b5691c9aa6b4ee6716a4bbcfd8559d30095d7f6`) → commit `889cb67bf8fcb55eb252513d381d00203fe9a8b4`; release `RE_kwDOUXjkQM4XTxeE` | four `*-assets.zip` (explicit `common/`+`legacy/`+`modern/` schema + `manifest.json` routing) + `routing.json` + `SHA256SUMS` + `v1.2.0-provenance.json` + `v1.2.0.spdx.json`; modern arm64/x86_64 lane 16 KB aligned; whole-app 16 KB still not claimed |
 | Accepted P1F3 support release | support tag `v1.1.0` (object `ff55608c0e9490dfd3a6dc392717c19a1916d636`) → commit `acc28abcd0756cca66782145099ef54ed4cbc46c`; release `RE_kwDOUXjkQM4XOeTw` | four `*-assets.zip` + `SHA256SUMS` + `v1.1.0-provenance.json` + `v1.1.0.spdx.json`; modern arm64/x86_64 lane 16 KB aligned; whole-app 16 KB still not claimed |
 | Accepted P1F2 support implementation | `a363e82b63ccc30ca678aba7dbb96c87d2879c08` (support repo `feature/p1f-support-modernization`) | reproducible support builder (pinned builder image digest + `termux-packages` commit + checksum-verified `termux/proot v5.1.107.92`), dual-lane legacy/modern model, deterministic archives, support CI |
@@ -245,6 +242,14 @@ dispatcher for both activities. There is no edge-to-edge or predictive-back opt-
 lock, and no large-screen/resizability opt-out. The Linux/PRoot runtime, session lifecycle, SSH
 behavior, data model, and visual design are unchanged.
 
+P1F4B **is** an intentional support-runtime packaging change, not a feature/UI redesign. The logical
+runtime contract (`filesDir/support/<name>`, `busybox sh support/execInProot.sh`, `.proot_version`
+`_meta`/`_meta_leveldb` selection, `LD_LIBRARY_PATH` = support dir) is unchanged. What changed is how
+the support payload reaches those paths: the modern lane is resolved from `nativeLibraryDir` and the
+legacy lane is extracted from APK assets only on API 21–28. Existing filesystems keep working with no
+metadata migration, and the extract/compress scripts are invoked through `busybox_static sh` so no
+writable-storage script is executed directly on API 29+.
+
 ## UI State
 
 The legacy UI (XML/Views) remains **visually unchanged** apart from correct system-bar/cutout
@@ -258,17 +263,15 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-**No build blocker.** P1F4A is CLOSED / PASS; support `main` carries the reproducible dual-lane
-toolchain and release `v1.2.0` is published. Remaining P1F work is the explicit **whole-app 16 KB
-packaging debt**: 13 x86_64 **legacy** ELFs (`busybox`, `busybox_static`, `dbclient`,
-`libc++_shared.so`, `libcrypto.so.1.1`, `libleveldb.so.1`, `libtalloc.so.2`, `libtermux-auth.so`,
-`libutil.so`, `loader`, `proot`, `proot_meta`, `proot_meta_leveldb`) are 4 KB aligned and still
-shipped through `jniLibs`/`nativeLibraryDir`. **P1F4B** owns the packaging isolation and the ProotX
-switch to `v1.2.0`. `proot_meta`/`proot_meta_leveldb` are no longer unknown-provenance: their exact
-2019 source lineage and `-DUSERLAND` contract are recorded (`DECISIONS.md` D037). The modern lane
-runtime equivalence (ashmem/memfd) and all insets/back/IME/VNC behavior are **P1G**
-physical-validation items. The local JaCoCo gate passes from the clean/report-only state; lint
-remains pre-existing legacy debt (13 errors / 134 warnings / 3 hints).
+**No build blocker.** P1F4B is CLOSED / PASS. The 13 x86_64 **legacy** ELFs (`busybox`,
+`busybox_static`, `dbclient`, `libc++_shared.so`, `libcrypto.so.1.1`, `libleveldb.so.1`,
+`libtalloc.so.2`, `libtermux-auth.so`, `libutil.so`, `loader`, `proot`, `proot_meta`,
+`proot_meta_leveldb`) are 4 KB aligned but are now packaged only under `assets/support/legacy/`;
+the APK/AAB native-library set contains no 4 KB 64-bit ELF. Remaining P1F work is **P1F5**
+(16 KB runtime/emulator acceptance, `adb shell getconf PAGE_SIZE` = 16384) and the modern lane
+runtime equivalence (ashmem/memfd). Physical validation of edge-to-edge/back/IME/VNC geometry is
+**P1G**. The local JaCoCo gate passes from the clean/report-only state; lint remains pre-existing
+legacy debt (13 errors / 134 warnings / 3 hints).
 
 ## Deferred Findings
 
@@ -453,6 +456,18 @@ The canonical list lives in
   `_meta`/`_meta_leveldb` sessions. `v1.0.0` and `v1.1.0` are untouched (`DECISIONS.md` D037).
   **Still deferred to P1F4B:** ProotX still downloads `v1.0.0`; the 13 x86_64 legacy 4 KB ELFs are
   still shipped through `jniLibs`/`nativeLibraryDir`; whole-app 16 KB compatibility is not claimed.
+- **Resolved in P1F4B:** ProotX now consumes support **`v1.2.0`**. The flat pseudo-`.so` transport is
+  removed: a single deterministic `prepareProotXSupport` task hash-verifies the pinned release and
+  stages a generated payload (modern → `jniLibs/<abi>/lib_<name>.so`, common/legacy →
+  `assets/support/...`, plus a `support-map.json` routing artifact). A manifest-driven installer
+  extracts the frozen legacy payload on API 21–28 and links the modern payload from
+  `nativeLibraryDir` on API 29+ (no writable-storage execution, Android W^X). The `.a10` inference
+  and the `lib_arch.so` pseudo-native marker are gone. The APK/AAB native-library set is all-ELF,
+  contains no legacy/common file, and every 64-bit `PT_LOAD >= 0x4000`; `zipalign -c -P 16` passes
+  and bundletool reports `PAGE_ALIGNMENT_16K`. `minSdk` stays 21, all four ABIs are retained, and
+  `extractNativeLibs="true"` is kept (`DECISIONS.md` D037). **Static acceptance only:** P1F5 owns
+  the 16 KB runtime/emulator acceptance and P1G the physical-device acceptance; whole-app runtime
+  16 KB compatibility is not claimed.
 - **Deferred after P1E9 (non-blocking):** the Activity 1.11.0 bridge moved transitive selections
   (core/core-ktx 1.13.0, lifecycle 2.6.2, savedstate 1.2.1, coroutines 1.7.3, new
   `core-viewtree`/`tracing`/`profileinstaller`) and `androidx.core` injects the benign signature
@@ -486,11 +501,9 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1F4B — SUPPORT PACKAGING / WHOLE-APP 16 KB INTEGRATION — READY TO START.** It owns switching
-ProotX to support `v1.2.0`, consuming the explicit `common/` + `legacy/` + `modern/` schema and the
-routing manifest: keeping the modern API 29+ files as native libraries, packaging the 4 KB x86_64
-legacy ELFs outside `nativeLibraryDir` (bounded legacy extraction/storage path), preserving host
-API 21–28 compatibility, and proving the final APK/AAB contains no 4 KB 64-bit ELF. It must not
-begin without explicit authorization. **Full application 16 KB compatibility must not be claimed**
-until P1F4B completes and **P1G** physical/16 KB-emulator acceptance passes. ProotX must **not** be
-called a Golden Candidate, release candidate, or store-ready final.
+**P1F5 — 16 KB RUNTIME / EMULATOR ACCEPTANCE — READY TO START.** It owns running the integrated
+application on an Android 15/16 **16 KB page-size** environment (`adb shell getconf PAGE_SIZE` must
+return `16384`), exercising real Linux sessions, and proving the modern lane executes correctly from
+`nativeLibraryDir`. It must not begin without explicit authorization. **Full application 16 KB
+compatibility must not be claimed** until P1F5 and **P1G** physical-device acceptance pass. ProotX
+must **not** be called a Golden Candidate, release candidate, or store-ready final.

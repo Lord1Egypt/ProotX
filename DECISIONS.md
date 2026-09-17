@@ -887,3 +887,20 @@
   `provenance/sources.lock.json`, `provenance/file_sources.json`,
   `provenance/releases/v1.2.0.json`, `THIRD_PARTY_NOTICES.md`, support CI),
   P1F4A/P1F4B/P1G.
+- **Implementation (P1F4B, CLOSED / PASS):** ProotX consumes `v1.2.0` through
+  `app/support-release.lock.json` (release + per-asset SHA-256). A deterministic
+  `prepareProotXSupport` task verifies the pinned release and stages generated output under
+  `app/build/generated/prootxSupport/` — modern natives as `jniLibs/<abi>/lib_<name>.so`, common and
+  legacy as `assets/support/{common,legacy/<abi>}/`, and a `support-map.json` routing artifact.
+  `sourceSets` use only the generated jniLibs dir, so a stale tracked `src/main/jniLibs` can never be
+  packaged. The runtime installer resolves the lane from `Build.SUPPORTED_ABIS` + the routing
+  manifest: API 21–28 extracts the frozen legacy payload from assets into `filesDir/support`
+  (SHA-256 verified); API 29+ links the modern payload from `nativeLibraryDir` and never copies
+  executable code into writable storage (Android W^X). The `.a10` filename inference and the
+  `lib_arch.so` pseudo-native marker are removed, and `extractFilesystem.sh`/`compressFilesystem.sh`
+  are invoked through `busybox_static sh`. The APK/AAB native-library set is all ELF, contains no
+  legacy/common file, and has no 4 KB 64-bit ELF; `zipalign -c -P 16` passes and bundletool reports
+  `PAGE_ALIGNMENT_16K`. `minSdk` stays 21, all four ABIs are retained, and `extractNativeLibs` stays
+  `true`. This is static whole-app acceptance only: P1F5 owns the 16 KB runtime/emulator acceptance
+  and P1G the physical-device acceptance. The implementation is `9f14ee3` (feature
+  `android-modernization`), feature CI `35281111291` SUCCESS (46 suites / 375 tests).

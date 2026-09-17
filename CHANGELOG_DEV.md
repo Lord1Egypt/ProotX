@@ -1095,3 +1095,39 @@
   `v1.2.0`. No ProotX production file changed. Durable decision `DECISIONS.md` D037.
 - **P1F4-P CLOSED / BRIDGE_FOUND. P1F4A CLOSED / PASS. P1F IN PROGRESS. P1F4B READY TO START.
   P1G NOT STARTED.**
+
+## P1F4B — Support Packaging / Whole-App Static 16 KB Integration (2026-09-17) — PASS
+
+- ProotX now consumes support **`v1.2.0`** through a tracked **`app/support-release.lock.json`**
+  (release, release ID, supported ABIs, and the exact SHA-256 of all eight release assets). The old
+  `downloadAssets`/`fetchAssets`/`checkIfAssetsMissing` pipeline — which downloaded support `v1.0.0`
+  and wrote pseudo-`.so` files plus a `lib_arch.so` text marker into the tracked
+  `src/main/jniLibs` tree — is removed.
+- New deterministic **`prepareProotXSupport`** Gradle task: downloads and hash-verifies every pinned
+  asset, cross-checks `SHA256SUMS`, validates the published `routing.json` + per-ABI `manifest.json`
+  (lanes, packaging classes, path safety, duplicate/missing routes, modern 16 KB), and stages a
+  generated payload under `app/build/generated/prootxSupport/`:
+  `jniLibs/<abi>/lib_<name>.so` (modern), `assets/support/common/*`,
+  `assets/support/legacy/<abi>/*`, and `assets/support/metadata/support-map.json`. `sourceSets` use
+  only the generated jniLibs dir, so a stale `src/main/jniLibs` can never be packaged.
+- New manifest-driven runtime **installer/resolver** (`io.github.lord1egypt.prootx.support`): API
+  21–28 copies the frozen legacy payload plus common scripts/data from assets into
+  `filesDir/support` with SHA-256 verification; API 29+ links the modern payload from
+  `nativeLibraryDir` and never copies executable code into writable storage (**Android W^X**).
+  Stale v1.0.0/v1.1.0 support entries are reconciled idempotently on upgrade.
+- **`lib_arch.so` removed** — `ProotXFiles.getArchType()` now uses `Build.SUPPORTED_ABIS` and the
+  routing manifest. **`.a10` filename inference removed** — the host API selects the lane.
+- `FilesystemManager` invokes `extractFilesystem.sh`/`compressFilesystem.sh` through
+  `busybox_static sh` so a writable-storage script is never execve'd directly on API 29+.
+- **Static whole-app gates PASS:** the APK and AAB native-library sets are all ELF with no
+  `lib_arch.so`, no legacy/common file and no 4 KB 64-bit ELF (`PT_LOAD >= 0x4000` for every
+  `lib/arm64-v8a` and `lib/x86_64` entry); `zipalign -c -P 16 -v 4` PASS; `bundletool dump config`
+  reports `PAGE_ALIGNMENT_16K`. A new `tools/verify_support_packaging.py` gate (with a self-test)
+  enforces this in CI.
+- `minSdk` stays **21**, all four ABIs (`arm64-v8a`, `armeabi-v7a`, `x86_64`, `x86`) are retained,
+  and `android:extractNativeLibs="true"` is kept. Tests: **46 suites / 375 tests / 0 failures /
+  0 errors / 0 skipped** (was 42 / 360). Implementation `9f14ee3`; feature CI `35281111291` SUCCESS
+  (logs prove staging, APK/AAB inventory, zipalign, `PAGE_ALIGNMENT_16K`). `DECISIONS.md` D037.
+- **P1F4B CLOSED / PASS. P1F IN PROGRESS. P1F5 READY TO START. P1G NOT STARTED.** Static acceptance
+  only: the 16 KB runtime/emulator acceptance is P1F5 and whole-app runtime 16 KB compatibility is
+  not claimed.

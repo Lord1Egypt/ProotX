@@ -99,9 +99,11 @@ export JAVA_HOME=/path/to/jdk17                   # JDK 17 for Gradle
 
 Notes:
 
-- `app/src/main/jniLibs/` (the PRoot/Busybox support bundle) is produced automatically by
-  the `downloadAssets` Gradle task from the `ProotX-Assets-Support` release; it is not
-  committed.
+- The PRoot/Busybox support bundle is produced automatically by the `prepareProotXSupport`
+  Gradle task (`app/support.gradle`) from the pinned `ProotX-Assets-Support` release and staged
+  under `app/build/generated/prootxSupport/` (modern `jniLibs/<abi>/`, common/legacy
+  `assets/support/`, and `assets/support/metadata/support-map.json`). It is not committed, and the
+  tracked `app/src/main/jniLibs/` tree is deliberately not a source directory (P1F4B).
 - `local.properties` is **gitignored** and must not be committed. Point it at the SDK location;
   the NDK is selected by the Gradle module `ndkVersion`, so do **not** add a deprecated `ndk.dir`:
 
@@ -132,9 +134,11 @@ written, and a stale one breaks configuration under r29). CI also runs a scoped 
 the packaged 64-bit `libtermux.so` (`arm64-v8a`, `x86_64`) has a `PT_LOAD` alignment below `0x4000`.
 The `ProotX-Assets-Support` payloads are **not** covered by that step (P1F2/P1F3).
 
-**Download task (P1E1):** `de.undercouch:gradle-download-task` is **5.0.0** — the 3.4.3 task
-type fails Gradle 7.6 task-property validation when `:app:downloadAssets` runs on a clean
-checkout (no pre-existing `jniLibs`).
+**Support preparation (P1F4B):** `prepareProotXSupport` (`app/support.gradle`) replaced the
+`de.undercouch:gradle-download-task`-based `downloadAssets`/`fetchAssets` pipeline. It downloads the
+pinned support `v1.2.0` assets, verifies every SHA-256 against `app/support-release.lock.json`,
+validates the published `routing.json`/`manifest.json` contract, and stages the generated payload;
+it fails closed on any checksum or schema mismatch. The plugin is no longer applied by `:app`.
 
 **Code generation (P1E2/P1E3):** Moshi runs on **KSP2 2.2.20-2.0.4** (`apply plugin:
 'com.google.devtools.ksp'` on `:app`; `ksp "com.squareup.moshi:moshi-kotlin-codegen"`). **Room
@@ -246,21 +250,26 @@ The `ProotX-Assets-Support` runtime is built by `build-support.sh` (branch
 | NDK / build API | r29 / **API 24** |
 | `SOURCE_DATE_EPOCH` | `1787437959` |
 
-Lanes: host API 21–28 use frozen legacy normal slots; host API 29+ use the source-rebuilt modern
-`.a10` slots. ProotX `minSdk` stays 21 and `ProotXFiles` selection is unchanged. The modern lane
+Lanes: host API 21–28 use the frozen legacy payload; host API 29+ use the source-rebuilt modern
+payload. ProotX `minSdk` stays 21 and the logical runtime contract is unchanged. The modern lane
 requires Docker with `/dev/fuse`, `CAP_SYS_ADMIN`, `seccomp=unconfined`, and `apparmor=unconfined`
-(for termux's `fuse-overlayfs` standalone toolchain). Whole-app 16 KB compatibility is **not**
-achieved; 4 KB 64-bit legacy normal-slot ELFs remain. See `docs/PROVENANCE.md` in the support repo
-and `DECISIONS.md` D035.
+(for termux's `fuse-overlayfs` standalone toolchain). See `docs/PROVENANCE.md` in the support repo
+and `DECISIONS.md` D035/D037.
 
-## Support release v1.1.0 (P1F3)
+## Support release v1.2.0 (P1F4A/P1F4B)
 
-The support runtime release **`v1.1.0`** is published from the P1F2 toolchain (annotated tag
-`ff55608c…` → commit `acc28ab…`; release `RE_kwDOUXjkQM4XOeTw`, 2026-09-16T05:59:57Z). Archives:
-`arm64-v8a` `7f279264…`, `armeabi-v7a` `f7b935f6…`, `x86` `25a53c33…`, `x86_64` `f6248107…`, plus
-`SHA256SUMS`, `v1.1.0-provenance.json`, `v1.1.0.spdx.json`. Release CI is split into untrusted
-validation (`support-validate.yml`), a privileged build limited to repository-owned refs
-(`support.yml`), and a tag-triggered `support-release.yml` whose `contents: write` publish job does
-no rebuild; all release actions are pinned by full commit SHA. **ProotX still downloads `v1.0.0`**;
-whole-app 16 KB compatibility is **not** achieved (13 x86_64 legacy normal-slot 4 KB ELFs remain).
+The support runtime release **`v1.2.0`** is the first explicit dual-lane bundle (annotated tag
+`2b5691c9…` → commit `889cb67…`; release `RE_kwDOUXjkQM4XTxeE`, 2026-09-17T21:04:07Z). Archives:
+`arm64-v8a` `42fd0042…`, `armeabi-v7a` `496c5d70…`, `x86` `df5e8b3a…`, `x86_64` `d3884105…`, plus
+`routing.json`, `SHA256SUMS`, `v1.2.0-provenance.json`, `v1.2.0.spdx.json`. Each archive uses the
+explicit `common/`+`legacy/`+`modern/` schema with a per-file `manifest.json`. ProotX pins the
+release and every asset SHA-256 in `app/support-release.lock.json`; `prepareProotXSupport` stages the
+generated payload and the runtime installer routes legacy (API 21–28, extracted from assets) vs
+modern (API 29+, linked from `nativeLibraryDir`, Android W^X). The `.a10` filename inference and
+`lib_arch.so` marker are removed. Release CI is split into untrusted validation
+(`support-validate.yml`), a privileged build limited to repository-owned refs (`support.yml`), and a
+tag-triggered `support-release.yml` whose `contents: write` publish job does no rebuild; all release
+actions are pinned by full commit SHA. Whole-app **static** 16 KB compatibility passes (APK/AAB lib
+set all-ELF, no 4 KB 64-bit ELF, `zipalign -P 16`, bundletool `PAGE_ALIGNMENT_16K`); the 16 KB
+**runtime/emulator** acceptance is P1F5 and physical acceptance is P1G.
 See `DECISIONS.md` D036 and the support repo `docs/PROVENANCE.md`.
