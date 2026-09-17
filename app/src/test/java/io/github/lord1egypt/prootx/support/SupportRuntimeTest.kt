@@ -19,12 +19,57 @@ internal class NioSymlinker : Symlinker {
     }
 }
 
+/** Counts symlink creations so a no-op re-initialization can be proven. */
+internal class CountingSymlinker(private val delegate: Symlinker = NioSymlinker()) : Symlinker {
+    var createCount = 0
+        private set
+
+    override fun createSymlink(targetPath: String, linkPath: String) {
+        createCount++
+        delegate.createSymlink(targetPath, linkPath)
+    }
+}
+
+/** Counts asset reads so a no-op re-initialization can be proven. */
+internal class CountingAssetSource(private val delegate: SupportAssetSource) : SupportAssetSource {
+    var openCount = 0
+        private set
+
+    override fun open(path: String): java.io.InputStream {
+        openCount++
+        return delegate.open(path)
+    }
+
+    override fun list(path: String): List<String> = delegate.list(path)
+}
+
 internal object Fixtures {
     const val ABI = "arm64-v8a"
 
-    val REQUIRED = listOf(
+    /** Names present in both lanes. */
+    val SHARED = listOf(
+        "proot", "loader", "busybox", "busybox_static", "dbclient",
+        "proot_meta", "proot_meta_leveldb", "libtalloc.so.2", "libtermux-auth.so",
+        "libc++_shared.so"
+    )
+
+    /** v1.2.0 legacy-only natives. */
+    val LEGACY_ONLY = listOf("libcrypto.so.1.1", "libleveldb.so.1", "libutil.so")
+
+    /** v1.2.0 modern-only natives. */
+    val MODERN_ONLY = listOf(
+        "libcrypto.so.3", "libleveldb.so", "libandroid-shmem.so", "libandroid-selinux.so",
+        "libbusybox.so.1.38.0", "libpcre2-8.so", "libsnappy.so", "libz.so.1"
+    )
+
+    val COMMON = listOf("execInProot.sh", "uptime")
+    val LEGACY = SHARED + LEGACY_ONLY
+    val MODERN = SHARED + MODERN_ONLY
+
+    /** Routes every ABI must expose (mirrors the build-time guard). */
+    val REQUIRED = setOf(
         "proot", "loader", "proot_meta", "proot_meta_leveldb",
-        "busybox", "busybox_static", "dbclient"
+        "busybox", "busybox_static", "dbclient", "execInProot.sh"
     )
 
     fun commonFile(name: String, exec: Boolean = true) =
@@ -35,18 +80,17 @@ internal object Fixtures {
 
     fun modernFile(name: String) = ModernFile(name = name, nativeLib = "lib_$name.so", sha256 = "modern-$name")
 
-    /** Writes a valid map plus its referenced asset bytes under [assetsRoot]. */
+    /** Writes a valid, lane-asymmetric map plus its referenced asset bytes under [assetsRoot]. */
     fun writeAssets(
         assetsRoot: File,
         abi: String = ABI,
-        corrupt: Set<String> = emptySet(),
         modernNativeDir: File? = null
     ): SupportMap {
-        val common = listOf(commonFile("execInProot.sh"), commonFile("uptime", exec = false))
-        val legacy = REQUIRED.map { legacyFile(it, abi) }
-        val modern = REQUIRED.map { modernFile(it) }
-        common.forEach { writeAsset(assetsRoot, it.assetPath, if (it.name in corrupt) "corrupt" else "data-${it.name}") }
-        legacy.forEach { writeAsset(assetsRoot, it.assetPath, if (it.name in corrupt) "corrupt" else "data-${it.name}") }
+        val common = COMMON.map { commonFile(it, exec = it.endsWith(".sh")) }
+        val legacy = LEGACY.map { legacyFile(it, abi) }
+        val modern = MODERN.map { modernFile(it) }
+        common.forEach { writeAsset(assetsRoot, it.assetPath, "data-${it.name}") }
+        legacy.forEach { writeAsset(assetsRoot, it.assetPath, "data-${it.name}") }
 
         fun sha(path: String) = sha256Hex(File(assetsRoot, path).readBytes())
         val map = SupportMap(
@@ -72,6 +116,19 @@ internal object Fixtures {
         f.writeText(content)
     }
 
+    /** Captures support state so a no-op re-initialization can be proven structurally. */
+    fun snapshot(dir: File): Map<String, String> {
+        val out = sortedMapOf<String, String>()
+        dir.listFiles()?.forEach { f ->
+            out[f.name] = if (Files.isSymbolicLink(f.toPath())) {
+                "link:" + Files.readSymbolicLink(f.toPath()).toString()
+            } else {
+                "file:" + sha256Hex(f.readBytes())
+            }
+        }
+        return out
+    }
+
     object SupportMapJson {
         private val moshi: Moshi = Moshi.Builder().build()
         fun encode(map: SupportMap): String = moshi.adapter(SupportMap::class.java).toJson(map)
@@ -95,17 +152,17 @@ class SupportRoutingValidatorTest {
         schemaVersion = 1,
         release = "v1.2.0",
         supportedAbis = listOf(Fixtures.ABI),
-        common = listOf(Fixtures.commonFile("execInProot.sh")),
+        common = Fixtures.COMMON.map { Fixtures.commonFile(it) },
         abis = mapOf(
             Fixtures.ABI to SupportAbi(
-                legacy = Fixtures.REQUIRED.map { Fixtures.legacyFile(it) },
-                modern = Fixtures.REQUIRED.map { Fixtures.modernFile(it) }
+                legacy = Fixtures.LEGACY.map { Fixtures.legacyFile(it) },
+                modern = Fixtures.MODERN.map { Fixtures.modernFile(it) }
             )
         )
     )
 
     @Test
-    fun `accepts a complete map`() {
+    fun `accepts a lane-asymmetric map`() {
         SupportRoutingValidator.validate(base())
     }
 
@@ -122,7 +179,7 @@ class SupportRoutingValidatorTest {
     }
 
     @Test
-    fun `rejects a duplicate runtime name`() {
+    fun `rejects a duplicate runtime name within a lane`() {
         val m = base()
         val abi = m.abis[Fixtures.ABI]!!
         val map = m.copy(abis = mapOf(Fixtures.ABI to abi.copy(legacy = abi.legacy + Fixtures.legacyFile("proot"))))
@@ -134,23 +191,30 @@ class SupportRoutingValidatorTest {
 class SupportRuntimeInstallerTest {
     @get:Rule val temp = TemporaryFolder()
 
-    private fun installer(assets: File, nativeDir: File, sdk: Int) =
-        SupportRuntimeInstaller(
-            assetSource = FileSupportAssetSource(assets),
-            nativeLibraryDir = nativeDir,
-            sdkInt = sdk,
-            deviceAbis = listOf(Fixtures.ABI),
-            symlinker = NioSymlinker()
-        )
+    private fun native() = temp.newFolder("native")
+
+    private fun installer(
+        assetSource: SupportAssetSource,
+        nativeDir: File,
+        sdk: Int,
+        symlinker: Symlinker
+    ) = SupportRuntimeInstaller(
+        assetSource = assetSource,
+        nativeLibraryDir = nativeDir,
+        sdkInt = sdk,
+        deviceAbis = listOf(Fixtures.ABI),
+        symlinker = symlinker
+    )
 
     @Test
     fun `api 28 installs common and legacy payload from assets`() {
-        val assets = temp.newFolder("assets")
-        val native = temp.newFolder("native")
+        val native = native()
         val support = File(temp.newFolder("files"), "support")
-        val map = Fixtures.writeAssets(assets)
+        val root = temp.newFolder("assets-root")
+        val map = Fixtures.writeAssets(root, modernNativeDir = native)
+        val assets = CountingAssetSource(FileSupportAssetSource(root))
 
-        val result = installer(assets, native, 28).install(support, map)
+        val result = installer(assets, native, 28, CountingSymlinker()).install(support, map)
 
         assertEquals(SupportLane.LEGACY, result.lane)
         assertTrue(File(support, "proot").isFile)
@@ -161,67 +225,159 @@ class SupportRuntimeInstallerTest {
 
     @Test
     fun `api 29 links modern payload from nativeLibraryDir`() {
-        val assets = temp.newFolder("assets")
-        val native = temp.newFolder("native")
+        val native = native()
         val support = File(temp.newFolder("files"), "support")
-        val map = Fixtures.writeAssets(assets, modernNativeDir = native)
+        val root = temp.newFolder("assets-root")
+        val map = Fixtures.writeAssets(root, modernNativeDir = native)
+        val assets = CountingAssetSource(FileSupportAssetSource(root))
 
-        val result = installer(assets, native, 29).install(support, map)
+        val result = installer(assets, native, 29, CountingSymlinker()).install(support, map)
 
         assertEquals(SupportLane.MODERN, result.lane)
-        val prootLink = File(support, "proot")
-        assertTrue(Files.isSymbolicLink(prootLink.toPath()))
-        assertEquals(File(native, "lib_proot.so").canonicalPath, prootLink.canonicalFile.path)
+        assertTrue(Files.isSymbolicLink(File(support, "proot").toPath()))
+        assertEquals(File(native, "lib_proot.so").canonicalPath, File(support, "proot").canonicalFile.path)
         assertFalse(Files.isSymbolicLink(File(support, "execInProot.sh").toPath()))
     }
 
     @Test
     fun `checksum mismatch fails closed`() {
-        val assets = temp.newFolder("assets")
-        val native = temp.newFolder("native")
+        val native = native()
         val support = File(temp.newFolder("files"), "support")
-        val map = Fixtures.writeAssets(assets)
-        Fixtures.writeAsset(assets, "support/common/execInProot.sh", "tampered")
+        val root = temp.newFolder("assets-root")
+        val map = Fixtures.writeAssets(root, modernNativeDir = native)
+        Fixtures.writeAsset(root, "support/common/execInProot.sh", "tampered")
+        val assets = CountingAssetSource(FileSupportAssetSource(root))
 
-        val e = runCatching { installer(assets, native, 28).install(support, map) }.exceptionOrNull()
+        val e = runCatching { installer(assets, native, 28, CountingSymlinker()).install(support, map) }.exceptionOrNull()
         assertTrue(e is SupportIntegrityException)
     }
 
     @Test
-    fun `reconciles stale historical layout and is idempotent`() {
-        val assets = temp.newFolder("assets")
-        val native = temp.newFolder("native")
+    fun `modern second initialization is a true no-op`() {
+        val native = native()
+        val support = File(temp.newFolder("files"), "support")
+        val root = temp.newFolder("assets-root")
+        val map = Fixtures.writeAssets(root, modernNativeDir = native)
+        val assets = CountingAssetSource(FileSupportAssetSource(root))
+        val symlinker = CountingSymlinker()
+        val inst = installer(assets, native, 29, symlinker)
+
+        inst.install(support, map)
+        assertTrue(File(support, "libcrypto.so.3").exists())
+        assertFalse(File(support, "libcrypto.so.1.1").exists())
+        assertFalse(File(support, "libleveldb.so.1").exists())
+        assertFalse(File(support, "libutil.so").exists())
+
+        val before = Fixtures.snapshot(support)
+        val markerBefore = File(support, SupportRuntimeInstaller.MARKER_NAME).readBytes().copyOf()
+        val opens = assets.openCount
+        val links = symlinker.createCount
+
+        inst.install(support, map)
+
+        assertEquals("no asset copies on re-init", opens, assets.openCount)
+        assertEquals("no symlink creations on re-init", links, symlinker.createCount)
+        assertEquals("support state unchanged", before, Fixtures.snapshot(support))
+        assertTrue(
+            "marker not rewritten",
+            markerBefore.contentEquals(File(support, SupportRuntimeInstaller.MARKER_NAME).readBytes())
+        )
+    }
+
+    @Test
+    fun `legacy second initialization is a true no-op`() {
+        val native = native()
+        val support = File(temp.newFolder("files"), "support")
+        val root = temp.newFolder("assets-root")
+        val map = Fixtures.writeAssets(root, modernNativeDir = native)
+        val assets = CountingAssetSource(FileSupportAssetSource(root))
+        val symlinker = CountingSymlinker()
+        val inst = installer(assets, native, 28, symlinker)
+
+        inst.install(support, map)
+        assertTrue(File(support, "libcrypto.so.1.1").isFile)
+        assertFalse(File(support, "libcrypto.so.3").exists())
+        assertFalse(File(support, "libz.so.1").exists())
+
+        val before = Fixtures.snapshot(support)
+        val markerBefore = File(support, SupportRuntimeInstaller.MARKER_NAME).readBytes().copyOf()
+        val opens = assets.openCount
+        val links = symlinker.createCount
+
+        inst.install(support, map)
+
+        assertEquals(opens, assets.openCount)
+        assertEquals(links, symlinker.createCount)
+        assertEquals(before, Fixtures.snapshot(support))
+        assertTrue(markerBefore.contentEquals(File(support, SupportRuntimeInstaller.MARKER_NAME).readBytes()))
+    }
+
+    @Test
+    fun `api 28 to api 29 transition reinstalls once then is a no-op`() {
+        val native = native()
+        val support = File(temp.newFolder("files"), "support")
+        val root = temp.newFolder("assets-root")
+        val map = Fixtures.writeAssets(root, modernNativeDir = native)
+        val assets = CountingAssetSource(FileSupportAssetSource(root))
+        val symlinker = CountingSymlinker()
+
+        installer(assets, native, 28, symlinker).install(support, map)
+        assertTrue(File(support, "libcrypto.so.1.1").isFile)
+
+        val linksBefore = symlinker.createCount
+        val opensBefore = assets.openCount
+        installer(assets, native, 29, symlinker).install(support, map)
+
+        assertTrue("transition must reinstall", assets.openCount > opensBefore)
+        assertTrue("transition must create modern links", symlinker.createCount > linksBefore)
+        assertTrue(File(support, "libcrypto.so.3").exists())
+        assertFalse("legacy-only must not shadow modern", File(support, "libcrypto.so.1.1").exists())
+        assertFalse(File(support, "libleveldb.so.1").exists())
+        assertFalse(File(support, "libutil.so").exists())
+        assertTrue(Files.isSymbolicLink(File(support, "proot").toPath()))
+
+        val opens = assets.openCount
+        val links = symlinker.createCount
+        installer(assets, native, 29, symlinker).install(support, map)
+        assertEquals(opens, assets.openCount)
+        assertEquals(links, symlinker.createCount)
+    }
+
+    @Test
+    fun `reconciles stale historical layout including lane-specific names`() {
+        val native = native()
         val support = File(temp.newFolder("files"), "support").apply { mkdirs() }
-        val map = Fixtures.writeAssets(assets, modernNativeDir = native)
+        val root = temp.newFolder("assets-root")
+        val map = Fixtures.writeAssets(root, modernNativeDir = native)
+        val assets = CountingAssetSource(FileSupportAssetSource(root))
 
         File(support, "proot").writeText("stale")
         File(support, "libcrypto.so.1.1").writeText("stale")
+        File(support, "libleveldb.so.1").writeText("stale")
+        File(support, "libutil.so").writeText("stale")
         File(support, "lib_arch.so").writeText("stale-marker")
 
-        val inst = installer(assets, native, 29)
-        inst.install(support, map)
+        installer(assets, native, 29, CountingSymlinker()).install(support, map)
+
         assertFalse(File(support, "libcrypto.so.1.1").exists())
+        assertFalse(File(support, "libleveldb.so.1").exists())
+        assertFalse(File(support, "libutil.so").exists())
+        assertTrue(File(support, "libcrypto.so.3").exists())
         assertTrue(Files.isSymbolicLink(File(support, "proot").toPath()))
         assertFalse(SupportRuntimeInstaller.HISTORICAL_NAMES.contains("lib_arch.so"))
-
-        val marker = File(support, SupportRuntimeInstaller.MARKER_NAME)
-        val markerText = marker.readText()
-        val prootTarget = File(support, "proot").canonicalPath
-        inst.install(support, map)
-        assertEquals(markerText, marker.readText())
-        assertEquals(prootTarget, File(support, "proot").canonicalPath)
     }
 
     @Test
     fun `meta routes resolve per lane`() {
-        val assets = temp.newFolder("assets")
-        val native = temp.newFolder("native")
+        val native = native()
+        val root = temp.newFolder("assets-root")
+        val map = Fixtures.writeAssets(root, modernNativeDir = native)
+        val assets = CountingAssetSource(FileSupportAssetSource(root))
         val supportLegacy = File(temp.newFolder("f1"), "support")
         val supportModern = File(temp.newFolder("f2"), "support")
-        val map = Fixtures.writeAssets(assets, modernNativeDir = native)
 
-        installer(assets, native, 28).install(supportLegacy, map)
-        installer(assets, native, 29).install(supportModern, map)
+        installer(assets, native, 28, CountingSymlinker()).install(supportLegacy, map)
+        installer(assets, native, 29, CountingSymlinker()).install(supportModern, map)
 
         assertTrue(File(supportLegacy, "proot_meta").isFile)
         assertFalse(Files.isSymbolicLink(File(supportLegacy, "proot_meta").toPath()))
@@ -231,11 +387,12 @@ class SupportRuntimeInstallerTest {
 
     @Test
     fun `no a10 heuristic is used`() {
-        val assets = temp.newFolder("assets")
-        val native = temp.newFolder("native")
+        val native = native()
         val support = File(temp.newFolder("files"), "support")
-        val map = Fixtures.writeAssets(assets, modernNativeDir = native)
-        installer(assets, native, 29).install(support, map)
+        val root = temp.newFolder("assets-root")
+        val map = Fixtures.writeAssets(root, modernNativeDir = native)
+        val assets = CountingAssetSource(FileSupportAssetSource(root))
+        installer(assets, native, 29, CountingSymlinker()).install(support, map)
         assertFalse(support.listFiles()!!.any { it.name.contains(".a10") })
     }
 }

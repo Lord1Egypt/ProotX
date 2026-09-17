@@ -17,8 +17,21 @@ data class SupportInstallation(
     val legacyNames: Set<String>,
     val modernNames: Set<String>
 ) {
-    /** Logical runtime names exposed by this installation. */
+    /**
+     * Logical runtime names this installation actually exposes: the common payload plus the
+     * native lane selected for the host. The v1.2.0 payload is lane-asymmetric (e.g. legacy
+     * `libcrypto.so.1.1` vs modern `libcrypto.so.3`), so the inactive lane must never be
+     * required to exist — otherwise the marker fast path can never match and every startup
+     * reinstalls the support state.
+     */
     val runtimeNames: Set<String>
+        get() = commonNames + when (lane) {
+            SupportLane.LEGACY -> legacyNames
+            SupportLane.MODERN -> modernNames
+        }
+
+    /** Every logical name the support map declares for this ABI, across both lanes. */
+    val allDeclaredNames: Set<String>
         get() = commonNames + legacyNames + modernNames
 }
 
