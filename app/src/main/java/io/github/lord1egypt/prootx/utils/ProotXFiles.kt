@@ -2,14 +2,25 @@ package io.github.lord1egypt.prootx.utils
 
 import android.content.Context
 import android.os.Build
-import android.system.Os
+import io.github.lord1egypt.prootx.support.AndroidSupportAssetSource
+import io.github.lord1egypt.prootx.support.SupportInstallation
+import io.github.lord1egypt.prootx.support.SupportRuntimeInstaller
+import io.github.lord1egypt.prootx.support.Symlinker
 import java.io.File
-import java.lang.NullPointerException
 
+/**
+ * Resolves and installs the ProotX support runtime from the pinned v1.2.0 support bundle.
+ *
+ * The installation is driven entirely by the generated `support-map.json` routing contract:
+ * the API 21-28 lane extracts the frozen legacy payload from assets, the API 29+ lane
+ * links to the modern payload in `nativeLibraryDir`. There is no filename heuristics and no
+ * `lib_arch.so` pseudo-native marker.
+ */
 class ProotXFiles(
     context: Context,
     libDirPath: String,
-    private val symlinker: Symlinker = Symlinker()
+    private val symlinker: Symlinker = Symlinker.default(),
+    installerOverride: SupportRuntimeInstaller? = null
 ) {
 
     val filesDir: File = context.filesDir
@@ -26,11 +37,21 @@ class ProotXFiles(
     val busybox = File(supportDir, "busybox")
     val proot = File(supportDir, "proot")
 
+    private val installer: SupportRuntimeInstaller = installerOverride ?: SupportRuntimeInstaller(
+        assetSource = AndroidSupportAssetSource(context),
+        nativeLibraryDir = libDir,
+        sdkInt = Build.VERSION.SDK_INT,
+        deviceAbis = Build.SUPPORTED_ABIS.toList(),
+        symlinker = symlinker
+    )
+
+    val installation: SupportInstallation
+
     init {
         emulatedUserDir.mkdirs()
         sdCardUserDir?.mkdirs()
 
-        setupLinks()
+        installation = installer.install(supportDir)
     }
 
     fun makePermissionsUsable(containingDirectoryPath: String, filename: String) {
@@ -56,42 +77,9 @@ class ProotXFiles(
         } else null
     }
 
-    // Lib files must start with 'lib' and end with '.so.'
-    private fun String.toSupportName(): String {
-        return this.substringAfter("lib_").substringBeforeLast(".so")
-    }
-
-    @Throws(NullPointerException::class, NoSuchFileException::class, Exception::class)
-    private fun setupLinks() {
-        supportDir.mkdirs()
-
-        libDir.listFiles()!!.forEach { libFile ->
-            var libFileName = libFile.name
-            if (libFileName.startsWith("lib_proot.") ||
-                    libFileName.startsWith("lib_libtalloc") ||
-                    libFileName.startsWith("lib_loader")) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    if (libFileName.endsWith(".a10.so")) {
-                        libFileName = libFileName.replace(".a10.so", ".so")
-                    } else {
-                        return@forEach
-                    }
-                } else {
-                    if (libFileName.endsWith(".a10.so")) {
-                        return@forEach
-                    }
-                }
-            }
-            val name = libFileName.toSupportName()
-            val linkFile = File(supportDir, name)
-            linkFile.delete()
-            symlinker.createSymlink(libFile.path, linkFile.path)
-        }
-    }
-
+    /** Selected support ABI in ProotX's short naming (e.g. `arm64`, `x86_64`). */
     fun getArchType(): String {
-        val usedABI = File(libDir, "lib_arch.so").readText()
-        return translateABI(usedABI)
+        return translateABI(installation.abi)
     }
 
     private fun translateABI(abi: String): String {
@@ -102,11 +90,5 @@ class ProotXFiles(
             "x86" -> "x86"
             else -> ""
         }
-    }
-}
-
-class Symlinker {
-    fun createSymlink(targetPath: String, linkPath: String) {
-        Os.symlink(targetPath, linkPath)
     }
 }

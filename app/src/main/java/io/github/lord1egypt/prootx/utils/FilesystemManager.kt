@@ -51,7 +51,9 @@ class FilesystemManager(
         listener: (String) -> Any
     ): ExecutionResult = withContext(Dispatchers.IO) {
         val filesystemDirName = "${filesystem.id}"
-        val command = "/support/common/extractFilesystem.sh"
+        // Explicit interpreter: the script lives in writable app storage, so it must never
+        // be execve'd directly on API 29+ (Android W^X). busybox_static reads it as data.
+        val command = "/support/common/busybox_static sh /support/common/extractFilesystem.sh"
         val env = HashMap<String, String>()
         env["INITIAL_USERNAME"] = filesystem.defaultUsername
         env["INITIAL_PASSWORD"] = filesystem.defaultPassword
@@ -72,7 +74,8 @@ class FilesystemManager(
         listener: (String) -> Any
     ) = withContext(Dispatchers.IO) {
         val filesystemDirName = "${filesystem.id}"
-        val command = "/support/common/compressFilesystem.sh"
+        // Explicit interpreter (Android W^X): never execve a writable-storage script directly.
+        val command = "/support/common/busybox_static sh /support/common/compressFilesystem.sh"
         val env = HashMap<String, String>()
         env["TAR_PATH"] = scopedExternalDestination.absolutePath
 
