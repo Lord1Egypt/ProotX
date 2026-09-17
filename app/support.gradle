@@ -1,0 +1,257 @@
+// ProotX support-release preparation (P1F4B).
+//
+// Replaces the historical downloadAssets/fetchAssets/checkIfAssetsMissing pipeline,
+// which downloaded support `v1.0.0` and wrote pseudo-`.so` files directly into the
+// tracked `src/main/jniLibs` tree.
+//
+// This pipeline downloads the pinned `v1.2.0` release, verifies every SHA-256 against
+// app/support-release.lock.json, validates the published routing/manifest contract, and
+// stages a deterministic generated payload:
+//
+//   build/generated/prootxSupport/jniLibs/<abi>/lib_<name>.so   (modern lane only)
+//   build/generated/prootxSupport/assets/support/common/*        (common lane)
+//   build/generated/prootxSupport/assets/support/legacy/<abi>/*  (legacy lane)
+//   build/generated/prootxSupport/assets/support/metadata/support-map.json
+//
+// No generated support binary is ever written into a tracked source directory.
+
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import java.security.MessageDigest
+import java.util.zip.ZipFile
+
+ext.supportLockFile = file("$projectDir/support-release.lock.json")
+ext.supportGenDir = new File(buildDir, "generated/prootxSupport")
+ext.supportDownloadDir = new File(buildDir, "support-downloads")
+
+ext.sha256Of = { File f ->
+    def md = MessageDigest.getInstance("SHA-256")
+    f.withInputStream { is ->
+        byte[] buf = new byte[1 << 16]
+        int n
+        while ((n = is.read(buf)) > 0) md.update(buf, 0, n)
+    }
+    md.digest().collect { String.format("%02x", it) }.join()
+}
+
+ext.downloadVerified = { String url, File dest, String expected ->
+    if (dest.exists() && sha256Of(dest) == expected) return
+    dest.parentFile.mkdirs()
+    def tmp = new File(dest.parentFile, dest.name + ".part")
+    if (tmp.exists()) tmp.delete()
+    def conn = new URL(url).openConnection()
+    conn.setInstanceFollowRedirects(true)
+    conn.connectTimeout = 60000
+    conn.readTimeout = 600000
+    conn.inputStream.withStream { is -> tmp.withOutputStream { os -> os << is } }
+    def actual = sha256Of(tmp)
+    if (actual != expected) {
+        tmp.delete()
+        throw new GradleException("ProotX support asset checksum mismatch for ${dest.name}: expected ${expected}, got ${actual}")
+    }
+    if (dest.exists()) dest.delete()
+    if (!tmp.renameTo(dest)) {
+        dest.bytes = tmp.bytes
+        tmp.delete()
+    }
+}
+
+ext.extractZip = { File zip, File dest ->
+    dest.mkdirs()
+    new ZipFile(zip).withCloseable { zf ->
+        zf.entries().toList().sort { it.name }.each { e ->
+            if (e.isDirectory()) return
+            def name = e.name.replace('\\', '/')
+            if (name.startsWith('/') || name.contains('../') || name.contains('/../')) {
+                throw new GradleException("Refusing unsafe archive path: ${name}")
+            }
+            def out = new File(dest, name)
+            out.parentFile.mkdirs()
+            zf.getInputStream(e).withStream { is -> out.withOutputStream { os -> os << is } }
+        }
+    }
+}
+
+ext.stageFile = { File src, File dest, boolean executable ->
+    if (!src.isFile()) throw new GradleException("staged source missing: ${src}")
+    dest.parentFile.mkdirs()
+    if (dest.exists()) dest.delete()
+    dest.bytes = src.bytes
+    dest.setExecutable(executable, false)
+}
+
+def LANES = ["common", "legacy", "modern"] as Set
+def PACKAGING = ["commonScript", "commonData", "legacyAsset", "modernNative"] as Set
+def REQUIRED_ROUTES = ["proot", "loader", "proot_meta", "proot_meta_leveldb",
+                       "busybox", "busybox_static", "dbclient", "execInProot.sh"] as Set
+
+ext.validateRouting = { lock, routing, manifests ->
+    if (routing.schemaVersion != 2) throw new GradleException("routing.json schemaVersion must be 2")
+    if (routing.releaseVersion != lock.release) throw new GradleException("routing.json releaseVersion mismatch")
+    if (routing.abis == null || routing.abis.isEmpty()) throw new GradleException("routing.json has no abis")
+    def supported = lock.supportedAbis as Set
+    if (routing.abis.keySet() != supported) {
+        throw new GradleException("routing.json abis ${routing.abis.keySet()} != lock supportedAbis ${supported}")
+    }
+    routing.abis.each { abi, routes ->
+        def manifest = manifests[abi]
+        def paths = manifest.files.collectEntries { [(it.archivePath): it] }
+        def seen = new HashSet()
+        routes.each { r ->
+            if (!r.runtimeName) throw new GradleException("route without runtimeName for ${abi}")
+            if (!seen.add(r.runtimeName)) throw new GradleException("duplicate route runtimeName '${r.runtimeName}' for ${abi}")
+            ["api21_28PackagingClass", "api29_plusPackagingClass"].each { k ->
+                if (r[k] != null && !PACKAGING.contains(r[k])) throw new GradleException("unknown packaging class '${r[k]}' for ${r.runtimeName}")
+            }
+            ["api21_28", "api29_plus"].each { k ->
+                def p = r[k]
+                if (p == null) return
+                def seg = p.split('/', 2)
+                if (!LANES.contains(seg[0]) || seg.length != 2) throw new GradleException("route path escapes lanes: ${p}")
+                if (!paths.containsKey(p)) throw new GradleException("route '${r.runtimeName}' references unknown archive path '${p}'")
+            }
+        }
+        def names = routes.collect { it.runtimeName } as Set
+        REQUIRED_ROUTES.each { req ->
+            if (!names.contains(req)) throw new GradleException("required runtime route '${req}' missing for ${abi}")
+        }
+        manifest.files.each { f ->
+            def covered = routes.any { it.api21_28 == f.archivePath || it.api29_plus == f.archivePath }
+            if (!covered) throw new GradleException("manifest file '${f.archivePath}' is not covered by routing for ${abi}")
+        }
+        if (manifest.modern64BitBelow16K != null && !manifest.modern64BitBelow16K.isEmpty()) {
+            throw new GradleException("modern 64-bit below-16K in ${abi}: ${manifest.modern64BitBelow16K}")
+        }
+    }
+}
+
+ext.physicalNativeName = { String runtimeName -> "lib_${runtimeName}.so" }
+
+task prepareProotXSupport {
+    group = "prootx"
+    description = "Download, verify and stage the pinned ProotX support release."
+    inputs.file(supportLockFile)
+    outputs.dir(supportGenDir)
+
+    doLast {
+        def lock = new JsonSlurper().parse(supportLockFile)
+        if (lock.schemaVersion != 1) throw new GradleException("support-release.lock.json schemaVersion must be 1")
+        if (lock.release != "v1.2.0") throw new GradleException("ProotX must consume support v1.2.0, lock says ${lock.release}")
+
+        delete supportGenDir
+        supportGenDir.mkdirs()
+
+        // 1) download + verify every pinned asset
+        def downloaded = [:]
+        lock.assets.each { name, digest ->
+            def dest = new File(supportDownloadDir, name)
+            downloadVerified("${lock.baseUrl}/${name}", dest, digest)
+            downloaded[name] = dest
+        }
+        // SHA256SUMS is itself a pinned asset; verify the other assets against it too
+        def sums = [:]
+        downloaded["SHA256SUMS"].eachLine { line ->
+            def parts = line.trim().split(/\s+/)
+            if (parts.length == 2) sums[parts[1]] = parts[0]
+        }
+        ["arm64-v8a-assets.zip", "armeabi-v7a-assets.zip", "x86-assets.zip", "x86_64-assets.zip",
+         "routing.json", "v1.2.0-provenance.json", "v1.2.0.spdx.json"].each { n ->
+            if (sums[n] != lock.assets[n]) throw new GradleException("SHA256SUMS disagrees with lock for ${n}")
+        }
+
+        // 2) extract the four ABI archives
+        def manifests = [:]
+        def abiDirs = [:]
+        lock.supportedAbis.each { abi ->
+            def dir = new File(buildDir, "support-work/${abi}")
+            delete dir
+            extractZip(downloaded["${abi}-assets.zip"], dir)
+            abiDirs[abi] = dir
+            def mf = new File(dir, "manifest.json")
+            if (!mf.isFile()) throw new GradleException("support archive is missing manifest.json: ${abi}")
+            manifests[abi] = new JsonSlurper().parse(mf)
+        }
+
+        // 3) validate routing + manifests
+        def routing = new JsonSlurper().parse(downloaded["routing.json"])
+        validateRouting(lock, routing, manifests)
+
+        // 4) stage generated payload
+        def jniRoot = new File(supportGenDir, "jniLibs")
+        def commonRoot = new File(supportGenDir, "assets/support/common")
+        def legacyRoot = new File(supportGenDir, "assets/support/legacy")
+        def metadataRoot = new File(supportGenDir, "assets/support/metadata")
+        [jniRoot, commonRoot, legacyRoot, metadataRoot].each { it.mkdirs() }
+
+        // common is identical across ABIs; stage it once from the first ABI
+        def commonMap = []
+        manifests[lock.supportedAbis[0]].files.findAll { it.lane == "common" }.each { f ->
+            def name = f.archivePath.split('/').last()
+            stageFile(new File(abiDirs[lock.supportedAbis[0]], f.archivePath),
+                      new File(commonRoot, name), f.executable == true)
+            commonMap << [name: name, assetPath: "support/common/${name}",
+                          sha256: f.sha256, executable: f.executable == true]
+        }
+        commonMap.sort { it.name }
+
+        def abiMap = [:]
+        lock.supportedAbis.each { abi ->
+            def legacy = []
+            def modern = []
+            manifests[abi].files.each { f ->
+                if (f.lane == "common") return
+                def src = new File(abiDirs[abi], f.archivePath)
+                if (sha256Of(src) != f.sha256) throw new GradleException("staged file hash mismatch: ${f.archivePath}")
+                def name = f.archivePath.split('/').last()
+                switch (f.lane) {
+                    case "legacy":
+                        stageFile(src, new File(new File(legacyRoot, abi), name), f.executable == true)
+                        legacy << [name: name, assetPath: "support/legacy/${abi}/${name}",
+                                   sha256: f.sha256, executable: f.executable == true]
+                        break
+                    case "modern":
+                        def physical = physicalNativeName(name)
+                        stageFile(src, new File(new File(jniRoot, abi), physical), true)
+                        modern << [name: name, nativeLib: physical, sha256: f.sha256]
+                        break
+                    default:
+                        throw new GradleException("unknown lane '${f.lane}' for ${f.archivePath}")
+                }
+            }
+            legacy.sort { it.name }
+            modern.sort { it.name }
+            abiMap[abi] = [legacy: legacy, modern: modern]
+        }
+
+        def supportMap = [
+            schemaVersion: 1,
+            release: lock.release,
+            supportedAbis: lock.supportedAbis,
+            common: commonMap,
+            abis: abiMap,
+        ]
+        new File(metadataRoot, "support-map.json").text =
+            JsonOutput.prettyPrint(JsonOutput.toJson(supportMap)) + "\n"
+
+        // 5) structural guard: jniLibs must contain only real ELF lib_*.so files
+        def jniFiles = []
+        jniRoot.eachFileRecurse { if (it.isFile()) jniFiles << it }
+        if (jniFiles.isEmpty()) throw new GradleException("generated jniLibs is empty")
+        jniFiles.each { f ->
+            if (!f.name.startsWith("lib_") || !f.name.endsWith(".so")) {
+                throw new GradleException("non-native physical name in jniLibs: ${f.name}")
+            }
+            def head = new byte[4]
+            f.withInputStream { it.read(head) }
+            if (!(head[0] == 0x7f && head[1] == 0x45 && head[2] == 0x4c && head[3] == 0x46)) {
+                throw new GradleException("non-ELF file in jniLibs: ${f.name}")
+            }
+        }
+        logger.lifecycle("ProotX support ${lock.release} staged: " +
+            "${jniFiles.size()} modern native files, " +
+            "${commonMap.size()} common files, " +
+            "${abiMap.values().sum { it.legacy.size() }} legacy files across ${abiMap.size()} ABIs")
+    }
+}
+
+preBuild.dependsOn prepareProotXSupport

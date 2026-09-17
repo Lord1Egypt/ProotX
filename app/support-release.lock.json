@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "comment": "Pinned ProotX support release. ProotX downloads exactly these assets and verifies every SHA-256 before use. Never replace a published asset; corrections require a new release.",
+  "release": "v1.2.0",
+  "releaseId": "RE_kwDOUXjkQM4XTxeE",
+  "baseUrl": "https://github.com/Lord1Egypt/ProotX-Assets-Support/releases/download/v1.2.0",
+  "supportedAbis": ["arm64-v8a", "armeabi-v7a", "x86_64", "x86"],
+  "assets": {
+    "arm64-v8a-assets.zip": "42fd0042b18d8145ebb72aece000404bed8a0911c83505c1acf31e2da5033fe7",
+    "armeabi-v7a-assets.zip": "496c5d70b0fc8048e0df5ed13f2450d7e9a0324c179c74efa4d5bc6baefb40c9",
+    "x86-assets.zip": "df5e8b3a1327ff23225a69b0664b76f47990fc892c298259087f8c2549010703",
+    "x86_64-assets.zip": "d3884105a9a63b2a13cd4fc97db6af6bd25d7f0495a68cb3a0461cfa62768816",
+    "routing.json": "1b825c4f363b90e0b6e9f893908a54e8fe26e6b827bc1ddc2d53818058828167",
+    "SHA256SUMS": "cbb8301a3c78b62c497ed8a3bf45df15b8418864e8de15ca8c9b96e27e8743d8",
+    "v1.2.0-provenance.json": "d3c4c5971b1a10a48e0ae919478236fde295b344ec97997f10d1e9c87e415e43",
+    "v1.2.0.spdx.json": "d2d4e1bd693cc5b8023a19095b8a5871eef93d05383b75cb4ca84c16bc963681"
+  },
+  "lanes": {
+    "common": "architecture-neutral non-native scripts/data; packaged as APK assets and installed into filesDir/support",
+    "legacy": "API 21-28 native payload; packaged as APK assets and extracted into filesDir/support only on API <= 28",
+    "modern": "API 29+ native payload; packaged under jniLibs/<abi> and executed from nativeLibraryDir only"
+  }
+}
