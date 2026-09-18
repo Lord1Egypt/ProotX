@@ -118,9 +118,13 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
 
     private val downloadBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-            if (id == -1L) return
-            else viewModel.submitCompletedDownloadId(id)
+            val id = DownloadCompletion.extractDownloadId(
+                    intent.action,
+                    intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            ) ?: return
+            // The id is not trusted here; it is only used if it matches one of this
+            // application's own enqueued downloads (AssetDownloader.handleDownloadComplete).
+            viewModel.submitCompletedDownloadId(id)
         }
     }
 
@@ -311,16 +315,24 @@ class MainActivity : AppCompatActivity(), SessionListFragment.SessionSelection, 
             }
     }
 
-    // DownloadManager.ACTION_DOWNLOAD_COMPLETE is a system broadcast. Android 14 exempts
-    // receivers registered only for system broadcasts from the exported/not-exported flag
-    // requirement, so the flag-less platform registration is intentional; the lint check is a
-    // known false positive for this case.
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onStart() {
         super.onStart()
         LocalBroadcastManager.getInstance(this)
                 .registerReceiver(serverServiceBroadcastReceiver, IntentFilter(ServerService.SERVER_SERVICE_RESULT))
-        registerReceiver(downloadBroadcastReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+        registerDownloadCompletionReceiver()
+    }
+
+    // DownloadManager is a separate provider process, so its completion broadcast requires an
+    // explicit export flag from API 33+. The earlier claim that Android 14 exempts this receiver
+    // was disproven by real API 36 runtime behaviour (SecurityException on registerReceiver).
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    private fun registerDownloadCompletionReceiver() {
+        val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(downloadBroadcastReceiver, filter, Context.RECEIVER_EXPORTED)
+        } else {
+            registerReceiver(downloadBroadcastReceiver, filter)
+        }
     }
 
     override fun onResume() {
