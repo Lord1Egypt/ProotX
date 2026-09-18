@@ -202,18 +202,24 @@ class TargetSdk36CompatibilityGuardTest {
     }
 
     @Test
-    fun `MainActivity system DownloadManager receiver keeps the flag-less registration`() {
+    fun `MainActivity DownloadManager receiver uses explicit modern export semantics`() {
         val text = mainActivity.readText()
 
+        // API 36 runtime proved the flag-less registration throws SecurityException: the
+        // DownloadManager provider is a separate process, so an explicit export flag is required.
         assertTrue(
-            "the system broadcast receiver must keep the two-argument registration",
+            "the API 33+ path must register the receiver exported",
+            text.contains("Context.RECEIVER_EXPORTED")
+        )
+        assertTrue(
+            "the legacy API 21-32 path must retain the two-argument registration",
             text.contains(
-                "registerReceiver(downloadBroadcastReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))"
+                "registerReceiver(downloadBroadcastReceiver, filter)"
             )
         )
-        assertFalse(
-            "the system DownloadManager receiver must not gain an export flag",
-            text.contains("RECEIVER_NOT_EXPORTED") || text.contains("RECEIVER_EXPORTED")
+        assertTrue(
+            "the receiver must validate the action and the download id before use",
+            text.contains("DownloadCompletion.extractDownloadId")
         )
         assertTrue(
             "the in-process LocalBroadcastManager registration stays unchanged",
