@@ -231,7 +231,7 @@ dependencies {
     def support_library_version = '1.1.0'
     def preference_version = '1.1.0'
     def ktx_version = '1.1.0'
-    def billing_version = '3.0.3'
+    def billing_version = '8.0.0'
     // P1E9 platform bridge: ComponentActivity >= 1.6 wires OnBackPressedDispatcher to the
     // platform OnBackInvokedDispatcher used by Android 15/16 predictive back. 1.11.0 is the
     // last line before the dependency raises minSdk to 23, so minSdk 21 is preserved.
@@ -267,7 +267,7 @@ dependencies {
     implementation "io.sentry:sentry-android:$sentry_version"
     implementation "org.slf4j:slf4j-nop:$slf4j_version"
 
-    implementation "com.android.billingclient:billing-ktx:$billing_version"
+    implementation "com.android.billingclient:billing:$billing_version"
 
     def mockito_version = '4.11.0'
     def mockito_kotlin_version = '2.1.0'

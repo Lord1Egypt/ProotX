@@ -379,7 +379,7 @@ class ContributionPrompter(private val activity: MainActivity, private val viewG
     }
 
     private fun processPurchase(purchase: Purchase) {
-        if (purchase.sku.endsWith("onetime"))
+        if (purchase.products.any { it.endsWith("onetime") })
             setHasMadeInAppPurchase(true)
         else
             setHasMadeSubPurchase(true)
