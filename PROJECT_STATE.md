@@ -465,9 +465,18 @@ The canonical list lives in
   and the `lib_arch.so` pseudo-native marker are gone. The APK/AAB native-library set is all-ELF,
   contains no legacy/common file, and every 64-bit `PT_LOAD >= 0x4000`; `zipalign -c -P 16` passes
   and bundletool reports `PAGE_ALIGNMENT_16K`. `minSdk` stays 21, all four ABIs are retained, and
-  `extractNativeLibs="true"` is kept (`DECISIONS.md` D037). **Static acceptance only:** P1F5 owns
-  the 16 KB runtime/emulator acceptance and P1G the physical-device acceptance; whole-app runtime
-  16 KB compatibility is not claimed.
+  `extractNativeLibs="true"` is kept (`DECISIONS.md` D037). **P1F4B-R1 remediation:** an independent
+  technical-lead audit found that `SupportInstallation.runtimeNames` returned the union of the
+  common + legacy + modern names while `install()` installs only the active lane, so the
+  lane-asymmetric v1.2.0 payload could never satisfy the marker fast path and every startup
+  reinstalled the support state. `runtimeNames` now returns the common payload plus the active lane
+  only (`allDeclaredNames` keeps the union); the test fixture is lane-asymmetric and the idempotency
+  tests assert zero asset reads, zero symlink creations, an unchanged support snapshot and an
+  unrewritten marker on the second initialization, plus a one-time API 28 → API 29 transition
+  reinstall. Verified on an API 30 x86_64 emulator (two launches: marker byte-identical, symlink
+  unchanged, `proot_smoke_ok`). **Static acceptance only:** P1F5 owns the 16 KB runtime/emulator
+  acceptance and P1G the physical-device acceptance; whole-app runtime 16 KB compatibility is not
+  claimed.
 - **Deferred after P1E9 (non-blocking):** the Activity 1.11.0 bridge moved transitive selections
   (core/core-ktx 1.13.0, lifecycle 2.6.2, savedstate 1.2.1, coroutines 1.7.3, new
   `core-viewtree`/`tracing`/`profileinstaller`) and `androidx.core` injects the benign signature

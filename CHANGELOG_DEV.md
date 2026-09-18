@@ -1128,6 +1128,18 @@
   and `android:extractNativeLibs="true"` is kept. Tests: **46 suites / 375 tests / 0 failures /
   0 errors / 0 skipped** (was 42 / 360). Implementation `9f14ee3`; feature CI `35281111291` SUCCESS
   (logs prove staging, APK/AAB inventory, zipalign, `PAGE_ALIGNMENT_16K`). `DECISIONS.md` D037.
+- **P1F4B-R1 remediation (`55f7547`):** an independent technical-lead audit found an idempotency
+  defect — `SupportInstallation.runtimeNames` returned the union of the common + legacy + modern
+  names, but `install()` installs only the active lane, so the lane-asymmetric v1.2.0 payload could
+  never satisfy the marker fast path and every startup reinstalled the support state. `runtimeNames`
+  now returns the common payload plus the active lane only; `allDeclaredNames` keeps the union. The
+  test fixture is lane-asymmetric (legacy `libcrypto.so.1.1`/`libleveldb.so.1`/`libutil.so` vs modern
+  `libcrypto.so.3`/`libleveldb.so`/`libz.so.1`/…) and the idempotency tests assert zero asset reads,
+  zero symlink creations, an unchanged support snapshot and an unrewritten marker on the second
+  initialization, plus a one-time API 28 → API 29 transition reinstall. Runtime-confirmed on an
+  API 30 x86_64 emulator (two launches: marker byte-identical, symlink unchanged, `proot_smoke_ok`).
+  Tests **46 suites / 378 tests / 0 failures / 0 errors / 0 skipped**. No support-binary, schema,
+  packaging-layout, W^X, ABI-resolver or release-lock change.
 - **P1F4B CLOSED / PASS. P1F IN PROGRESS. P1F5 READY TO START. P1G NOT STARTED.** Static acceptance
   only: the 16 KB runtime/emulator acceptance is P1F5 and whole-app runtime 16 KB compatibility is
   not claimed.

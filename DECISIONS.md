@@ -904,3 +904,14 @@
   `true`. This is static whole-app acceptance only: P1F5 owns the 16 KB runtime/emulator acceptance
   and P1G the physical-device acceptance. The implementation is `9f14ee3` (feature
   `android-modernization`), feature CI `35281111291` SUCCESS (46 suites / 375 tests).
+- **Remediation (P1F4B-R1, `55f7547`):** an independent technical-lead audit found that
+  `SupportInstallation.runtimeNames` required the union of the common + legacy + modern names while
+  `install()` installs only the active lane. The v1.2.0 payload is lane-asymmetric, so the marker
+  fast path could never match and every startup unnecessarily reconciled and reinstalled the support
+  state. `runtimeNames` now returns the common payload plus the active lane only (with
+  `allDeclaredNames` preserving the union for any future caller); the test fixture is lane-asymmetric
+  and the idempotency tests prove zero asset reads, zero symlink creations, an unchanged support
+  snapshot and an unrewritten marker on the second initialization, plus a one-time API 28 → API 29
+  transition reinstall. Runtime-confirmed on an API 30 x86_64 emulator (marker byte-identical across
+  two launches, `proot_smoke_ok`). The architecture is unchanged; no support release, schema,
+  packaging layout, W^X, ABI resolver or lock change.

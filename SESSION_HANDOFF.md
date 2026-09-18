@@ -238,7 +238,11 @@ generated-staging pipeline (`prepareProotXSupport`) hash-verifies the pinned rel
 `support-map.json` routing artifact. A manifest-driven installer extracts the frozen legacy payload
 on API 21–28 and links the modern payload from `nativeLibraryDir` on API 29+ (Android W^X); the
 `.a10` inference and `lib_arch.so` marker are removed. The APK/AAB native set is all-ELF with no 4 KB
-64-bit ELF, `zipalign -P 16` passes and bundletool reports `PAGE_ALIGNMENT_16K`. **Deferred to
+64-bit ELF, `zipalign -P 16` passes and bundletool reports `PAGE_ALIGNMENT_16K`. **P1F4B-R1
+remediation (`55f7547`):** an independent audit found `SupportInstallation.runtimeNames` required
+both native lanes while only the active lane is installed, so the marker fast path never matched and
+every startup reinstalled; `runtimeNames` is now the common payload plus the active lane, with a
+lane-asymmetric test fixture and operation-counting idempotency/transition tests. **Deferred to
 P1F5:** the 16 KB runtime/emulator acceptance (`getconf PAGE_SIZE` = 16384) and real-session
 execution; whole-app runtime 16 KB compatibility is not claimed.
 
