@@ -11,9 +11,10 @@ current program phase is **P1F — MODERN NDK / 16 KB PAGE-SIZE COMPATIBILITY: I
 CLOSED / PARTIAL_BRIDGE, P1F1 (in-tree NDK r29) is CLOSED / PASS, P1F2 (support
 toolchain/provenance) is CLOSED / PASS, P1F3 (support bundle publication `v1.1.0`) is
 CLOSED / PASS, P1F4-P (whole-app 16 KB preflight) is CLOSED / BRIDGE_FOUND, P1F4A (complete
-dual-lane support release `v1.2.0`) is CLOSED / PASS, and P1F4B (support packaging / whole-app
-static 16 KB integration) is CLOSED / PASS, with P1F5 (16 KB runtime/emulator acceptance) READY TO
-START. See `PROJECT_STATE.md` and `DECISIONS.md`
+dual-lane support release `v1.2.0`) is CLOSED / PASS, P1F4B (support packaging / whole-app static
+16 KB integration) is CLOSED / PASS, P1E-R1 (API36 first-launch platform remediation discovered by
+P1F5) is CLOSED / PASS, and P1F5 (true 16 KB runtime/emulator acceptance) is CLOSED / PASS, with
+P1G (physical-device acceptance) READY TO START. See `PROJECT_STATE.md` and `DECISIONS.md`
 D034/D035/D036/D037 for the 16 KB scope boundary (full application 16 KB compatibility is not yet
 claimed). P1G physical acceptance remains after P1F.
 
@@ -935,7 +936,9 @@ Accepted implementation: `41cc7a8c629da364903de0ae71ab524541c7ef76`; remote CI r
 - No Room/schema, storage-path, SSH, notification-policy, FGS-type/ID, or data-model change. No
   orientation lock, no large-screen opt-out, no edge-to-edge/back opt-out. **P1E is CLOSED / PASS.**
 
-**Next:** P1F5 — 16 KB RUNTIME / EMULATOR ACCEPTANCE — **READY TO START**. It runs the integrated
-application on an Android 15/16 16 KB page-size environment (`adb shell getconf PAGE_SIZE` must
-return `16384`) and exercises real Linux sessions. Do not start without explicit authorization.
-P1G physical acceptance remains after P1F.
+**Next:** P1G — PHYSICAL DEVICE ACCEPTANCE — **READY TO START**. It owns physical/arm64 device
+acceptance of the integrated application (real Linux sessions, the modern lane from
+`nativeLibraryDir`, and edge-to-edge/back/IME/VNC geometry). Do not start without explicit
+authorization. **Note (P1E-R1):** the P1E static/platform review had missed three API36 launch
+defects (nav graph root id, DownloadManager receiver export flag, Play Billing 3.0.3 internal
+receiver); real P1F5 execution exposed them and they were fixed before P1F5 resumed.

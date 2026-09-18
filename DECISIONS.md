@@ -915,3 +915,30 @@
   transition reinstall. Runtime-confirmed on an API 30 x86_64 emulator (marker byte-identical across
   two launches, `proot_smoke_ok`). The architecture is unchanged; no support release, schema,
   packaging layout, W^X, ABI resolver or lock change.
+
+---
+
+## Remediation evidence — P1E-R1 API36 first-launch + P1F5 true 16 KB runtime (no new decision ID)
+
+This is recorded as remediation evidence, not a new architectural decision: the Billing change is a
+dependency-compatibility upgrade, not a product architecture choice, so no decision ID was added
+(per the milestone's guidance to avoid decision-ID churn).
+
+Real API36 execution on a genuine 16384-byte page-size emulator exposed three **pre-existing** launch
+defects that the static P1E review had missed. They were fixed before P1F5 resumed:
+
+1. `nav_graph.xml`'s root `<navigation>` had no `android:id`; Navigation 2.3.5 `NavGraph.onInflate`
+   threw for `startDestination == graphId == 0`. A stable `android:id="@+id/nav_graph"` is required;
+   the start destination stays dynamic.
+2. The `DownloadManager` completion receiver must be registered with an explicit export flag on
+   API 33+ (`Context.RECEIVER_EXPORTED`), because the provider is a separate process. The earlier
+   "system-broadcast exemption" assumption was wrong on API 36.
+3. Play Billing `billing-ktx:3.0.3` is not API34-compatible (internal flag-less receiver). The
+   minimum compatible client is `com.android.billingclient:billing:8.0.0` (AAR minSdk 21, targetSdk
+   34). The Java artifact is used because ProotX consumes the Java Billing API; `billing-ktx` would
+   transitively bump kotlinx-coroutines. Subscriptions use the base-plan offer token (fail-closed).
+
+The resulting durable constraints: **minSdk stays 21**; receiver registrations on modern Android must
+state their export semantics; Billing must not raise the minSdk floor; Billing failures must never
+propagate through the Activity lifecycle. P1F5 then passed the complete true-16 KB runtime matrix.
+Implementation `65b729f`; feature CI `35297254107` SUCCESS (50 suites / 398 tests).

@@ -1143,3 +1143,51 @@
 - **P1F4B CLOSED / PASS. P1F IN PROGRESS. P1F5 READY TO START. P1G NOT STARTED.** Static acceptance
   only: the 16 KB runtime/emulator acceptance is P1F5 and whole-app runtime 16 KB compatibility is
   not claimed.
+
+## P1E-R1 — API36 First-Launch Platform Remediation (2026-09-18) — PASS
+
+Real API36 execution on a genuine 16384-byte page-size emulator exposed three **pre-existing**
+launch defects that static platform review (P1E) had missed. They are **not** 16 KB regressions; they
+were discovered by P1F5 and remediated before P1F5 resumed.
+
+- **Navigation graph id.** `nav_graph.xml`'s root `<navigation>` had no `android:id`, so Navigation
+  2.3.5 `NavGraph.onInflate` called `setStartDestination(0)` and threw `Start destination 0 cannot
+  use the same id as the graph NavGraph(0)` in `MainActivity.setNavStartDestination` on **every** API
+  level. Added `android:id="@+id/nav_graph"`; the start destination stays dynamic. Guard:
+  `NavigationGraphContractTest` + `NavigationGraphInstrumentedTest`.
+- **DownloadManager receiver.** `MainActivity.onStart` registered
+  `DownloadManager.ACTION_DOWNLOAD_COMPLETE` without an export flag; the "system-broadcast
+  exemption" comment was disproven by real API36 `SecurityException`. Now registers
+  `Context.RECEIVER_EXPORTED` on API 33+ with the legacy path retained, and validates action/id via
+  the testable `DownloadCompletion` helper. Unknown ids remain rejected by
+  `AssetDownloader.handleDownloadComplete` (`NonProotXDownloadFound`).
+- **Play Billing.** `billing-ktx:3.0.3` registers a receiver internally without the Android 14 flag
+  and crashed `BillingClientImpl.startConnection` on API 34+. Migrated to
+  `com.android.billingclient:billing:8.0.0` (AAR minSdk **21**, targetSdk 34): `ProductDetails`,
+  `queryProductDetailsAsync`, async `queryPurchasesAsync`, `PendingPurchasesParams`, and a
+  deliberately selected base-plan subscription offer token (fail-closed when absent). Billing
+  failures never propagate through the Activity lifecycle.
+
+## P1F5 — True 16 KB Runtime / Emulator Acceptance (2026-09-18) — PASS
+
+Ran the exact accepted application on a real **16384-byte page-size** environment:
+`system-images;android-36;google_apis_ps16k;x86_64` (revision 7), Android 16 / API 36, emulator
+37.1.11.0, x86_64. `getconf PAGE_SIZE` = 16384.
+
+- First cold launch succeeds; the three prior crash classes are absent (0 matching logcat lines).
+- Support runtime: `v1.2.0`, ABI `x86_64`, lane `MODERN`; modern names symlinked into
+  `nativeLibraryDir`; zero legacy-active files; second-init idempotent (marker byte-identical).
+- `busybox` and `busybox_static` run; `proot` session prints `prootx_16k_session_ok`; the
+  `execInProot.sh` end-to-end path prints `prootx_execinproot_16k_ok`.
+- Normal filesystem session, `_meta` sidecar fixture (fake UID/GID, restart persistence) and
+  `_meta_leveldb` fixture (`/support/meta_db`, restart persistence) all pass with R1 parity.
+- `compressFilesystem.sh`/`extractFilesystem.sh` roundtrip passes (matching hashes, preserved
+  symlink, honored exclusions); session restart and process cleanup pass; lifecycle stable; a real
+  `DownloadManager` completion broadcast is delivered; final logcat has zero ProotX `FATAL
+  EXCEPTION`.
+- Static gates unchanged (APK/AAB all-ELF, no 4 KB 64-bit ELF, `zipalign -P 16`,
+  `PAGE_ALIGNMENT_16K`); merged `minSdk` = 21; all four ABIs retained; support `v1.2.0` untouched.
+  Tests **50 suites / 398 tests / 0 failures / 0 errors / 0 skipped**. Implementation `65b729f`;
+  feature CI `35297254107` SUCCESS (one `:app:packageDebug` `IncrementalSplitterRunnable` runner
+  flake cleared by re-run). A real-distro smoke was not run (external rootfs/network dependency).
+- **P1F CLOSED / PASS. P1G READY TO START.**

@@ -4,7 +4,7 @@
 > substantial engineering session. Always re-verify with Git — this is a
 > point-in-time record, and verified repository state overrides stale docs.
 
-Last updated: 2026-09-17 (P1F4B support packaging / whole-app static 16 KB integration — CLOSED / PASS; P1F IN PROGRESS; P1F5 READY TO START)
+Last updated: 2026-09-18 (API36 first-launch remediation + P1F5 true 16 KB runtime acceptance — CLOSED / PASS; P1F CLOSED / PASS; P1G READY TO START)
 
 ## Project Identity
 
@@ -63,38 +63,55 @@ Last updated: 2026-09-17 (P1F4B support packaging / whole-app static 16 KB integ
 | P1F4-P — Whole-App 16 KB Preflight | **CLOSED / BRIDGE_FOUND** |
 | P1F4A — Complete Dual-Lane Support Release (v1.2.0) | **CLOSED / PASS** |
 | P1F4B — Support Packaging / Whole-App 16 KB Integration | **CLOSED / PASS** |
-| P1F5 — 16 KB Runtime / Emulator Acceptance | **READY TO START** |
-| P1G — Physical Device Acceptance | **NOT STARTED** |
+| P1F4B-R1 — Active-Lane Idempotency Remediation | **CLOSED / PASS** |
+| P1E-R1 — API36 First-Launch Platform Remediation | **CLOSED / PASS** |
+| P1F5 — True 16 KB Runtime / Emulator Acceptance | **CLOSED / PASS** |
+| P1G — Physical Device Acceptance | **READY TO START** |
 | P1D7-U — SwipeRefreshLayout Ownership + Material Retry | **CLOSED / SUPERSEDED BY P1D7-U2** |
 | P1D7-U2 — Explicit Legacy Replacements + Material Final Retry | **CLOSED / PASS** |
 
 ## Current Milestone
 
-**P1F4B — Support Packaging / Whole-App Static 16 KB Integration: CLOSED / PASS. P1F is IN PROGRESS.**
-ProotX now consumes support **`v1.2.0`**. The old flat pseudo-`.so` transport (downloadAssets/
-fetchAssets writing into the tracked `src/main/jniLibs`) is removed. A single deterministic
-`prepareProotXSupport` task downloads the pinned release, verifies every asset SHA-256 against
-`app/support-release.lock.json`, validates the published `routing.json` + per-ABI `manifest.json`,
-and stages a generated payload under `app/build/generated/prootxSupport/`: modern natives into
-`jniLibs/<abi>/lib_<name>.so`, common/legacy into `assets/support/{common,legacy/<abi>}/`, and a
-`support-map.json` runtime routing artifact. A manifest-driven installer resolves the lane at
-runtime: API 21–28 extracts the frozen legacy payload from assets into `filesDir/support`
-(integrity-checked); API 29+ links the modern payload from `nativeLibraryDir` and never copies
-executable code into writable storage (Android W^X). The `.a10` filename inference and the
-`lib_arch.so` pseudo-native marker are gone; ABI selection uses `Build.SUPPORTED_ABIS` and the
-routing manifest. The legacy 4 KB x86_64 ELFs are packaged only under `assets/support/legacy/`, so
-the APK/AAB native-library set contains no 4 KB 64-bit ELF. Static gates: APK/AAB `lib/` inventory
-(all ELF, no `lib_arch`, no legacy/common), every 64-bit `PT_LOAD >= 0x4000`,
-`zipalign -c -P 16` PASS, and bundletool `PAGE_ALIGNMENT_16K`. `minSdk` stays **21**, all four ABIs
-are retained, and `android:extractNativeLibs="true"` is kept (`DECISIONS.md` D037). This is
-**static whole-app acceptance only**: P1F5 owns the 16 KB runtime/emulator acceptance and P1G the
-physical-device acceptance. **Whole-app runtime 16 KB compatibility is not yet claimed.**
+**P1F5 — True 16 KB Runtime / Emulator Acceptance: CLOSED / PASS. P1F is CLOSED / PASS. P1G is
+READY TO START.**
+ProotX runs correctly on a genuine **16384-byte page-size** Android 16 (API 36) environment
+(`system-images;android-36;google_apis_ps16k;x86_64`, revision 7; emulator 37.1.11.0). Real API36
+execution exposed three **pre-existing, non-16 KB** launch defects that static review had missed;
+they were remediated first (P1E-R1) and then the full runtime matrix was re-run.
+
+- **P1E-R1 (API36 first-launch remediation).** (1) `nav_graph.xml` had no root `android:id`, so
+  Navigation 2.3.5 `NavGraph.onInflate` threw `Start destination 0 cannot use the same id as the
+  graph NavGraph(0)` in `MainActivity.setNavStartDestination` on every API level; a stable
+  `android:id="@+id/nav_graph"` is added while the start destination stays dynamic. (2) the
+  `DownloadManager` completion receiver was registered without an export flag; the
+  "system-broadcast exemption" comment was disproven on API36, so it now registers
+  `Context.RECEIVER_EXPORTED` on API 33+ (legacy path retained) and validates action/id. (3) Play
+  Billing `billing-ktx:3.0.3` registers a receiver internally without the Android 14 flag and
+  crashes on API 34+; migrated to `com.android.billingclient:billing:8.0.0` (AAR minSdk **21**),
+  preserving the minSdk 21 floor, with `ProductDetails`/`queryProductDetailsAsync`/
+  `queryPurchasesAsync`/`PendingPurchasesParams` and a deliberate base-plan offer token.
+- **P1F5 runtime matrix on 16 KB (all PASS).** support installer `v1.2.0` / `x86_64` / `MODERN`
+  with modern symlinks into `nativeLibraryDir` and zero legacy-active files; second-init idempotency
+  (marker byte-identical); `busybox` and `busybox_static`; `proot` session `prootx_16k_session_ok`;
+  `execInProot.sh` end-to-end `prootx_execinproot_16k_ok`; normal filesystem session; `_meta`
+  sidecar fixture with fake UID/GID + restart persistence; `_meta_leveldb` fixture with
+  `/support/meta_db` + restart persistence; compress/extract roundtrip with matching hashes,
+  preserved symlink and honored exclusions; session restart; no stuck proot/loader processes; real
+  `DownloadManager` completion broadcast delivered; lifecycle background/foreground stable; final
+  logcat has zero `FATAL EXCEPTION` for ProotX. A real-distro smoke was **not run** (external
+  rootfs/network dependency).
+- **Static gates unchanged:** APK/AAB `lib/` all-ELF with no legacy/common file and no 4 KB 64-bit
+  ELF, `zipalign -c -P 16` PASS, bundletool `PAGE_ALIGNMENT_16K`; merged `minSdk` = 21. `minSdk`
+  stays **21**, all four ABIs retained, `extractNativeLibs="true"` kept, support `v1.2.0`
+  untouched (`DECISIONS.md` D037 evidence). **Whole-app runtime 16 KB compatibility is now
+  demonstrated on x86_64; P1G owns physical/arm64 device acceptance.**
 
 ## Repository State
 
 | Ref | SHA | Notes |
 |---|---|---|
 | Active branch | `feature/android-modernization` | |
+| Accepted P1E-R1/P1F5 implementation | `65b729f` (feature/android-modernization) | API36 first-launch remediation (nav graph id, DownloadManager receiver export flag + id validation, Play Billing 8.0.0 migration preserving minSdk 21) and the true-16 KB runtime acceptance evidence (50 suites / 398 tests; feature CI `35297254107` SUCCESS) |
 | Accepted P1F4B implementation | `9f14ee3f78af9f997ee38cc4c72770783dd35fd8` (feature/android-modernization) | pins support v1.2.0 (`app/support-release.lock.json`), deterministic `prepareProotXSupport` generated staging (modern `jniLibs`, common/legacy assets, `support-map.json` routing), manifest-driven installer (legacy extracted on API 21–28, modern linked from `nativeLibraryDir` on API 29+), `.a10`/`lib_arch` removed, APK/AAB static 16 KB gates |
 | Accepted P1F4A support release | support tag `v1.2.0` (object `2b5691c9aa6b4ee6716a4bbcfd8559d30095d7f6`) → commit `889cb67bf8fcb55eb252513d381d00203fe9a8b4`; release `RE_kwDOUXjkQM4XTxeE` | four `*-assets.zip` (explicit `common/`+`legacy/`+`modern/` schema + `manifest.json` routing) + `routing.json` + `SHA256SUMS` + `v1.2.0-provenance.json` + `v1.2.0.spdx.json`; modern arm64/x86_64 lane 16 KB aligned; whole-app 16 KB still not claimed |
 | Accepted P1F3 support release | support tag `v1.1.0` (object `ff55608c0e9490dfd3a6dc392717c19a1916d636`) → commit `acc28abcd0756cca66782145099ef54ed4cbc46c`; release `RE_kwDOUXjkQM4XOeTw` | four `*-assets.zip` + `SHA256SUMS` + `v1.1.0-provenance.json` + `v1.1.0.spdx.json`; modern arm64/x86_64 lane 16 KB aligned; whole-app 16 KB still not claimed |
@@ -263,15 +280,14 @@ All six ProotX asset repositories (`ProotX-Assets-Support`, `-Debian`, `-Ubuntu`
 
 ## Current Blockers
 
-**No build blocker.** P1F4B is CLOSED / PASS. The 13 x86_64 **legacy** ELFs (`busybox`,
-`busybox_static`, `dbclient`, `libc++_shared.so`, `libcrypto.so.1.1`, `libleveldb.so.1`,
-`libtalloc.so.2`, `libtermux-auth.so`, `libutil.so`, `loader`, `proot`, `proot_meta`,
-`proot_meta_leveldb`) are 4 KB aligned but are now packaged only under `assets/support/legacy/`;
-the APK/AAB native-library set contains no 4 KB 64-bit ELF. Remaining P1F work is **P1F5**
-(16 KB runtime/emulator acceptance, `adb shell getconf PAGE_SIZE` = 16384) and the modern lane
-runtime equivalence (ashmem/memfd). Physical validation of edge-to-edge/back/IME/VNC geometry is
-**P1G**. The local JaCoCo gate passes from the clean/report-only state; lint remains pre-existing
-legacy debt (13 errors / 134 warnings / 3 hints).
+**No build blocker.** P1E-R1 and P1F5 are CLOSED / PASS; **P1F is CLOSED / PASS**. The 13 x86_64
+**legacy** ELFs remain 4 KB aligned but are packaged only under `assets/support/legacy/`, so the
+APK/AAB native-library set contains no 4 KB 64-bit ELF. **P1G** owns physical-device (arm64)
+acceptance, including edge-to-edge/back/IME/VNC geometry. The local JaCoCo gate passes from the
+clean/report-only state; lint remains pre-existing legacy debt (13 errors / 134 warnings / 3
+hints). A non-reproducible CI flake (`:app:packageDebug` `IncrementalSplitterRunnable` under
+parallel packaging) was seen twice and cleared by re-run; it is an AGP/runner timing issue, not a
+repository defect.
 
 ## Deferred Findings
 
@@ -477,6 +493,19 @@ The canonical list lives in
   unchanged, `proot_smoke_ok`). **Static acceptance only:** P1F5 owns the 16 KB runtime/emulator
   acceptance and P1G the physical-device acceptance; whole-app runtime 16 KB compatibility is not
   claimed.
+- **Resolved in P1E-R1 / P1F5:** real API36 execution on a true 16384-byte page-size emulator
+  (`system-images;android-36;google_apis_ps16k;x86_64` rev 7) exposed three pre-existing launch
+  defects that static platform review had missed: the navigation graph lacked a root `android:id`
+  (crash on every API level), the `DownloadManager` completion receiver used a flag-less
+  registration (API 34+ `SecurityException`), and Play Billing 3.0.3 registered a receiver
+  internally without the Android 14 flag (API 34+ `SecurityException`). They were remediated before
+  P1F5 resumed — stable graph id; explicit `RECEIVER_EXPORTED` on API 33+ with action/id
+  validation; migration to `com.android.billingclient:billing:8.0.0` (minSdk 21). The full P1F5
+  runtime matrix then passed on 16 KB (support lane, idempotency, BusyBox, PRoot,
+  execInProot, normal filesystem, `_meta`/`_meta_leveldb` parity with restart persistence,
+  compress/extract roundtrip, session restart, process cleanup, lifecycle, real DownloadManager
+  completion, clean logcat). A real-distro smoke was not run (external rootfs/network dependency).
+  **P1F is CLOSED / PASS; P1G owns physical/arm64 acceptance.**
 - **Deferred after P1E9 (non-blocking):** the Activity 1.11.0 bridge moved transitive selections
   (core/core-ktx 1.13.0, lifecycle 2.6.2, savedstate 1.2.1, coroutines 1.7.3, new
   `core-viewtree`/`tracing`/`profileinstaller`) and `androidx.core` injects the benign signature
@@ -510,9 +539,7 @@ The canonical list lives in
 
 ## Next Safe Action
 
-**P1F5 — 16 KB RUNTIME / EMULATOR ACCEPTANCE — READY TO START.** It owns running the integrated
-application on an Android 15/16 **16 KB page-size** environment (`adb shell getconf PAGE_SIZE` must
-return `16384`), exercising real Linux sessions, and proving the modern lane executes correctly from
-`nativeLibraryDir`. It must not begin without explicit authorization. **Full application 16 KB
-compatibility must not be claimed** until P1F5 and **P1G** physical-device acceptance pass. ProotX
-must **not** be called a Golden Candidate, release candidate, or store-ready final.
+**P1G — PHYSICAL DEVICE ACCEPTANCE — READY TO START.** It owns physical/arm64 device acceptance of
+the integrated application, including real Linux sessions, the modern lane from `nativeLibraryDir`,
+and edge-to-edge/back/IME/VNC geometry. It must not begin without explicit authorization. ProotX
+must **not** be called a Golden Candidate, release candidate, or store-ready final until P1G passes.

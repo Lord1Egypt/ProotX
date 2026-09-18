@@ -273,3 +273,24 @@ actions are pinned by full commit SHA. Whole-app **static** 16 KB compatibility 
 set all-ELF, no 4 KB 64-bit ELF, `zipalign -P 16`, bundletool `PAGE_ALIGNMENT_16K`); the 16 KB
 **runtime/emulator** acceptance is P1F5 and physical acceptance is P1G.
 See `DECISIONS.md` D036 and the support repo `docs/PROVENANCE.md`.
+
+## 16 KB runtime acceptance and API36 launch remediation (P1F5 / P1E-R1)
+
+The true 16 KB acceptance uses the official **16384-byte page-size** system image
+`system-images;android-36;google_apis_ps16k;x86_64` (revision 7, Android 16 / API 36, emulator
+37.1.11.0). Acceptance requires `adb shell getconf PAGE_SIZE` = `16384`; a 4096-byte emulator does
+not count.
+
+Real API36 execution exposed three **pre-existing, non-16 KB** launch defects that static review had
+missed, all now fixed:
+
+- `nav_graph.xml` needs a root `android:id` (Navigation 2.3.5 throws for `startDestination ==
+  graphId == 0`); the start destination remains dynamic.
+- The `DownloadManager` completion receiver must be registered `Context.RECEIVER_EXPORTED` on
+  API 33+ (the provider is a separate process); the legacy two-argument path is retained below 33.
+- Play Billing migrated from `billing-ktx:3.0.3` to `com.android.billingclient:billing:8.0.0`
+  (AAR minSdk 21, targetSdk 34). The Java artifact is used because ProotX consumes the Java Billing
+  API; `billing-ktx` would transitively bump kotlinx-coroutines. Merged `minSdk` stays 21.
+
+Static gates are unchanged: the APK/AAB native set is all ELF, contains no 4 KB 64-bit ELF,
+`zipalign -c -P 16` passes and bundletool reports `PAGE_ALIGNMENT_16K`.

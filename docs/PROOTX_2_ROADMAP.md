@@ -103,8 +103,21 @@
 >     `lib_arch` removed; APK/AAB native set all-ELF with no 4 KB 64-bit ELF; `zipalign -c -P 16`
 >     PASS; bundletool `PAGE_ALIGNMENT_16K`; 46 suites / 375 tests; implementation `9f14ee3`;
 >     feature CI `35281111291`; static acceptance only)
->   - **P1F5 — 16 KB Runtime / Emulator Acceptance Gate:** READY TO START
-> - **P1G — Physical-Device Acceptance:** NOT STARTED (after P1F)
+>   - **P1E-R1 — API36 First-Launch Platform Remediation:** CLOSED / PASS
+>     (real API36 execution exposed three pre-existing launch defects static review missed: nav
+>     graph root id; DownloadManager receiver export flag; Play Billing 3.0.3 internal receiver.
+>     Fixed with a stable graph id, `Context.RECEIVER_EXPORTED` on API 33+ with id validation, and
+>     migration to `com.android.billingclient:billing:8.0.0` preserving minSdk 21; `65b729f`)
+>   - **P1F5 — True 16 KB Runtime / Emulator Acceptance Gate:** CLOSED / PASS
+>     (real 16384-byte Android 16 / API36 `google_apis_ps16k` x86_64 emulator; support
+>     `v1.2.0`/`x86_64`/`MODERN`; idempotency; busybox; busybox_static; proot
+>     `prootx_16k_session_ok`; execInProot `prootx_execinproot_16k_ok`; normal filesystem;
+>     `_meta`/`_meta_leveldb` parity + restart persistence; compress/extract roundtrip; session
+>     restart; process cleanup; lifecycle; real DownloadManager completion; clean logcat; 50
+>     suites / 398 tests; feature CI `35297254107`; real-distro smoke NOT RUN — external
+>     dependency)
+> - **P1F — Modern NDK / 16 KB Page-Size Compatibility:** CLOSED / PASS
+> - **P1G — Physical-Device Acceptance:** READY TO START
 >
 > This roadmap records the agreed architectural direction at a high level only.
 > No implementation work starts until a later phase is explicitly authorized.

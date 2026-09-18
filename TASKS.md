@@ -242,8 +242,20 @@ Conceptual increments (subdivision not immutable; see `DECISIONS.md`):
         `.a10` and `lib_arch` removed; APK/AAB lib set all-ELF with no 4 KB 64-bit ELF;
         `zipalign -c -P 16` PASS; bundletool `PAGE_ALIGNMENT_16K`; 46 suites / 375 tests;
         implementation `9f14ee3`; feature CI `35281111291`; static acceptance only)
-  - [ ] **P1F5 — 16 KB runtime / emulator acceptance gate (`getconf PAGE_SIZE` = 16384)** — READY TO START
-- [ ] **P1G — Modernization regression candidate and physical acceptance** — NOT STARTED
+  - [x] **P1E-R1 — API36 first-launch platform remediation** — CLOSED / PASS
+        (real API36 execution exposed three pre-existing launch defects static review missed:
+        nav graph root id, DownloadManager receiver export flag, Play Billing 3.0.3 internal
+        receiver. Fixed: `android:id="@+id/nav_graph"`; `Context.RECEIVER_EXPORTED` on API 33+
+        with action/id validation; migration to `com.android.billingclient:billing:8.0.0`
+        (minSdk 21). Implementation `65b729f`.)
+  - [x] **P1F5 — 16 KB runtime / emulator acceptance gate (`getconf PAGE_SIZE` = 16384)** — CLOSED / PASS
+        (true 16384-byte Android 16 / API36 `google_apis_ps16k` x86_64 emulator; support v1.2.0 /
+        x86_64 / MODERN; idempotency; busybox; busybox_static; proot `prootx_16k_session_ok`;
+        execInProot `prootx_execinproot_16k_ok`; normal filesystem; `_meta`/`_meta_leveldb` parity
+        + restart persistence; compress/extract roundtrip; session restart; process cleanup;
+        lifecycle; real DownloadManager completion; clean logcat. 50 suites / 398 tests; feature
+        CI `35297254107`. Real-distro smoke NOT RUN — external dependency.)
+- [ ] **P1G — Modernization regression candidate and physical acceptance** — READY TO START
   - [ ] Produce a modernization candidate build
   - [ ] Physical-device acceptance (separate from source/test acceptance)
 
