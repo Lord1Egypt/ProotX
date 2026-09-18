@@ -3,7 +3,8 @@
     according to user preference -->
 <navigation xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" >
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph" >
     <fragment
         android:id="@+id/app_list_fragment"
         android:name="io.github.lord1egypt.prootx.ui.AppsListFragment"
